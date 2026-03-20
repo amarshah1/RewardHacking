@@ -1,0 +1,31 @@
+# Reward Hacking Experiment Configuration
+
+# OpenRouter settings
+openrouter:
+  base_url: "https://openrouter.ai/api/v1"
+  # Use the free Qwen3 Coder 480B model (rate-limited: 20 req/min, 200 req/day)
+  model: "qwen/qwen3-coder"
+  # For spec/test generation (can use a different model if needed)
+  generator_model: "qwen/qwen3-coder"
+
+# Sampling settings
+sampling:
+  temperature: 0.8
+  max_tokens: 2048
+  n_samples: 1          # completions per problem (prototype: 4, full: 16)
+
+# Benchmark settings
+benchmark:
+  human_eval_verus_dir: "human-eval-verus/tasks"
+  # For prototype, limit to first N problems
+  max_problems: 2
+
+# Evaluation settings
+evaluation:
+  timeout_seconds: 30    # max time per compilation/verification
+  verus_binary: "verus"  # path to verus binary (assumes on PATH)
+
+# Rejection sampling settings
+training:
+  n_iterations: 1        # prototype: 1, full: 2-3
+  min_reward: 1.0        # only keep completions with perfect score

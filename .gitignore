@@ -1,0 +1,25 @@
+human-eval-verus/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+*.egg-info/
+
+# Environment
+.env
+
+# Data
+data/processed/
+
+# Results
+results/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
