@@ -18,7 +18,7 @@ import yaml
 from data.parse_benchmarks import parse_human_eval_verus, HumanEvalVerusTask
 from generation.generate_tests import generate_unit_tests
 from generation.generate_specs import generate_verus_spec
-from generation.generate_code import generate_code_for_tests, generate_code_for_verus
+from generation.generate_code import generate_code_for_tests, generate_code_for_verus, repair_code_for_tests, repair_code_for_verus
 from evaluation.run_tests import run_rust_tests
 from evaluation.run_verus import run_verus
 from evaluation.evaluate import (
@@ -47,9 +47,24 @@ def _print_block(label: str, content: str, verbose: bool):
     print(f"  └{'─' * (len(label) + 6)}")
 
 
+def _save_cache_file(cache_dir: str, *path_parts: str, content: str):
+    """Save content to a file under the cache directory."""
+    filepath = os.path.join(cache_dir, *path_parts)
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, "w") as f:
+        f.write(content)
+
+
 def run_pipeline(config: dict, verbose: bool = False):
     """Run the full prototype pipeline."""
-    run_log = {"tasks": [], "config": config, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}
+    run_id = time.strftime("%Y%m%d_%H%M%S")
+    cache_dir = os.path.join("experiment_cache", run_id)
+    os.makedirs(cache_dir, exist_ok=True)
+
+    # Save config for this run
+    _save_cache_file(cache_dir, "config.yaml", content=yaml.dump(config, default_flow_style=False))
+
+    run_log = {"tasks": [], "config": config, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"), "run_id": run_id}
 
     # --- Step 1: Parse benchmark ---
     print("=" * 60)
@@ -72,9 +87,9 @@ def run_pipeline(config: dict, verbose: bool = False):
     n_samples = config["sampling"]["n_samples"]
     temperature = config["sampling"]["temperature"]
     verus_binary = config["evaluation"]["verus_binary"]
+    repair_rounds = config["sampling"].get("repair_rounds", 1)
 
     # Validate API key early so we don't silently fail on every task
-    import os
     from dotenv import load_dotenv
     load_dotenv()
     if not os.environ.get("OPENROUTER_API_KEY"):
@@ -86,6 +101,7 @@ def run_pipeline(config: dict, verbose: bool = False):
     print(f"Model: {model}")
     print(f"Generator model: {generator_model}")
     print(f"Samples per problem: {n_samples}")
+    print(f"Repair rounds: {repair_rounds}")
     print(f"Temperature: {temperature}")
     if verbose:
         print("Verbose mode: ON (showing prompts, generated content, and scores)")
@@ -99,6 +115,7 @@ def run_pipeline(config: dict, verbose: bool = False):
         print("=" * 60)
 
         nl_prompt = task.nl_prompt
+        task_cache = os.path.join(cache_dir, task.task_id)
         _print_block("NL Prompt", nl_prompt, verbose)
 
         task_log = {
@@ -106,6 +123,9 @@ def run_pipeline(config: dict, verbose: bool = False):
             "entry_point": task.entry_point,
             "nl_prompt": nl_prompt,
         }
+
+        # Save NL prompt
+        _save_cache_file(task_cache, "nl_prompt.txt", content=nl_prompt)
 
         # --- Step 2: Generate reward mechanisms ---
         print("\n--- Step 2a: Generating unit tests (Branch A) ---")
@@ -121,6 +141,7 @@ def run_pipeline(config: dict, verbose: bool = False):
             print(f"  ERROR generating tests: {type(e).__name__}: {e}")
             generated_tests = ""
         task_log["generated_tests"] = generated_tests
+        _save_cache_file(task_cache, "generated_tests.rs", content=generated_tests)
 
         print("\n--- Step 2b: Generating Verus spec (Branch B) ---")
         try:
@@ -135,6 +156,7 @@ def run_pipeline(config: dict, verbose: bool = False):
             print(f"  ERROR generating spec: {type(e).__name__}: {e}")
             generated_spec = ""
         task_log["generated_spec"] = generated_spec
+        _save_cache_file(task_cache, "generated_spec.rs", content=generated_spec)
 
         # --- Step 3: Sample code completions ---
         print(f"\n--- Step 3a: Sampling {n_samples} code completions for Branch A ---")
@@ -152,6 +174,7 @@ def run_pipeline(config: dict, verbose: bool = False):
                 print(f"  Generated {len(test_completions)} completions")
                 for i, code in enumerate(test_completions):
                     _print_block(f"Branch A Completion {i}", code, verbose)
+                    _save_cache_file(task_cache, "branch_a", f"completion_{i}.rs", content=code)
             except Exception as e:
                 print(f"  ERROR generating code (Branch A): {type(e).__name__}: {e}")
         task_log["test_completions"] = test_completions
@@ -171,6 +194,7 @@ def run_pipeline(config: dict, verbose: bool = False):
                 print(f"  Generated {len(verus_completions)} completions")
                 for i, code in enumerate(verus_completions):
                     _print_block(f"Branch B Completion {i}", code, verbose)
+                    _save_cache_file(task_cache, "branch_b", f"completion_{i}.rs", content=code)
             except Exception as e:
                 print(f"  ERROR generating code (Branch B): {type(e).__name__}: {e}")
         task_log["verus_completions"] = verus_completions
@@ -181,27 +205,61 @@ def run_pipeline(config: dict, verbose: bool = False):
         test_scores = []
         task_log["test_scores"] = []
         for i, code in enumerate(test_completions):
-            # Run tests directly so we can capture full output
-            test_result = run_rust_tests(code, generated_tests)
-            score = score_test_completion(
-                task_id=task.task_id,
-                code=code,
-                tests=generated_tests,
-                gold_verus_code=task.verus_code if task.has_verus_impl else None,
-                completion_idx=i,
-                verus_binary=verus_binary,
-            )
-            status = "PASS" if score.passes_own_reward else "FAIL"
-            print(f"  Branch A completion {i}: {status} ({score.own_reward_detail})")
-            if verbose:
+            current_code = code
+            for round_num in range(repair_rounds):
+                test_result = run_rust_tests(current_code, generated_tests)
+                score = score_test_completion(
+                    task_id=task.task_id,
+                    code=current_code,
+                    tests=generated_tests,
+                    gold_verus_code=task.verus_code if task.has_verus_impl else None,
+                    completion_idx=i,
+                    verus_binary=verus_binary,
+                )
+                status = "PASS" if score.passes_own_reward else "FAIL"
+                round_label = f"round {round_num+1}/{repair_rounds}" if repair_rounds > 1 else ""
+                print(f"  Branch A completion {i} {round_label}: {status} ({score.own_reward_detail})")
+                if verbose:
+                    if not test_result.compile_success:
+                        _print_block(f"Branch A [{i}] Compile Error", test_result.stderr, verbose)
+                    else:
+                        _print_block(f"Branch A [{i}] Test Output", test_result.stdout, verbose)
+                        if test_result.stderr.strip():
+                            _print_block(f"Branch A [{i}] Stderr", test_result.stderr, verbose)
+                # Save each round's code and result
+                round_suffix = f"_round{round_num}" if repair_rounds > 1 else ""
+                _save_cache_file(task_cache, "branch_a", f"completion_{i}{round_suffix}.rs", content=current_code)
+                result_text = f"Status: {status}\n{score.own_reward_detail}\nCompiled: {test_result.compile_success}\nRound: {round_num+1}/{repair_rounds}\n\n"
                 if not test_result.compile_success:
-                    _print_block(f"Branch A [{i}] Compile Error", test_result.stderr, verbose)
+                    result_text += f"=== COMPILE ERROR ===\n{test_result.stderr}\n"
                 else:
-                    _print_block(f"Branch A [{i}] Test Output", test_result.stdout, verbose)
+                    result_text += f"=== STDOUT ===\n{test_result.stdout}\n"
                     if test_result.stderr.strip():
-                        _print_block(f"Branch A [{i}] Stderr", test_result.stderr, verbose)
+                        result_text += f"\n=== STDERR ===\n{test_result.stderr}\n"
+                _save_cache_file(task_cache, "branch_a", f"result_{i}{round_suffix}.txt", content=result_text)
+
+                if score.passes_own_reward or round_num == repair_rounds - 1:
+                    break
+
+                # Repair: send error back to LLM
+                error_output = test_result.stderr if not test_result.compile_success else test_result.stdout
+                print(f"    Repairing Branch A completion {i} (round {round_num+2}/{repair_rounds})...")
+                try:
+                    current_code = repair_code_for_tests(
+                        nl_prompt=nl_prompt,
+                        entry_point=task.entry_point,
+                        tests=generated_tests,
+                        previous_code=current_code,
+                        error_output=error_output,
+                        model=model,
+                        temperature=temperature,
+                    )
+                except Exception as e:
+                    print(f"    ERROR repairing (Branch A): {type(e).__name__}: {e}")
+                    break
+
             test_scores.append(score)
-            task_log["test_scores"].append({
+            score_log = {
                 "idx": i,
                 "passes": score.passes_own_reward,
                 "detail": score.own_reward_detail,
@@ -210,27 +268,59 @@ def run_pipeline(config: dict, verbose: bool = False):
                 "stderr": test_result.stderr,
                 "n_tests_passed": test_result.n_tests_passed,
                 "n_tests_total": test_result.n_tests_total,
-            })
+                "rounds_used": round_num + 1,
+            }
+            task_log["test_scores"].append(score_log)
 
         verus_scores = []
         task_log["verus_scores"] = []
         for i, code in enumerate(verus_completions):
-            # Run verus directly so we can capture full output
-            verus_result = run_verus(code, verus_binary=verus_binary)
-            score = score_verus_completion(
-                task_id=task.task_id,
-                code=code,
-                gold_verus_code=task.verus_code if task.has_verus_impl else None,
-                completion_idx=i,
-                verus_binary=verus_binary,
-            )
-            status = "PASS" if score.passes_own_reward else "FAIL"
-            print(f"  Branch B completion {i}: {status} ({score.own_reward_detail})")
-            if verbose:
-                verus_output = (verus_result.stdout + "\n" + verus_result.stderr).strip()
-                _print_block(f"Branch B [{i}] Verus Output", verus_output, verbose)
+            current_code = code
+            for round_num in range(repair_rounds):
+                verus_result = run_verus(current_code, verus_binary=verus_binary)
+                score = score_verus_completion(
+                    task_id=task.task_id,
+                    code=current_code,
+                    gold_verus_code=task.verus_code if task.has_verus_impl else None,
+                    completion_idx=i,
+                    verus_binary=verus_binary,
+                )
+                status = "PASS" if score.passes_own_reward else "FAIL"
+                round_label = f"round {round_num+1}/{repair_rounds}" if repair_rounds > 1 else ""
+                print(f"  Branch B completion {i} {round_label}: {status} ({score.own_reward_detail})")
+                if verbose:
+                    verus_output = (verus_result.stdout + "\n" + verus_result.stderr).strip()
+                    _print_block(f"Branch B [{i}] Verus Output", verus_output, verbose)
+                # Save each round's code and result
+                round_suffix = f"_round{round_num}" if repair_rounds > 1 else ""
+                _save_cache_file(task_cache, "branch_b", f"completion_{i}{round_suffix}.rs", content=current_code)
+                result_text = f"Status: {status}\n{score.own_reward_detail}\nRound: {round_num+1}/{repair_rounds}\n\n=== VERUS OUTPUT ===\n{verus_result.stdout}\n"
+                if verus_result.stderr.strip():
+                    result_text += f"\n=== STDERR ===\n{verus_result.stderr}\n"
+                _save_cache_file(task_cache, "branch_b", f"result_{i}{round_suffix}.txt", content=result_text)
+
+                if score.passes_own_reward or round_num == repair_rounds - 1:
+                    break
+
+                # Repair: send error back to LLM
+                error_output = (verus_result.stdout + "\n" + verus_result.stderr).strip()
+                print(f"    Repairing Branch B completion {i} (round {round_num+2}/{repair_rounds})...")
+                try:
+                    current_code = repair_code_for_verus(
+                        nl_prompt=nl_prompt,
+                        entry_point=task.entry_point,
+                        spec=generated_spec,
+                        previous_code=current_code,
+                        error_output=error_output,
+                        model=model,
+                        temperature=temperature,
+                    )
+                except Exception as e:
+                    print(f"    ERROR repairing (Branch B): {type(e).__name__}: {e}")
+                    break
+
             verus_scores.append(score)
-            task_log["verus_scores"].append({
+            score_log = {
                 "idx": i,
                 "passes": score.passes_own_reward,
                 "detail": score.own_reward_detail,
@@ -239,7 +329,9 @@ def run_pipeline(config: dict, verbose: bool = False):
                 "n_errors": verus_result.n_errors,
                 "stdout": verus_result.stdout,
                 "stderr": verus_result.stderr,
-            })
+                "rounds_used": round_num + 1,
+            }
+            task_log["verus_scores"].append(score_log)
 
         evaluations.append(TaskEvaluation(
             task_id=task.task_id,
@@ -258,14 +350,18 @@ def run_pipeline(config: dict, verbose: bool = False):
     output_dir = "results"
     save_results(evaluations, metrics, output_dir)
 
-    # Save detailed run log
-    os.makedirs(output_dir, exist_ok=True)
-    log_path = os.path.join(output_dir, "run_log.json")
-    with open(log_path, "w") as f:
+    # Save run log and metrics to cache
+    run_log_path = os.path.join(cache_dir, "run_log.json")
+    with open(run_log_path, "w") as f:
         json.dump(run_log, f, indent=2)
 
+    metrics_path = os.path.join(cache_dir, "metrics.json")
+    from dataclasses import asdict
+    with open(metrics_path, "w") as f:
+        json.dump(asdict(metrics), f, indent=2)
+
     print(f"\nResults saved to {output_dir}/")
-    print(f"Detailed run log: {log_path}")
+    print(f"Experiment cache: {cache_dir}/")
 
 
 def main():

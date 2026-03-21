@@ -10,9 +10,10 @@ Instead of RL (PPO/GRPO), we use **rejection sampling finetuning** (also known a
 
 1. Sample many code completions from an LLM
 2. Score each completion using an automated reward signal
-3. Keep only completions that pass the reward
-4. Finetune the model on those passing completions
-5. Repeat
+3. If a completion fails, feed the error back to the LLM for repair (up to N rounds)
+4. Keep only completions that pass the reward
+5. Finetune the model on those passing completions
+6. Repeat
 
 This is a simpler alternative to RL that tests the same hypothesis: does the choice of reward signal (unit tests vs formal specs) affect reward hacking rates?
 
@@ -37,6 +38,11 @@ Completions  Completions
   v             v
 Run Tests    Run Verus
 (rustc)      Verifier
+  |             |
+  v             v
+Failed?      Failed?
+Repair up    Repair up
+to N rounds  to N rounds
   |             |
   v             v
 Filter:      Filter:
@@ -64,7 +70,8 @@ The prototype validates every component end-to-end on a small scale, **without f
 2. **Generate rewards**: For each problem, use an LLM to generate Rust unit tests (Branch A) and a Verus specification (Branch B)
 3. **Generate code**: Sample 4 code completions per problem per branch
 4. **Score**: Run Rust compiler + tests (Branch A) or Verus verifier (Branch B)
-5. **Report**: Which completions pass each reward signal
+5. **Repair**: If a completion fails, feed the error back to the LLM for correction (up to `repair_rounds`, applied equally to both branches)
+6. **Report**: Which completions pass each reward signal
 
 Finetuning is added in a later phase once compute is available.
 
@@ -141,6 +148,7 @@ Edit `config/config.yaml` to adjust:
 - `openrouter.model`: Which LLM to use (default: `qwen/qwen3-coder:free`)
 - `benchmark.max_problems`: Number of problems for prototype (default: 5)
 - `sampling.n_samples`: Completions per problem (default: 4)
+- `sampling.repair_rounds`: Max error-correction rounds per completion (default: 1 = no repair)
 - `sampling.temperature`: Sampling temperature (default: 0.8)
 
 ## Model Choice

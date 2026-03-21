@@ -17,6 +17,9 @@ data/processed/
 # Results
 results/
 
+# Experiment cache
+experiment_cache/
+
 # OS
 .DS_Store
 

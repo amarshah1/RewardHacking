@@ -12,13 +12,14 @@ openrouter:
 sampling:
   temperature: 0.8
   max_tokens: 2048
-  n_samples: 1          # completions per problem (prototype: 4, full: 16)
+  n_samples: 6          # completions per problem (prototype: 4, full: 16)
+  repair_rounds: 3      # max error-correction rounds per completion (default: 1 = no repair)
 
 # Benchmark settings
 benchmark:
   human_eval_verus_dir: "human-eval-verus/tasks"
   # For prototype, limit to first N problems
-  max_problems: 2
+  max_problems: 3
 
 # Evaluation settings
 evaluation:

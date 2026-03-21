@@ -115,6 +115,119 @@ def generate_code_for_verus(
     return [_clean_code_output(c) for c in completions]
 
 
+REPAIR_SYSTEM_TESTS = """You are an expert Rust programmer. Your previous code attempt failed. Fix the code based on the error output below.
+
+Requirements:
+- Fix the compilation or test failure
+- Output ONLY the corrected function implementation (no tests, no main function)
+- Include any necessary use/import statements at the top"""
+
+REPAIR_SYSTEM_VERUS = """You are an expert in Verus, a formal verification tool for Rust. Your previous code attempt failed Verus verification. Fix the code based on the error output below.
+
+Requirements:
+- Fix the verification errors (add/fix proof annotations, loop invariants, assertions)
+- Write the implementation inside a verus! { } block
+- Include necessary imports (use vstd::prelude::*)
+- Include `fn main() {}` at the end
+- Output ONLY the complete corrected Verus code"""
+
+REPAIR_TEMPLATE_TESTS = """Task description:
+{nl_prompt}
+
+Function name: {entry_point}
+
+Unit tests to pass:
+{tests}
+
+Your previous attempt:
+```rust
+{previous_code}
+```
+
+Error output:
+```
+{error_output}
+```
+
+Fix the code so it compiles and passes all the tests. Output only the corrected code."""
+
+REPAIR_TEMPLATE_VERUS = """Task description:
+{nl_prompt}
+
+Function name: {entry_point}
+
+Verus specification to satisfy:
+{spec}
+
+Your previous attempt:
+```rust
+{previous_code}
+```
+
+Error output:
+```
+{error_output}
+```
+
+Fix the code so it passes Verus verification. Output only the corrected code."""
+
+
+def repair_code_for_tests(
+    nl_prompt: str,
+    entry_point: str,
+    tests: str,
+    previous_code: str,
+    error_output: str,
+    model: str = "qwen/qwen3-coder:free",
+    temperature: float = 0.8,
+) -> str:
+    """Generate a repaired code completion given test failure output."""
+    prompt = REPAIR_TEMPLATE_TESTS.format(
+        nl_prompt=nl_prompt,
+        entry_point=entry_point,
+        tests=tests,
+        previous_code=previous_code,
+        error_output=error_output,
+    )
+    completions = generate(
+        prompt=prompt,
+        system_prompt=REPAIR_SYSTEM_TESTS,
+        model=model,
+        temperature=temperature,
+        max_tokens=2048,
+        n=1,
+    )
+    return _clean_code_output(completions[0])
+
+
+def repair_code_for_verus(
+    nl_prompt: str,
+    entry_point: str,
+    spec: str,
+    previous_code: str,
+    error_output: str,
+    model: str = "qwen/qwen3-coder:free",
+    temperature: float = 0.8,
+) -> str:
+    """Generate a repaired code completion given Verus verification failure output."""
+    prompt = REPAIR_TEMPLATE_VERUS.format(
+        nl_prompt=nl_prompt,
+        entry_point=entry_point,
+        spec=spec,
+        previous_code=previous_code,
+        error_output=error_output,
+    )
+    completions = generate(
+        prompt=prompt,
+        system_prompt=REPAIR_SYSTEM_VERUS,
+        model=model,
+        temperature=temperature,
+        max_tokens=2048,
+        n=1,
+    )
+    return _clean_code_output(completions[0])
+
+
 def _clean_code_output(raw: str) -> str:
     """Clean LLM output to extract just the code."""
     lines = raw.strip().split("\n")
