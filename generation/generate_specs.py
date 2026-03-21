@@ -1,35 +1,45 @@
 """Generate Verus specifications from natural language task descriptions."""
 
 from generation.openrouter_client import generate
+from generation.verus_reference import VERUS_CHEAT_SHEET
 
-SYSTEM_PROMPT = """You are an expert in Verus, a formal verification tool for Rust. Given a natural language description of a coding task, generate a Verus function signature with formal pre-conditions (requires) and post-conditions (ensures).
+SYSTEM_PROMPT = f"""You are an expert in Verus, a formal verification tool for Rust. Given a natural language description of a coding task, generate a Verus function signature with formal pre-conditions (requires) and post-conditions (ensures).
 
 Requirements:
-- Use Verus syntax: the function must be inside a verus! { } block
+- Use Verus syntax: the function must be inside a verus! {{ }} block
 - Include `requires` clauses for pre-conditions
 - Include `ensures` clauses for post-conditions that fully specify the function behavior
 - Use `spec fn` for any helper specification functions needed
 - Include necessary imports (use vstd::prelude::*)
-- Include `fn main() {}` at the end
+- Include `fn main() {{}}` at the end, OUTSIDE the verus! block
 - The function body should be left empty or contain a placeholder `todo!()` — only write the spec
 - Output ONLY the Verus code, no explanations
 
-Example format:
-use vstd::prelude::*;
+{VERUS_CHEAT_SHEET}
 
-verus! {
+Example:
+```rust
+use vstd::prelude::*;
+use vstd::slice::*;
+
+verus! {{
+
+spec fn double(x: int) -> int {{
+    x * 2
+}}
 
 fn my_function(x: i32) -> (result: i32)
     requires
-        x >= 0,
+        0 <= x < 1000,
     ensures
-        result == x * 2,
-{
+        result == double(x as int),
+{{
     todo!()  // implementation left for solver
-}
+}}
 
-} // verus!
-fn main() {}"""
+}} // verus!
+fn main() {{}}
+```"""
 
 USER_TEMPLATE = """Task description:
 {nl_prompt}

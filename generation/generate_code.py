@@ -1,6 +1,7 @@
 """Generate Rust code completions from natural language task descriptions."""
 
 from generation.openrouter_client import generate
+from generation.verus_reference import VERUS_CHEAT_SHEET
 
 SYSTEM_PROMPT_TESTS = """You are an expert Rust programmer. Given a natural language description and unit tests, write a Rust function that passes all the tests.
 
@@ -10,15 +11,17 @@ Requirements:
 - Output ONLY the function implementation (no tests, no main function)
 - Include any necessary use/import statements at the top"""
 
-SYSTEM_PROMPT_VERUS = """You are an expert in Verus, a formal verification tool for Rust. Given a natural language description and a Verus specification, write a Rust implementation that satisfies the specification.
+SYSTEM_PROMPT_VERUS = f"""You are an expert in Verus, a formal verification tool for Rust. Given a natural language description and a Verus specification, write a Rust implementation that satisfies the specification.
 
 Requirements:
-- Write the implementation inside a verus! { } block
+- Write the implementation inside a verus! {{}} block
 - Include proof annotations (loop invariants, assertions) as needed for Verus to verify
 - The implementation must satisfy all requires/ensures clauses
-- Include necessary imports (use vstd::prelude::*)
-- Include `fn main() {}` at the end
-- Output ONLY the complete Verus code"""
+- Include necessary imports (use vstd::prelude::*, use vstd::slice::*)
+- Include `fn main() {{}}` at the end, OUTSIDE the verus! block
+- Output ONLY the complete Verus code
+
+{VERUS_CHEAT_SHEET}"""
 
 USER_TEMPLATE_TESTS = """Task description:
 {nl_prompt}
@@ -122,14 +125,16 @@ Requirements:
 - Output ONLY the corrected function implementation (no tests, no main function)
 - Include any necessary use/import statements at the top"""
 
-REPAIR_SYSTEM_VERUS = """You are an expert in Verus, a formal verification tool for Rust. Your previous code attempt failed Verus verification. Fix the code based on the error output below.
+REPAIR_SYSTEM_VERUS = f"""You are an expert in Verus, a formal verification tool for Rust. Your previous code attempt failed Verus verification. Fix the code based on the error output below.
 
 Requirements:
 - Fix the verification errors (add/fix proof annotations, loop invariants, assertions)
-- Write the implementation inside a verus! { } block
-- Include necessary imports (use vstd::prelude::*)
-- Include `fn main() {}` at the end
-- Output ONLY the complete corrected Verus code"""
+- Write the implementation inside a verus! {{}} block
+- Include necessary imports (use vstd::prelude::*, use vstd::slice::*)
+- Include `fn main() {{}}` at the end, OUTSIDE the verus! block
+- Output ONLY the complete corrected Verus code
+
+{VERUS_CHEAT_SHEET}"""
 
 REPAIR_TEMPLATE_TESTS = """Task description:
 {nl_prompt}
