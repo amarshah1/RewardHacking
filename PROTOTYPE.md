@@ -42,7 +42,7 @@ Run Tests    Run Verus
   v             v
 Failed?      Failed?
 Repair up    Repair up
-to N rounds  to N rounds
+to M rounds  to M rounds
   |             |
   v             v
 Filter:      Filter:

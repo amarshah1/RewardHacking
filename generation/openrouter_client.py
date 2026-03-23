@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DEFAULT_MODEL = "qwen/qwen3-coder:free"
+DEFAULT_MODEL = "qwen/qwen3-235b-a22b"
 BASE_URL = "https://openrouter.ai/api/v1"
 
 # Free tier: can drop to 8 req/min under high demand → 8s between requests

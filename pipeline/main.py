@@ -149,6 +149,8 @@ def run_pipeline(config: dict, verbose: bool = False):
                 nl_prompt=nl_prompt,
                 entry_point=task.entry_point,
                 model=generator_model,
+                verus_binary=verus_binary,
+                repair_rounds=repair_rounds,
             )
             print(f"  Generated spec ({len(generated_spec)} chars)")
             _print_block("Generated Verus Spec", generated_spec, verbose)

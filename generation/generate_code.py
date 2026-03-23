@@ -75,7 +75,7 @@ def generate_code_for_tests(
         system_prompt=SYSTEM_PROMPT_TESTS,
         model=model,
         temperature=temperature,
-        max_tokens=2048,
+        max_tokens=4096,
         n=n,
     )
     return [_clean_code_output(c) for c in completions]
@@ -85,7 +85,7 @@ def generate_code_for_verus(
     nl_prompt: str,
     entry_point: str,
     spec: str,
-    model: str = "qwen/qwen3-coder:free",
+    model: str = "qwen/qwen3-235b-a22b",
     temperature: float = 0.8,
     n: int = 1,
 ) -> list[str]:
@@ -112,7 +112,7 @@ def generate_code_for_verus(
         system_prompt=SYSTEM_PROMPT_VERUS,
         model=model,
         temperature=temperature,
-        max_tokens=2048,
+        max_tokens=16384,
         n=n,
     )
     return [_clean_code_output(c) for c in completions]
@@ -183,7 +183,7 @@ def repair_code_for_tests(
     tests: str,
     previous_code: str,
     error_output: str,
-    model: str = "qwen/qwen3-coder:free",
+    model: str = "qwen/qwen3-235b-a22b",
     temperature: float = 0.8,
 ) -> str:
     """Generate a repaired code completion given test failure output."""
@@ -199,7 +199,7 @@ def repair_code_for_tests(
         system_prompt=REPAIR_SYSTEM_TESTS,
         model=model,
         temperature=temperature,
-        max_tokens=2048,
+        max_tokens=4096,
         n=1,
     )
     return _clean_code_output(completions[0])
@@ -211,7 +211,7 @@ def repair_code_for_verus(
     spec: str,
     previous_code: str,
     error_output: str,
-    model: str = "qwen/qwen3-coder:free",
+    model: str = "qwen/qwen3-235b-a22b",
     temperature: float = 0.8,
 ) -> str:
     """Generate a repaired code completion given Verus verification failure output."""
@@ -227,7 +227,7 @@ def repair_code_for_verus(
         system_prompt=REPAIR_SYSTEM_VERUS,
         model=model,
         temperature=temperature,
-        max_tokens=2048,
+        max_tokens=16384,
         n=1,
     )
     return _clean_code_output(completions[0])
