@@ -2,14 +2,15 @@
 
 from generation.openrouter_client import generate
 from generation.verus_reference import VERUS_CHEAT_SHEET
+from generation.few_shot_examples import build_few_shot_messages
 
 SYSTEM_PROMPT_TESTS = """You are an expert Rust programmer. Given a natural language description and unit tests, write a Rust function that passes all the tests.
 
 Requirements:
 - Write clean, correct Rust code
 - The function must compile and pass all provided tests
-- Output ONLY the function implementation (no tests, no main function)
-- Include any necessary use/import statements at the top"""
+- Include any necessary use/import statements at the top
+- First briefly explain your reasoning, then output the code in a ```rust``` block"""
 
 SYSTEM_PROMPT_VERUS = f"""You are an expert in Verus, a formal verification tool for Rust. Given a natural language description and a Verus specification, write a Rust implementation that satisfies the specification.
 
@@ -19,7 +20,7 @@ Requirements:
 - The implementation must satisfy all requires/ensures clauses
 - Include necessary imports (use vstd::prelude::*, use vstd::slice::*)
 - Include `fn main() {{}}` at the end, OUTSIDE the verus! block
-- Output ONLY the complete Verus code
+- First briefly explain your reasoning, then output the complete Verus code in a ```rust``` block
 
 {VERUS_CHEAT_SHEET}"""
 
@@ -65,6 +66,7 @@ def generate_code_for_tests(
     Returns:
         List of code completion strings
     """
+    few_shot = build_few_shot_messages("rust_impl", USER_TEMPLATE_TESTS)
     prompt = USER_TEMPLATE_TESTS.format(
         nl_prompt=nl_prompt,
         entry_point=entry_point,
@@ -77,6 +79,7 @@ def generate_code_for_tests(
         temperature=temperature,
         max_tokens=4096,
         n=n,
+        few_shot_messages=few_shot,
     )
     return [_clean_code_output(c) for c in completions]
 
@@ -102,6 +105,7 @@ def generate_code_for_verus(
     Returns:
         List of code completion strings
     """
+    few_shot = build_few_shot_messages("verus_impl", USER_TEMPLATE_VERUS)
     prompt = USER_TEMPLATE_VERUS.format(
         nl_prompt=nl_prompt,
         entry_point=entry_point,
@@ -114,6 +118,7 @@ def generate_code_for_verus(
         temperature=temperature,
         max_tokens=16384,
         n=n,
+        few_shot_messages=few_shot,
     )
     return [_clean_code_output(c) for c in completions]
 
@@ -234,13 +239,15 @@ def repair_code_for_verus(
 
 
 def _clean_code_output(raw: str) -> str:
-    """Clean LLM output to extract just the code."""
-    lines = raw.strip().split("\n")
-    cleaned = []
-    in_code_block = False
-    for line in lines:
-        if line.strip().startswith("```"):
-            in_code_block = not in_code_block
-            continue
-        cleaned.append(line)
-    return "\n".join(cleaned).strip()
+    """Extract code from the last ```rust``` (or ```) block in LLM output.
+
+    With few-shot prompting the model outputs reasoning text before the code
+    block. We only want the code inside the fences.
+    """
+    import re
+    # Find all fenced code blocks (```rust ... ``` or ``` ... ```)
+    blocks = re.findall(r"```(?:\w*)\n(.*?)```", raw, re.DOTALL)
+    if blocks:
+        return blocks[-1].strip()
+    # Fallback: no fences found, return everything (legacy behavior)
+    return raw.strip()

@@ -2,6 +2,7 @@
 
 from generation.openrouter_client import generate
 from generation.verus_reference import VERUS_CHEAT_SHEET
+from generation.few_shot_examples import build_few_shot_messages
 from evaluation.run_verus import run_verus
 
 SYSTEM_PROMPT = f"""You are an expert in Verus, a formal verification tool for Rust. Given a natural language description of a coding task, generate a Verus function signature with formal pre-conditions (requires) and post-conditions (ensures).
@@ -14,33 +15,9 @@ Requirements:
 - Include necessary imports (use vstd::prelude::*)
 - Include `fn main() {{}}` at the end, OUTSIDE the verus! block
 - The function body should be left empty or contain a placeholder `todo!()` — only write the spec
-- Output ONLY the Verus code, no explanations
+- First briefly explain your reasoning, then output the Verus code in a ```rust``` block
 
-{VERUS_CHEAT_SHEET}
-
-Example:
-```rust
-use vstd::prelude::*;
-use vstd::slice::*;
-
-verus! {{
-
-spec fn double(x: int) -> int {{
-    x * 2
-}}
-
-fn my_function(x: i32) -> (result: i32)
-    requires
-        0 <= x < 1000,
-    ensures
-        result == double(x as int),
-{{
-    todo!()  // implementation left for solver
-}}
-
-}} // verus!
-fn main() {{}}
-```"""
+{VERUS_CHEAT_SHEET}"""
 
 USER_TEMPLATE = """Task description:
 {nl_prompt}
@@ -112,6 +89,7 @@ def generate_verus_spec(
     Returns:
         String containing Verus code with specification
     """
+    few_shot = build_few_shot_messages("spec", USER_TEMPLATE)
     prompt = USER_TEMPLATE.format(nl_prompt=nl_prompt, entry_point=entry_point)
     completions = generate(
         prompt=prompt,
@@ -120,6 +98,7 @@ def generate_verus_spec(
         temperature=temperature,
         max_tokens=8192,
         n=1,
+        few_shot_messages=few_shot,
     )
     spec = _clean_verus_output(completions[0])
 
@@ -153,13 +132,9 @@ def generate_verus_spec(
 
 
 def _clean_verus_output(raw: str) -> str:
-    """Clean LLM output to extract just the Verus code."""
-    lines = raw.strip().split("\n")
-    cleaned = []
-    in_code_block = False
-    for line in lines:
-        if line.strip().startswith("```"):
-            in_code_block = not in_code_block
-            continue
-        cleaned.append(line)
-    return "\n".join(cleaned).strip()
+    """Extract Verus code from the last ```rust``` (or ```) block in LLM output."""
+    import re
+    blocks = re.findall(r"```(?:\w*)\n(.*?)```", raw, re.DOTALL)
+    if blocks:
+        return blocks[-1].strip()
+    return raw.strip()

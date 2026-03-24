@@ -3,23 +3,24 @@
 # OpenRouter settings
 openrouter:
   base_url: "https://openrouter.ai/api/v1"
-  # Qwen3 235B (A22B) - open weights, strong reasoning
-  model: "qwen/qwen3-235b-a22b"
+  # Qwen3 Coder 480B - strong coding model, open weights
+  model: "qwen/qwen3-coder"
   # For spec/test generation (can use a different model if needed)
-  generator_model: "qwen/qwen3-235b-a22b"
+  generator_model: "qwen/qwen3-coder"
 
 # Sampling settings
 sampling:
   temperature: 0.8
   max_tokens: 16384       # thinking models need more tokens (think blocks count toward limit)
-  n_samples: 1          # completions per problem (prototype: 4, full: 16)
+  n_samples: 2          # completions per problem (prototype: 4, full: 16)
   repair_rounds: 5      # max error-correction rounds per completion (default: 1 = no repair)
 
 # Benchmark settings
 benchmark:
   human_eval_verus_dir: "human-eval-verus/tasks"
-  # For prototype, limit to first N problems
+  # For prototype, limit to first N problems (after skipping few-shot)
   max_problems: 3
+  skip_few_shot: true  # skip first 10 HumanEval tasks (used as few-shot examples)
 
 # Evaluation settings
 evaluation:

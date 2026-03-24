@@ -16,6 +16,7 @@ import time
 import yaml
 
 from data.parse_benchmarks import parse_human_eval_verus, HumanEvalVerusTask
+from generation.few_shot_examples import FEW_SHOT_TASK_IDS
 from generation.generate_tests import generate_unit_tests
 from generation.generate_specs import generate_verus_spec
 from generation.generate_code import generate_code_for_tests, generate_code_for_verus, repair_code_for_tests, repair_code_for_verus
@@ -74,7 +75,15 @@ def run_pipeline(config: dict, verbose: bool = False):
     tasks_dir = config["benchmark"]["human_eval_verus_dir"]
     max_problems = config["benchmark"]["max_problems"]
 
-    tasks = parse_human_eval_verus(tasks_dir, only_with_verus=True)
+    all_tasks = parse_human_eval_verus(tasks_dir, only_with_verus=True)
+
+    # Skip tasks used as few-shot examples (first 10 HumanEval IDs)
+    skip_few_shot = config["benchmark"].get("skip_few_shot", True)
+    if skip_few_shot:
+        tasks = [t for t in all_tasks if t.task_id not in FEW_SHOT_TASK_IDS]
+        print(f"Skipping {len(all_tasks) - len(tasks)} tasks used as few-shot examples")
+    else:
+        tasks = all_tasks
     tasks = tasks[:max_problems]
 
     print(f"Using {len(tasks)} tasks with Verus specs")

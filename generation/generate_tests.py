@@ -1,6 +1,7 @@
 """Generate Rust unit tests from natural language task descriptions."""
 
 from generation.openrouter_client import generate
+from generation.few_shot_examples import build_few_shot_messages
 
 SYSTEM_PROMPT = """You are an expert Rust programmer. Given a natural language description of a coding task, generate Rust unit tests that thoroughly verify a correct implementation.
 
@@ -9,8 +10,8 @@ Requirements:
 - Cover normal cases, edge cases, and boundary conditions
 - Tests should call a function with the given entry point name
 - Use assert_eq! or assert! macros
-- Output ONLY the test functions (no mod block, no imports beyond what's needed)
-- Each test function should be self-contained"""
+- Each test function should be self-contained
+- First briefly explain your reasoning, then output the test code in a ```rust``` block"""
 
 USER_TEMPLATE = """Task description:
 {nl_prompt}
@@ -37,6 +38,7 @@ def generate_unit_tests(
     Returns:
         String containing Rust #[test] functions
     """
+    few_shot = build_few_shot_messages("tests", USER_TEMPLATE)
     prompt = USER_TEMPLATE.format(nl_prompt=nl_prompt, entry_point=entry_point)
     completions = generate(
         prompt=prompt,
@@ -45,19 +47,15 @@ def generate_unit_tests(
         temperature=temperature,
         max_tokens=2048,
         n=1,
+        few_shot_messages=few_shot,
     )
     return _clean_test_output(completions[0])
 
 
 def _clean_test_output(raw: str) -> str:
-    """Clean LLM output to extract just the test functions."""
-    # Strip markdown code fences if present
-    lines = raw.strip().split("\n")
-    cleaned = []
-    in_code_block = False
-    for line in lines:
-        if line.strip().startswith("```"):
-            in_code_block = not in_code_block
-            continue
-        cleaned.append(line)
-    return "\n".join(cleaned).strip()
+    """Extract test code from the last ```rust``` (or ```) block in LLM output."""
+    import re
+    blocks = re.findall(r"```(?:\w*)\n(.*?)```", raw, re.DOTALL)
+    if blocks:
+        return blocks[-1].strip()
+    return raw.strip()

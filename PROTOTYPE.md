@@ -62,15 +62,47 @@ All Pass?    Verified?
   Hacking Rates
 ```
 
+## Few-Shot Prompting
+
+All generation tasks use **few-shot examples** with proper chat templates to improve output quality, especially for Verus syntax which is rare in training data.
+
+**Setup**: The first 10 HumanEval problems (IDs 0-9) are reserved as few-shot exemplars. The pipeline automatically skips these during evaluation.
+
+**Format**: Each few-shot example uses user/assistant message pairs in the conversation history:
+```
+[system]  → Verus cheat sheet + task instructions
+[user]    → Few-shot input 1 (formatted with same template as real prompt)
+[assistant] → Reasoning trace + code in ```rust``` block
+[user]    → Few-shot input 2
+[assistant] → Reasoning trace + code in ```rust``` block
+...
+[user]    → Actual problem prompt
+```
+
+**5 exemplars selected** (concise, representative of key Verus patterns):
+- `rolling_max` (HumanEval/9) — simple loop + invariant
+- `below_zero` (HumanEval/3) — accumulator, wider types for overflow
+- `sum_product` (HumanEval/8) — fold_left specs, proof blocks
+- `has_close_elements` (HumanEval/0) — nested loops, overflow handling
+- `intersperse` (HumanEval/5) — spec functions, proof lemmas
+
+**4 task types** each get tailored few-shot examples:
+1. **Test generation**: NL → Rust `#[test]` functions
+2. **Spec generation**: NL → Verus requires/ensures (body as `todo!()`)
+3. **Code from tests** (Branch A): NL + tests → plain Rust implementation
+4. **Code from Verus spec** (Branch B): NL + spec → Verus implementation with proofs
+
+Inspired by the [AlphaVerus](https://github.com/cmu-l3/alphaverus) approach to few-shot prompting for Verus code generation.
+
 ## Prototype Scope
 
 The prototype validates every component end-to-end on a small scale, **without finetuning**:
 
-1. **Data**: Parse 5 human-eval-verus problems (NL + gold Verus specs)
+1. **Data**: Parse human-eval-verus problems (NL + gold Verus specs), skip first 10 (used as few-shot)
 2. **Generate rewards**: For each problem, use an LLM to generate Rust unit tests (Branch A) and a Verus specification (Branch B)
-3. **Generate code**: Sample 4 code completions per problem per branch
+3. **Generate code**: Sample N code completions per problem per branch
 4. **Score**: Run Rust compiler + tests (Branch A) or Verus verifier (Branch B)
-5. **Repair**: If a completion fails, feed the error back to the LLM for correction (up to `repair_rounds`, applied equally to both branches)
+5. **Repair**: If a completion fails, feed the error back to the LLM for correction (up to `repair_rounds`, applied equally to both branches). Verus specs are also syntax-checked and repaired before code generation.
 6. **Report**: Which completions pass each reward signal
 
 Finetuning is added in a later phase once compute is available.
@@ -87,9 +119,11 @@ RewardHacking/
 │   └── __init__.py
 ├── generation/
 │   ├── openrouter_client.py     # OpenRouter API wrapper (OpenAI-compatible)
+│   ├── few_shot_examples.py     # Few-shot examples from first 10 HumanEval tasks
 │   ├── generate_tests.py        # Generate Rust unit tests from NL
 │   ├── generate_specs.py        # Generate Verus specs from NL
 │   ├── generate_code.py         # Sample code completions
+│   ├── verus_reference.py       # Verus cheat sheet for prompts
 │   └── __init__.py
 ├── evaluation/
 │   ├── run_tests.py             # Compile + run Rust unit tests via rustc
@@ -145,25 +179,25 @@ python -m pipeline.main --config config/config.yaml
 
 Edit `config/config.yaml` to adjust:
 
-- `openrouter.model`: Which LLM to use (default: `qwen/qwen3-coder:free`)
-- `benchmark.max_problems`: Number of problems for prototype (default: 5)
-- `sampling.n_samples`: Completions per problem (default: 4)
+- `openrouter.model`: Which LLM to use (default: `qwen/qwen3-235b-a22b`)
+- `benchmark.max_problems`: Number of problems to evaluate (default: 3)
+- `benchmark.skip_few_shot`: Skip first 10 HumanEval tasks used as few-shot (default: true)
+- `sampling.n_samples`: Completions per problem (default: 1)
 - `sampling.repair_rounds`: Max error-correction rounds per completion (default: 1 = no repair)
 - `sampling.temperature`: Sampling temperature (default: 0.8)
 
 ## Model Choice
 
-**Default: Qwen3 Coder 480B (free)** via OpenRouter
+**Default: Qwen3 235B (A22B)** via OpenRouter
 
-- Strongest free coding model on OpenRouter (480B MoE, 35B active params)
-- 262K context window, optimized for agentic coding tasks
-- Free tier: rate-limited to ~20 req/min, 200 req/day
-- OpenRouter ID: `qwen/qwen3-coder:free`
+- Strong open-weights reasoning model (235B MoE, 22B active params)
+- Good balance of capability and cost
+- OpenRouter ID: `qwen/qwen3-235b-a22b`
 
-**Paid alternatives (no rate limits):**
-- `qwen/qwen3-coder` - Same model, paid ($0.22/M input, $1/M output)
-- `qwen/qwen-2.5-coder-7b-instruct` - Smaller, cheaper ($0.03/$0.09), open weights for finetuning
-- `qwen/qwen-2.5-coder-32b-instruct` - Mid-tier ($0.66/$1.00)
+**Alternatives:**
+- `qwen/qwen3-coder:free` - Free tier, but harsh rate limits (8 req/min under load)
+- `qwen/qwen-2.5-coder-7b-instruct` - Smaller, cheaper, open weights for finetuning
+- `qwen/qwen-2.5-coder-32b-instruct` - Mid-tier
 
 ## Finetuning (Future Phase)
 

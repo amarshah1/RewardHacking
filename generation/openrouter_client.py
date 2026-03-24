@@ -56,6 +56,7 @@ def generate(
     temperature: float = 0.8,
     max_tokens: int = 2048,
     n: int = 1,
+    few_shot_messages: list[dict] | None = None,
 ) -> list[str]:
     """Generate completions from OpenRouter.
 
@@ -68,6 +69,8 @@ def generate(
         temperature: Sampling temperature
         max_tokens: Maximum tokens to generate
         n: Number of completions to generate
+        few_shot_messages: Optional list of {"role": "user"/"assistant", "content": ...}
+            dicts inserted between system prompt and the final user message.
 
     Returns:
         List of completion strings
@@ -77,6 +80,8 @@ def generate(
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
+    if few_shot_messages:
+        messages.extend(few_shot_messages)
     messages.append({"role": "user", "content": prompt})
 
     completions = []
