@@ -16,14 +16,16 @@ Requirements:
 USER_TEMPLATE = """Task description:
 {nl_prompt}
 
-Function name to test: {entry_point}
+Function signature:
+{fn_signature}
 
-Generate Rust unit tests for this function. Output only the #[test] functions, nothing else."""
+Generate Rust unit tests for this function. The tests must use the types from the function signature above. Output only the #[test] functions, nothing else."""
 
 
 def generate_unit_tests(
     nl_prompt: str,
     entry_point: str,
+    fn_signature: str = "",
     model: str = "qwen/qwen3-coder:free",
     temperature: float = 0.4,
 ) -> str:
@@ -32,14 +34,17 @@ def generate_unit_tests(
     Args:
         nl_prompt: Natural language description of the task
         entry_point: Function name to test
+        fn_signature: Function signature (from gold spec) to ensure correct types
         model: OpenRouter model ID
         temperature: Lower temperature for more focused test generation
 
     Returns:
         String containing Rust #[test] functions
     """
+    if not fn_signature:
+        fn_signature = f"fn {entry_point}(...)"
     few_shot = build_few_shot_messages("tests", USER_TEMPLATE)
-    prompt = USER_TEMPLATE.format(nl_prompt=nl_prompt, entry_point=entry_point)
+    prompt = USER_TEMPLATE.format(nl_prompt=nl_prompt, entry_point=entry_point, fn_signature=fn_signature)
     completions = generate(
         prompt=prompt,
         system_prompt=SYSTEM_PROMPT,

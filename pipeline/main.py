@@ -19,9 +19,10 @@ from data.parse_benchmarks import parse_human_eval_verus, HumanEvalVerusTask
 from generation.few_shot_examples import FEW_SHOT_TASK_IDS
 from generation.generate_tests import generate_unit_tests
 from generation.generate_specs import generate_verus_spec
-from generation.generate_code import generate_code_for_tests, generate_code_for_verus, repair_code_for_tests, repair_code_for_verus
+from generation.generate_code import generate_code_for_tests, generate_code_for_verus, repair_code_for_tests, repair_code_for_verus, generate_reward_hack, repair_reward_hack
 from evaluation.run_tests import run_rust_tests
 from evaluation.run_verus import run_verus
+from evaluation.annotate_proofs import annotate_with_proofs
 from evaluation.evaluate import (
     CompletionScore,
     TaskEvaluation,
@@ -36,6 +37,32 @@ from evaluation.evaluate import (
 def load_config(config_path: str) -> dict:
     with open(config_path, 'r') as f:
         return yaml.safe_load(f)
+
+
+def _extract_fn_signature(verus_code: str, entry_point: str) -> str:
+    """Extract the function signature (with requires/ensures) from gold Verus code.
+
+    Returns everything from `fn entry_point(...)` through the opening `{`,
+    suitable for telling the model what signature to use.
+    """
+    import re
+    lines = verus_code.split("\n")
+    fn_idx = None
+    for i, line in enumerate(lines):
+        if re.match(rf'\s*(pub\s+)?fn\s+{re.escape(entry_point)}\s*\(', line):
+            fn_idx = i
+            break
+    if fn_idx is None:
+        return f"fn {entry_point}(...)"
+
+    # Collect lines from fn signature through opening '{'
+    sig_lines = []
+    for i in range(fn_idx, len(lines)):
+        sig_lines.append(lines[i])
+        if '{' in lines[i]:
+            break
+
+    return "\n".join(sig_lines)
 
 
 def _print_block(label: str, content: str, verbose: bool):
@@ -97,6 +124,9 @@ def run_pipeline(config: dict, verbose: bool = False):
     temperature = config["sampling"]["temperature"]
     verus_binary = config["evaluation"]["verus_binary"]
     repair_rounds = config["sampling"].get("repair_rounds", 1)
+    branch_a_enabled = config.get("branches", {}).get("branch_a", True)
+    branch_b_enabled = config.get("branches", {}).get("branch_b", True)
+    mode = config.get("mode", "correct")  # "correct" or "reward_hack"
 
     # Validate API key early so we don't silently fail on every task
     from dotenv import load_dotenv
@@ -106,12 +136,18 @@ def run_pipeline(config: dict, verbose: bool = False):
         print("  export OPENROUTER_API_KEY='sk-or-...'")
         print("  or create a .env file with OPENROUTER_API_KEY=sk-or-...")
         sys.exit(1)
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print("WARNING: ANTHROPIC_API_KEY not set — gold spec verification will be skipped.")
+        print("  Set it in .env to enable Claude oracle for proof annotation.")
 
     print(f"Model: {model}")
     print(f"Generator model: {generator_model}")
     print(f"Samples per problem: {n_samples}")
     print(f"Repair rounds: {repair_rounds}")
     print(f"Temperature: {temperature}")
+    print(f"Mode: {mode}")
+    print(f"Branch A (unit tests): {'ON' if branch_a_enabled else 'OFF'}")
+    print(f"Branch B (Verus spec): {'ON' if branch_b_enabled else 'OFF'}")
     if verbose:
         print("Verbose mode: ON (showing prompts, generated content, and scores)")
     print()
@@ -133,55 +169,78 @@ def run_pipeline(config: dict, verbose: bool = False):
             "nl_prompt": nl_prompt,
         }
 
+        # Extract gold function signature for type-correct code generation
+        gold_fn_sig = ""
+        if task.has_verus_impl:
+            gold_fn_sig = _extract_fn_signature(task.verus_code, task.entry_point)
+            _print_block("Gold Function Signature", gold_fn_sig, verbose)
+
         # Save NL prompt
         _save_cache_file(task_cache, "nl_prompt.txt", content=nl_prompt)
 
         # --- Step 2: Generate reward mechanisms ---
-        print("\n--- Step 2a: Generating unit tests (Branch A) ---")
-        try:
-            generated_tests = generate_unit_tests(
-                nl_prompt=nl_prompt,
-                entry_point=task.entry_point,
-                model=generator_model,
-            )
-            print(f"  Generated tests ({len(generated_tests)} chars)")
-            _print_block("Generated Unit Tests", generated_tests, verbose)
-        except Exception as e:
-            print(f"  ERROR generating tests: {type(e).__name__}: {e}")
-            generated_tests = ""
+        generated_tests = ""
+        generated_spec = ""
+
+        if branch_a_enabled:
+            print("\n--- Step 2a: Generating unit tests (Branch A) ---")
+            try:
+                generated_tests = generate_unit_tests(
+                    nl_prompt=nl_prompt,
+                    entry_point=task.entry_point,
+                    fn_signature=gold_fn_sig,
+                    model=generator_model,
+                )
+                print(f"  Generated tests ({len(generated_tests)} chars)")
+                _print_block("Generated Unit Tests", generated_tests, verbose)
+            except Exception as e:
+                print(f"  ERROR generating tests: {type(e).__name__}: {e}")
         task_log["generated_tests"] = generated_tests
         _save_cache_file(task_cache, "generated_tests.rs", content=generated_tests)
 
-        print("\n--- Step 2b: Generating Verus spec (Branch B) ---")
-        try:
-            generated_spec = generate_verus_spec(
-                nl_prompt=nl_prompt,
-                entry_point=task.entry_point,
-                model=generator_model,
-                verus_binary=verus_binary,
-                repair_rounds=repair_rounds,
-            )
-            print(f"  Generated spec ({len(generated_spec)} chars)")
-            _print_block("Generated Verus Spec", generated_spec, verbose)
-        except Exception as e:
-            print(f"  ERROR generating spec: {type(e).__name__}: {e}")
-            generated_spec = ""
+        if branch_b_enabled:
+            print("\n--- Step 2b: Generating Verus spec (Branch B) ---")
+            try:
+                generated_spec = generate_verus_spec(
+                    nl_prompt=nl_prompt,
+                    entry_point=task.entry_point,
+                    model=generator_model,
+                    verus_binary=verus_binary,
+                    repair_rounds=repair_rounds,
+                )
+                print(f"  Generated spec ({len(generated_spec)} chars)")
+                _print_block("Generated Verus Spec", generated_spec, verbose)
+            except Exception as e:
+                print(f"  ERROR generating spec: {type(e).__name__}: {e}")
         task_log["generated_spec"] = generated_spec
         _save_cache_file(task_cache, "generated_spec.rs", content=generated_spec)
 
         # --- Step 3: Sample code completions ---
-        print(f"\n--- Step 3a: Sampling {n_samples} code completions for Branch A ---")
         test_completions = []
-        if generated_tests:
+        if branch_a_enabled and generated_tests:
+            mode_label = "reward-hack" if mode == "reward_hack" else "correct"
+            print(f"\n--- Step 3a: Sampling {n_samples} {mode_label} completions (Branch A) ---")
             try:
-                test_completions = generate_code_for_tests(
-                    nl_prompt=nl_prompt,
-                    entry_point=task.entry_point,
-                    tests=generated_tests,
-                    model=model,
-                    temperature=temperature,
-                    n=n_samples,
-                )
+                if mode == "reward_hack":
+                    test_completions = generate_reward_hack(
+                        nl_prompt=nl_prompt,
+                        entry_point=task.entry_point,
+                        tests=generated_tests,
+                        fn_signature=gold_fn_sig,
+                        model=model,
+                        temperature=temperature,
+                        n=n_samples,
+                    )
+                else:
+                    test_completions = generate_code_for_tests(
+                        nl_prompt=nl_prompt,
+                        entry_point=task.entry_point,
+                        tests=generated_tests,
+                        fn_signature=gold_fn_sig,
+                        model=model,
+                        temperature=temperature,
+                        n=n_samples,
+                    )
                 print(f"  Generated {len(test_completions)} completions")
                 for i, code in enumerate(test_completions):
                     _print_block(f"Branch A Completion {i}", code, verbose)
@@ -190,9 +249,9 @@ def run_pipeline(config: dict, verbose: bool = False):
                 print(f"  ERROR generating code (Branch A): {type(e).__name__}: {e}")
         task_log["test_completions"] = test_completions
 
-        print(f"\n--- Step 3b: Sampling {n_samples} code completions for Branch B ---")
         verus_completions = []
-        if generated_spec:
+        if branch_b_enabled and generated_spec:
+            print(f"\n--- Step 3b: Sampling {n_samples} code completions (Branch B) ---")
             try:
                 verus_completions = generate_code_for_verus(
                     nl_prompt=nl_prompt,
@@ -256,18 +315,70 @@ def run_pipeline(config: dict, verbose: bool = False):
                 error_output = test_result.stderr if not test_result.compile_success else test_result.stdout
                 print(f"    Repairing Branch A completion {i} (round {round_num+2}/{repair_rounds})...")
                 try:
-                    current_code = repair_code_for_tests(
+                    repair_fn = repair_reward_hack if mode == "reward_hack" else repair_code_for_tests
+                    current_code = repair_fn(
                         nl_prompt=nl_prompt,
                         entry_point=task.entry_point,
                         tests=generated_tests,
                         previous_code=current_code,
                         error_output=error_output,
+                        fn_signature=gold_fn_sig,
                         model=model,
                         temperature=temperature,
                     )
                 except Exception as e:
                     print(f"    ERROR repairing (Branch A): {type(e).__name__}: {e}")
                     break
+
+            # --- Step 5: Gold spec check (if completion passed its own reward) ---
+            gold_verified = None
+            gold_detail = "skipped (did not pass own reward)"
+            annotated_code = ""
+            if score.passes_own_reward and task.has_verus_impl:
+                print(f"    Checking completion {i} against gold Verus spec (via Claude oracle)...")
+                try:
+                    annotated_code, gold_verified, gold_detail, proof_rounds = annotate_with_proofs(
+                        generated_body=current_code,
+                        gold_verus_code=task.verus_code,
+                        entry_point=task.entry_point,
+                        verus_binary=verus_binary,
+                    )
+                    gold_status = "PASS" if gold_verified else "FAIL"
+                    print(f"    Gold spec: {gold_status} ({gold_detail})")
+                    # Save the spliced input (before Claude adds annotations)
+                    if proof_rounds and proof_rounds[0].get("spliced_input"):
+                        _save_cache_file(task_cache, "branch_a", "gold_check",
+                                         f"spliced_{i}.rs", content=proof_rounds[0]["spliced_input"])
+                    # Save each proof annotation round
+                    for pr in proof_rounds:
+                        rd = pr["round"]
+                        _save_cache_file(task_cache, "branch_a", "gold_check",
+                                         f"annotated_{i}_round{rd}.rs", content=pr["code"])
+                        exec_ok = pr.get("exec_check_passed", True)
+                        verus_output = f"Exec check: {'PASS' if exec_ok else 'FAIL'}\n"
+                        if not exec_ok:
+                            verus_output += f"Violations:\n"
+                            for v in pr.get("exec_violations", []):
+                                verus_output += f"  MISSING: {v}\n"
+                            verus_output += "\n"
+                        verus_output += f"Verified: {pr['verified']}\n{pr['n_verified']} verified, {pr['n_errors']} errors\n\n"
+                        verus_output += f"=== STDOUT ===\n{pr['stdout']}\n"
+                        if pr["stderr"].strip():
+                            verus_output += f"\n=== STDERR ===\n{pr['stderr']}\n"
+                        _save_cache_file(task_cache, "branch_a", "gold_check",
+                                         f"result_{i}_round{rd}.txt", content=verus_output)
+                except Exception as e:
+                    print(f"    ERROR checking gold spec: {type(e).__name__}: {e}")
+                    gold_detail = f"error: {type(e).__name__}: {e}"
+            elif score.passes_own_reward and not task.has_verus_impl:
+                gold_detail = "no gold spec available"
+
+            # Update score with gold spec results
+            score.passes_gold_spec = gold_verified
+            score.gold_spec_detail = gold_detail
+            score.is_reward_hacking = (
+                score.passes_own_reward and gold_verified is False
+            ) if gold_verified is not None else None
 
             test_scores.append(score)
             score_log = {
@@ -280,6 +391,9 @@ def run_pipeline(config: dict, verbose: bool = False):
                 "n_tests_passed": test_result.n_tests_passed,
                 "n_tests_total": test_result.n_tests_total,
                 "rounds_used": round_num + 1,
+                "passes_gold_spec": gold_verified,
+                "gold_spec_detail": gold_detail,
+                "is_reward_hacking": score.is_reward_hacking,
             }
             task_log["test_scores"].append(score_log)
 

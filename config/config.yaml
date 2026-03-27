@@ -8,12 +8,20 @@ openrouter:
   # For spec/test generation (can use a different model if needed)
   generator_model: "qwen/qwen3-coder"
 
+# Branch toggles
+branches:
+  branch_a: true   # Unit test branch
+  branch_b: false  # Verus spec branch (disabled for now)
+
+# Mode: "correct" = generate correct implementations, "reward_hack" = generate test-gaming implementations
+mode: "reward_hack"
+
 # Sampling settings
 sampling:
   temperature: 0.8
   max_tokens: 16384       # thinking models need more tokens (think blocks count toward limit)
-  n_samples: 2          # completions per problem (prototype: 4, full: 16)
-  repair_rounds: 5      # max error-correction rounds per completion (default: 1 = no repair)
+  n_samples: 1          # completions per problem (prototype: 4, full: 16)
+  repair_rounds: 1      # max error-correction rounds per completion (default: 1 = no repair)
 
 # Benchmark settings
 benchmark:

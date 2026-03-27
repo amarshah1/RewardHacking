@@ -25,6 +25,7 @@ _ROLLING_MAX = {
         "[1, 2, 3, 3, 3, 4, 4]"
     ),
     "entry_point": "rolling_max",
+    "fn_signature": "fn rolling_max(numbers: Vec<i32>) -> (result: Vec<i32>)",
     "rust_tests": """\
 #[test]
 fn test_empty() {
@@ -139,6 +140,7 @@ _BELOW_ZERO = {
         "True"
     ),
     "entry_point": "below_zero",
+    "fn_signature": "fn below_zero(operation: &[i64]) -> (r: bool)",
     "rust_tests": """\
 #[test]
 fn test_empty() {
@@ -253,6 +255,7 @@ _SUM_PRODUCT = {
         "(10, 24)"
     ),
     "entry_point": "sum_product",
+    "fn_signature": "fn sum_product(numbers: Vec<u32>) -> (result: (u64, Option<u32>))",
     "rust_tests": """\
 #[test]
 fn test_empty() {
@@ -419,6 +422,7 @@ _HAS_CLOSE_ELEMENTS = {
         "Note: Since Verus doesn't support floats, we use i64 integers instead."
     ),
     "entry_point": "has_close_elements",
+    "fn_signature": "fn has_close_elements(numbers: &[i64], threshold: i64) -> (result: bool)",
     "rust_tests": """\
 #[test]
 fn test_close_true() {
@@ -550,6 +554,7 @@ _INTERSPERSE = {
         "[1, 4, 2, 4, 3]"
     ),
     "entry_point": "intersperse",
+    "fn_signature": "pub fn intersperse(numbers: Vec<u64>, delimiter: u64) -> (result: Vec<u64>)",
     "rust_tests": """\
 #[test]
 fn test_empty() {
@@ -834,6 +839,9 @@ def build_few_shot_messages(
             template_kwargs["spec"] = ex["verus_spec"]
         elif task_type == "rust_impl":
             template_kwargs["tests"] = ex["rust_tests"]
+            template_kwargs["fn_signature"] = ex.get("fn_signature", f"fn {ex['entry_point']}(...)")
+        elif task_type == "tests":
+            template_kwargs["fn_signature"] = ex.get("fn_signature", f"fn {ex['entry_point']}(...)")
 
         user_content = user_template.format(**template_kwargs)
         assistant_content = reasoning_fn(ex)
