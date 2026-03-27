@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ORACLE_MODEL = "anthropic/claude-opus-4"
+ORACLE_MODEL = "anthropic/claude-sonnet-4"
 
 SYSTEM_PROMPT = """You are a Verus proof annotation oracle. You will be given a Verus file that contains:
 - Imports and spec/proof helper functions (from the gold specification)
