@@ -17,8 +17,8 @@ class HumanEvalVerusTask:
     python_tests: str  # Python test cases
     verus_code: str  # Full Verus code (spec + impl + proof)
     has_verus_impl: bool  # Whether the Verus section has a real implementation
-    impl_sig: str # Signature of the real implementation function, if it exists
-    verus_fn_name: str  # Name of the exec fn in Verus code (may differ from entry_point)
+    impl_sig: list[str] # Signatures of the real implementation functions, if they exist
+    verus_fn_names: list[str]  # Names of the exec fns in Verus code (may differ from entry_point)
 
 def _extract_section(content: str, section_name: str) -> str:
     """Extract content between ### SECTION_NAME markers inside block comments."""
@@ -45,16 +45,28 @@ def _extract_verus_code(content: str) -> str:
     return ""
 
 
-def _extract_verus_impl(verus_code: str) -> tuple[str, str]:
-    """Extract (name, signature) of the real Verus implementation."""
+def _extract_verus_impl(verus_code: str) -> tuple[list[str], list[str]]:
+    """Extract (last_name, all_signatures) of the real Verus implementations."""
+    # Strip comments to avoid false positives (e.g. 'fn' in comments)
+    # Strip /* ... */ comments
+    verus_clean = re.sub(r"/\*.*?\*/", "", verus_code, flags=re.DOTALL)
+    # Strip // ... comments
+    verus_clean = re.sub(r"//.*", "", verus_clean)
+
     # Find all 'fn' occurrences
     pattern = r"\bfn\s+(\w+)"
-    for match in re.finditer(pattern, verus_code):
+    names = []
+    all_signatures = []
+
+    for match in re.finditer(pattern, verus_clean):
         start = match.start()
         name = match.group(1)
 
+        if name == "main":
+            continue
+
         # Check prefix for 'spec' or 'proof'
-        prefix = verus_code[max(0, start - 20) : start]
+        prefix = verus_clean[max(0, start - 20) : start]
         if re.search(r"\b(spec|proof)\s+$", prefix):
             continue
 
@@ -67,31 +79,61 @@ def _extract_verus_impl(verus_code: str) -> tuple[str, str]:
             sig_start = start - (len(prefix) - pub_match.start())
 
         # Find the end of the signature
-        # It ends at 'requires', 'ensures', or '{'
-        end_markers = ["requires", "ensures", "{"]
-        earliest_end = len(verus_code)
+        # It ends at 'requires', 'ensures', 'by', or '{'
+        end_markers = ["requires", "ensures", "by", "{"]
+        earliest_end = len(verus_clean)
         
         for marker in end_markers:
             # Search for marker as a whole word after the function name match
-            marker_match = re.search(rf"\b{marker}\b", verus_code[match.end():])
+            marker_match = re.search(rf"\b{marker}\b", verus_clean[match.end():])
             if marker_match:
                 marker_pos = match.end() + marker_match.start()
                 if marker_pos < earliest_end:
                     earliest_end = marker_pos
             elif marker == "{":
                 # Special case for '{' which might not be surrounded by word boundaries in all cases
-                brace_pos = verus_code.find("{", match.end())
+                brace_pos = verus_clean.find("{", match.end())
                 if brace_pos != -1 and brace_pos < earliest_end:
                     earliest_end = brace_pos
 
-        signature = verus_code[sig_start:earliest_end].strip()
+        signature = verus_clean[sig_start:earliest_end].strip()
         # Replace multiple spaces/newlines with single space
         signature = re.sub(r"\s+", " ", signature)
+        
         # Replace '-> (name: type)' with '-> type'
-        signature = re.sub(r"->\s*\(\s*\w+\s*:\s*(.*?)\s*\)", r"-> \1", signature)
-        return name, signature
+        # Handles nested parentheses by finding the first ':' and then the matching closing ')'
+        if "->" in signature:
+            parts = signature.split("->", 1)
+            ret_part = parts[1].strip()
+            if ret_part.startswith("("):
+                # Check if it follows the (name: type) pattern
+                # We look for a ':' before any nested '('
+                colon_pos = ret_part.find(":")
+                first_open_paren = ret_part.find("(", 1)
+                
+                if colon_pos != -1 and (first_open_paren == -1 or colon_pos < first_open_paren):
+                    # Potential (name: type) pattern
+                    # Find the matching closing parenthesis for the one at index 0
+                    depth = 0
+                    matching_end = -1
+                    for i, char in enumerate(ret_part):
+                        if char == "(":
+                            depth += 1
+                        elif char == ")":
+                            depth -= 1
+                            if depth == 0:
+                                matching_end = i
+                                break
+                    
+                    if matching_end != -1:
+                        # Extract the type part: from colon_pos + 1 to matching_end
+                        type_content = ret_part[colon_pos + 1 : matching_end].strip()
+                        signature = parts[0] + "-> " + type_content
+        
+        all_signatures.append(signature)
+        names.append(name)
 
-    return "", ""
+    return names, all_signatures
 
 
 def _has_real_verus_impl(verus_code: str) -> bool:
@@ -137,7 +179,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
         return None
 
     # Extract implementation details
-    verus_fn_name, impl_sig = _extract_verus_impl(verus_code)
+    verus_fn_names, impl_sig = _extract_verus_impl(verus_code)
 
     return HumanEvalVerusTask(
         task_id=task_id,
@@ -148,7 +190,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
         verus_code=verus_code,
         has_verus_impl=_has_real_verus_impl(verus_code),
         impl_sig=impl_sig,
-        verus_fn_name=verus_fn_name or entry_point,
+        verus_fn_names=verus_fn_names,
     )
 
 

@@ -187,10 +187,13 @@ def run_pipeline(config: dict, verbose: bool = False):
         if branch_a_enabled:
             print("\n--- Step 2a: Generating unit tests (Branch A) ---")
             try:
+                # task.impl_sig is now a list, but generate_unit_tests expects a single signature
+                # for the entry point (the last one).
+                sig = task.impl_sig[-1] if task.impl_sig else ""
                 generated_tests = generate_unit_tests(
                     nl_prompt=nl_prompt,
                     entry_point=task.entry_point,
-                    fn_signature=task.impl_sig,
+                    fn_signature=sig,
                     model=generator_model,
                 )
                 print(f"  Generated tests ({len(generated_tests)} chars)")
@@ -347,7 +350,7 @@ def run_pipeline(config: dict, verbose: bool = False):
             annotated_code = ""
             if task.has_verus_impl:
                 # Always splice and compile-check (cheap, runs even if tests failed)
-                spliced = splice_body_into_gold_spec(current_code, task.verus_code, task.verus_fn_name)
+                spliced = splice_body_into_gold_spec(current_code, task.verus_code, task.verus_fn_names)
                 _save_cache_file(task_cache, "branch_a", "gold_check", f"spliced_{i}.rs", content=spliced)
 
                 print(f"    Compile-checking spliced code against gold spec (--no-verify)...")
@@ -375,7 +378,7 @@ def run_pipeline(config: dict, verbose: bool = False):
                         annotated_code, gold_verified, gold_detail, proof_rounds = annotate_with_proofs(
                             generated_body=current_code,
                             gold_verus_code=task.verus_code,
-                            entry_point=task.verus_fn_name,
+                            entry_point=task.verus_fn_names,
                             verus_binary=verus_binary,
                         )
                         gold_status = "PASS" if gold_verified else "FAIL"
