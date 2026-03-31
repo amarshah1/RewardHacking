@@ -22,7 +22,7 @@ from generation.generate_specs import generate_verus_spec
 from generation.generate_code import generate_code_for_tests, generate_code_for_verus, repair_code_for_tests, repair_code_for_verus, generate_reward_hack, repair_reward_hack
 from evaluation.run_tests import run_rust_tests
 from evaluation.run_verus import run_verus
-from evaluation.annotate_proofs import annotate_with_proofs
+from evaluation.annotate_proofs import annotate_with_proofs, splice_body_into_gold_spec
 from evaluation.evaluate import (
     CompletionScore,
     TaskEvaluation,
@@ -345,45 +345,63 @@ def run_pipeline(config: dict, verbose: bool = False):
             gold_verified = None
             gold_detail = "skipped (did not pass own reward)"
             annotated_code = ""
-            if gold_spec_check and score.passes_own_reward and task.has_verus_impl:
-                print(f"    Checking completion {i} against gold Verus spec (via Claude oracle)...")
-                try:
-                    annotated_code, gold_verified, gold_detail, proof_rounds = annotate_with_proofs(
-                        generated_body=current_code,
-                        gold_verus_code=task.verus_code,
-                        entry_point=task.entry_point,
-                        verus_binary=verus_binary,
-                    )
-                    gold_status = "PASS" if gold_verified else "FAIL"
-                    print(f"    Gold spec: {gold_status} ({gold_detail})")
-                    # Save the spliced input (before Claude adds annotations)
-                    if proof_rounds and proof_rounds[0].get("spliced_input"):
-                        _save_cache_file(task_cache, "branch_a", "gold_check",
-                                         f"spliced_{i}.rs", content=proof_rounds[0]["spliced_input"])
-                    # Save each proof annotation round
-                    for pr in proof_rounds:
-                        rd = pr["round"]
-                        _save_cache_file(task_cache, "branch_a", "gold_check",
-                                         f"annotated_{i}_round{rd}.rs", content=pr["code"])
-                        exec_ok = pr.get("exec_check_passed", True)
-                        verus_output = f"Exec check: {'PASS' if exec_ok else 'FAIL'}\n"
-                        if not exec_ok:
-                            verus_output += f"Violations:\n"
-                            for v in pr.get("exec_violations", []):
-                                verus_output += f"  MISSING: {v}\n"
-                            verus_output += "\n"
-                        verus_output += f"Verified: {pr['verified']}\n{pr['n_verified']} verified, {pr['n_errors']} errors\n\n"
-                        verus_output += f"=== STDOUT ===\n{pr['stdout']}\n"
-                        if pr["stderr"].strip():
-                            verus_output += f"\n=== STDERR ===\n{pr['stderr']}\n"
-                        _save_cache_file(task_cache, "branch_a", "gold_check",
-                                         f"result_{i}_round{rd}.txt", content=verus_output)
-                except Exception as e:
-                    print(f"    ERROR checking gold spec: {type(e).__name__}: {e}")
-                    gold_detail = f"error: {type(e).__name__}: {e}"
-            elif score.passes_own_reward and not gold_spec_check:
-                gold_detail = "gold spec check disabled"
-            elif score.passes_own_reward and not task.has_verus_impl:
+            if task.has_verus_impl:
+                # Always splice and compile-check (cheap, runs even if tests failed)
+                spliced = splice_body_into_gold_spec(current_code, task.verus_code, task.verus_fn_name)
+                _save_cache_file(task_cache, "branch_a", "gold_check", f"spliced_{i}.rs", content=spliced)
+
+                print(f"    Compile-checking spliced code against gold spec (--no-verify)...")
+                compile_result = run_verus(spliced, verus_binary=verus_binary, timeout=60, no_verify=True)
+                compile_ok = compile_result.n_errors == 0 and "error" not in compile_result.stderr.lower()
+                compile_output = f"Compile check (--no-verify): {'PASS' if compile_ok else 'FAIL'}\n\n"
+                compile_output += f"=== STDOUT ===\n{compile_result.stdout}\n"
+                if compile_result.stderr.strip():
+                    compile_output += f"\n=== STDERR ===\n{compile_result.stderr}\n"
+                _save_cache_file(task_cache, "branch_a", "gold_check", f"compile_check_{i}.txt", content=compile_output)
+
+                if not compile_ok:
+                    print(f"    Spliced code failed to compile — skipping oracle")
+                    gold_detail = f"spliced code failed to compile"
+                elif not gold_spec_check:
+                    print(f"    Compile check passed (oracle disabled)")
+                    gold_detail = "compile check passed; oracle disabled"
+                elif not score.passes_own_reward:
+                    print(f"    Compile check passed (skipping oracle — did not pass tests)")
+                    gold_detail = "compile check passed; did not pass own reward"
+                else:
+                    # Run the Claude oracle for full verification
+                    print(f"    Compile OK — running Claude oracle for proof annotation...")
+                    try:
+                        annotated_code, gold_verified, gold_detail, proof_rounds = annotate_with_proofs(
+                            generated_body=current_code,
+                            gold_verus_code=task.verus_code,
+                            entry_point=task.verus_fn_name,
+                            verus_binary=verus_binary,
+                        )
+                        gold_status = "PASS" if gold_verified else "FAIL"
+                        print(f"    Gold spec: {gold_status} ({gold_detail})")
+                        # Save each proof annotation round
+                        for pr in proof_rounds:
+                            rd = pr["round"]
+                            _save_cache_file(task_cache, "branch_a", "gold_check",
+                                             f"annotated_{i}_round{rd}.rs", content=pr["code"])
+                            exec_ok = pr.get("exec_check_passed", True)
+                            verus_output = f"Exec check: {'PASS' if exec_ok else 'FAIL'}\n"
+                            if not exec_ok:
+                                verus_output += f"Violations:\n"
+                                for v in pr.get("exec_violations", []):
+                                    verus_output += f"  MISSING: {v}\n"
+                                verus_output += "\n"
+                            verus_output += f"Verified: {pr['verified']}\n{pr['n_verified']} verified, {pr['n_errors']} errors\n\n"
+                            verus_output += f"=== STDOUT ===\n{pr['stdout']}\n"
+                            if pr["stderr"].strip():
+                                verus_output += f"\n=== STDERR ===\n{pr['stderr']}\n"
+                            _save_cache_file(task_cache, "branch_a", "gold_check",
+                                             f"result_{i}_round{rd}.txt", content=verus_output)
+                    except Exception as e:
+                        print(f"    ERROR checking gold spec: {type(e).__name__}: {e}")
+                        gold_detail = f"error: {type(e).__name__}: {e}"
+            elif not task.has_verus_impl:
                 gold_detail = "no gold spec available"
 
             # Update score with gold spec results

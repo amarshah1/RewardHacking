@@ -17,7 +17,8 @@ class HumanEvalVerusTask:
     python_tests: str  # Python test cases
     verus_code: str  # Full Verus code (spec + impl + proof)
     has_verus_impl: bool  # Whether the Verus section has a real implementation
-    impl_sig: str # Name of the real implementation function, if it exists
+    impl_sig: str # Signature of the real implementation function, if it exists
+    verus_fn_name: str  # Name of the exec fn in Verus code (may differ from entry_point)
 
 def _extract_section(content: str, section_name: str) -> str:
     """Extract content between ### SECTION_NAME markers inside block comments."""
@@ -136,7 +137,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
         return None
 
     # Extract implementation details
-    _, impl_sig = _extract_verus_impl(verus_code)
+    verus_fn_name, impl_sig = _extract_verus_impl(verus_code)
 
     return HumanEvalVerusTask(
         task_id=task_id,
@@ -147,6 +148,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
         verus_code=verus_code,
         has_verus_impl=_has_real_verus_impl(verus_code),
         impl_sig=impl_sig,
+        verus_fn_name=verus_fn_name or entry_point,
     )
 
 

@@ -73,9 +73,12 @@ def _call_oracle(messages: list[dict], model: str = ORACLE_MODEL, max_tokens: in
 
 
 def _extract_function_body(code: str) -> str:
-    """Extract just the body of a function, stripping the signature and outer braces.
+    """Extract just the body of a function, stripping the signature, outer braces,
+    and any surrounding code (imports, other items).
 
     Given code like:
+        use std::option::Option;
+
         fn foo(x: i32) -> i32 {
             x + 1
         }
@@ -86,19 +89,22 @@ def _extract_function_body(code: str) -> str:
     """
     lines = code.strip().split("\n")
 
-    # Check if the code starts with a function signature
-    first_line = lines[0].strip()
-    has_fn_sig = bool(re.match(r'(pub\s+)?fn\s+\w+\s*\(', first_line))
+    # Find the first fn signature line anywhere in the code
+    fn_line_idx = None
+    for i, line in enumerate(lines):
+        if re.match(r'\s*(pub\s+)?fn\s+\w+\s*[\(<]', line.strip()):
+            fn_line_idx = i
+            break
 
-    if not has_fn_sig:
-        # Already just a body, return as-is
+    if fn_line_idx is None:
+        # No fn signature found — already just a body, return as-is
         return code.strip()
 
-    # Find the opening brace of the function body
+    # Find the opening brace of the function body (starting from fn signature)
     brace_depth = 0
     body_start = None
-    for i, line in enumerate(lines):
-        for ch in line:
+    for i in range(fn_line_idx, len(lines)):
+        for ch in lines[i]:
             if ch == '{':
                 brace_depth += 1
                 if brace_depth == 1:
@@ -114,7 +120,6 @@ def _extract_function_body(code: str) -> str:
         return code.strip()
 
     # Extract lines between the opening '{' and closing '}'
-    # The opening brace might be on the same line as the signature
     body_lines = lines[body_start + 1:body_end]
 
     # Dedent: find minimum indentation and strip it
@@ -161,24 +166,52 @@ def splice_body_into_gold_spec(generated_code: str, gold_verus_code: str, entry_
 // WARNING: Could not find function '{entry_point}' to splice body into.
 """
 
-    # Find the opening brace of the function body
-    # It could be on the same line as the signature or on a later line (after requires/ensures)
+    # Find the boundary: the next function declaration after this one (or end of file).
+    # This prevents us from accidentally matching braces in later functions.
+    next_fn_idx = len(lines)
+    for i in range(fn_line_idx + 1, len(lines)):
+        if re.match(r'\s*(pub\s+)?(spec\s+|proof\s+)?fn\s+\w+\s*[\(<]', lines[i]):
+            next_fn_idx = i
+            break
+        # Also stop at closing verus macro
+        if lines[i].strip().startswith('} // verus'):
+            next_fn_idx = i
+            break
+
+    # Within this function's region, find all 0→1 brace transitions.
+    # The ensures/requires clauses may contain { } (e.g. match blocks, if/else).
+    # The LAST 0→1 transition is the function body opening '{'.
     brace_depth = 0
-    body_start_idx = None
-    for i in range(fn_line_idx, len(lines)):
+    zero_to_one = []  # line indices where depth goes 0→1
+
+    for i in range(fn_line_idx, next_fn_idx):
         for ch in lines[i]:
             if ch == '{':
+                if brace_depth == 0:
+                    zero_to_one.append(i)
                 brace_depth += 1
-                if brace_depth == 1:
-                    body_start_idx = i
             elif ch == '}':
                 brace_depth -= 1
 
-        if body_start_idx is not None and brace_depth == 0:
+    if not zero_to_one:
+        return gold_verus_code
+
+    body_start_idx = zero_to_one[-1]
+
+    # Find the matching closing '}' for the body
+    brace_depth = 0
+    body_end_idx = None
+    for i in range(body_start_idx, len(lines)):
+        for ch in lines[i]:
+            if ch == '{':
+                brace_depth += 1
+            elif ch == '}':
+                brace_depth -= 1
+        if brace_depth == 0:
             body_end_idx = i
             break
-    else:
-        # Couldn't find matching braces
+
+    if body_end_idx is None:
         return gold_verus_code
 
     # Build the spliced code:

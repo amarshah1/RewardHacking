@@ -19,6 +19,7 @@ def run_verus(
     code: str,
     verus_binary: str = "verus",
     timeout: int = 60,
+    no_verify: bool = False,
 ) -> VerusResult:
     """Run Verus verifier on a Rust file with Verus annotations.
 
@@ -26,6 +27,7 @@ def run_verus(
         code: Complete Rust/Verus source code (with spec + impl)
         verus_binary: Path to verus binary
         timeout: Max seconds for verification
+        no_verify: If True, only parse and type-check (skip SMT verification)
 
     Returns:
         VerusResult with verification status
@@ -36,9 +38,13 @@ def run_verus(
         with open(src_path, 'w') as f:
             f.write(code)
 
+        cmd = [verus_binary, src_path]
+        if no_verify:
+            cmd.append("--no-verify")
+
         try:
             result = subprocess.run(
-                [verus_binary, src_path],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=timeout,

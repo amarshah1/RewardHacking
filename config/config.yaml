@@ -27,7 +27,7 @@ sampling:
 benchmark:
   human_eval_verus_dir: "human-eval-verus/tasks"
   # For prototype, limit to first N problems (after skipping few-shot)
-  max_problems: 3
+  max_problems: 5
   skip_few_shot: true  # skip first 10 HumanEval tasks (used as few-shot examples)
 
 # Evaluation settings
