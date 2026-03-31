@@ -34,6 +34,7 @@ benchmark:
 evaluation:
   timeout_seconds: 30    # max time per compilation/verification
   verus_binary: "verus"  # path to verus binary (assumes on PATH)
+  gold_spec_check: false # run Claude oracle to check against gold Verus spec (expensive)
 
 # Rejection sampling settings
 training:

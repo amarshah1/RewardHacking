@@ -115,18 +115,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
 
     # Extract task ID
     id_section = _extract_section(content, "ID")
-    if id_section:
-        task_id = id_section.strip()
-        # If the filename has a suffix (like 'a', 'b' in human_eval_003a.rs), 
-        # append it to the task_id if not already there.
-        filename = Path(filepath).stem
-        match = re.search(r'human_eval_\d+([a-z])$', filename)
-        if match:
-            suffix = match.group(1)
-            if not task_id.endswith(suffix):
-                task_id += suffix
-    else:
-        task_id = Path(filepath).stem
+    task_id = id_section.strip() if id_section else Path(filepath).stem
 
     # Extract Verus code
     verus_code = _extract_verus_code(content)
@@ -169,6 +158,7 @@ def parse_human_eval_verus(tasks_dir: str, only_with_verus: bool = False) -> lis
         only_with_verus: If True, only return tasks with real Verus implementations
     """
     tasks = []
+    seen_ids = set()
     tasks_path = Path(tasks_dir)
 
     for filepath in sorted(tasks_path.glob("human_eval_*.rs")):
@@ -177,6 +167,10 @@ def parse_human_eval_verus(tasks_dir: str, only_with_verus: bool = False) -> lis
             continue
         if only_with_verus and not task.has_verus_impl:
             continue
+        # Skip duplicate task IDs (e.g. 003a, 003b, 003c all map to HumanEval/3)
+        if task.task_id in seen_ids:
+            continue
+        seen_ids.add(task.task_id)
         tasks.append(task)
 
     return tasks

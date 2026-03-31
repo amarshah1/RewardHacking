@@ -127,6 +127,7 @@ def run_pipeline(config: dict, verbose: bool = False):
     branch_a_enabled = config.get("branches", {}).get("branch_a", True)
     branch_b_enabled = config.get("branches", {}).get("branch_b", True)
     mode = config.get("mode", "correct")  # "correct" or "reward_hack"
+    gold_spec_check = config.get("evaluation", {}).get("gold_spec_check", True)
 
     # Validate API key early so we don't silently fail on every task
     from dotenv import load_dotenv
@@ -136,7 +137,7 @@ def run_pipeline(config: dict, verbose: bool = False):
         print("  export OPENROUTER_API_KEY='sk-or-...'")
         print("  or create a .env file with OPENROUTER_API_KEY=sk-or-...")
         sys.exit(1)
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    if gold_spec_check and not os.environ.get("ANTHROPIC_API_KEY"):
         print("WARNING: ANTHROPIC_API_KEY not set — gold spec verification will be skipped.")
         print("  Set it in .env to enable Claude oracle for proof annotation.")
 
@@ -148,6 +149,7 @@ def run_pipeline(config: dict, verbose: bool = False):
     print(f"Mode: {mode}")
     print(f"Branch A (unit tests): {'ON' if branch_a_enabled else 'OFF'}")
     print(f"Branch B (Verus spec): {'ON' if branch_b_enabled else 'OFF'}")
+    print(f"Gold spec check (Claude oracle): {'ON' if gold_spec_check else 'OFF'}")
     if verbose:
         print("Verbose mode: ON (showing prompts, generated content, and scores)")
     print()
@@ -225,7 +227,6 @@ def run_pipeline(config: dict, verbose: bool = False):
                     test_completions = generate_reward_hack(
                         nl_prompt=nl_prompt,
                         entry_point=task.entry_point,
-                        tests=generated_tests,
                         fn_signature=task.impl_sig,
                         model=model,
                         temperature=temperature,
@@ -315,17 +316,27 @@ def run_pipeline(config: dict, verbose: bool = False):
                 error_output = test_result.stderr if not test_result.compile_success else test_result.stdout
                 print(f"    Repairing Branch A completion {i} (round {round_num+2}/{repair_rounds})...")
                 try:
-                    repair_fn = repair_reward_hack if mode == "reward_hack" else repair_code_for_tests
-                    current_code = repair_fn(
-                        nl_prompt=nl_prompt,
-                        entry_point=task.entry_point,
-                        tests=generated_tests,
-                        previous_code=current_code,
-                        error_output=error_output,
-                        fn_signature=task.impl_sig,
-                        model=model,
-                        temperature=temperature,
-                    )
+                    if mode == "reward_hack":
+                        current_code = repair_reward_hack(
+                            nl_prompt=nl_prompt,
+                            entry_point=task.entry_point,
+                            previous_code=current_code,
+                            error_output=error_output,
+                            fn_signature=task.impl_sig,
+                            model=model,
+                            temperature=temperature,
+                        )
+                    else:
+                        current_code = repair_code_for_tests(
+                            nl_prompt=nl_prompt,
+                            entry_point=task.entry_point,
+                            tests=generated_tests,
+                            previous_code=current_code,
+                            error_output=error_output,
+                            fn_signature=task.impl_sig,
+                            model=model,
+                            temperature=temperature,
+                        )
                 except Exception as e:
                     print(f"    ERROR repairing (Branch A): {type(e).__name__}: {e}")
                     break
@@ -334,7 +345,7 @@ def run_pipeline(config: dict, verbose: bool = False):
             gold_verified = None
             gold_detail = "skipped (did not pass own reward)"
             annotated_code = ""
-            if score.passes_own_reward and task.has_verus_impl:
+            if gold_spec_check and score.passes_own_reward and task.has_verus_impl:
                 print(f"    Checking completion {i} against gold Verus spec (via Claude oracle)...")
                 try:
                     annotated_code, gold_verified, gold_detail, proof_rounds = annotate_with_proofs(
@@ -370,6 +381,8 @@ def run_pipeline(config: dict, verbose: bool = False):
                 except Exception as e:
                     print(f"    ERROR checking gold spec: {type(e).__name__}: {e}")
                     gold_detail = f"error: {type(e).__name__}: {e}"
+            elif score.passes_own_reward and not gold_spec_check:
+                gold_detail = "gold spec check disabled"
             elif score.passes_own_reward and not task.has_verus_impl:
                 gold_detail = "no gold spec available"
 
