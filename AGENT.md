@@ -86,6 +86,10 @@ All intermediate outputs are saved to `experiment_cache/<datetime>/HumanEval/<ta
 3. **Finetuning not yet implemented**: `training/rejection_sampling.py` and `training/finetune.py` are planned but not built. Current focus is on the inference/evaluation pipeline.
 4. **MBPP training set not loaded**: Pipeline currently uses human-eval-verus for both prototype testing and evaluation.
 
+## TODOs
+
+- **Revisit iterator restriction**: Verus currently does not support most iterators (e.g. `.iter()`, `for x in collection`, `into_iter`). Code generation prompts currently ban them in favour of index-based loops. Once Verus adds broader iterator support, remove these restrictions from `generation/generate_code.py` prompts.
+
 ## Running the Pipeline
 
 ```bash
