@@ -17,7 +17,7 @@ class HumanEvalVerusTask:
     python_tests: str  # Python test cases
     verus_code: str  # Full Verus code (spec + impl + proof)
     has_verus_impl: bool  # Whether the Verus section has a real implementation
-
+    impl_sig: str # Name of the real implementation function, if it exists
 
 def _extract_section(content: str, section_name: str) -> str:
     """Extract content between ### SECTION_NAME markers inside block comments."""
@@ -44,6 +44,55 @@ def _extract_verus_code(content: str) -> str:
     return ""
 
 
+def _extract_verus_impl(verus_code: str) -> tuple[str, str]:
+    """Extract (name, signature) of the real Verus implementation."""
+    # Find all 'fn' occurrences
+    pattern = r"\bfn\s+(\w+)"
+    for match in re.finditer(pattern, verus_code):
+        start = match.start()
+        name = match.group(1)
+
+        # Check prefix for 'spec' or 'proof'
+        prefix = verus_code[max(0, start - 20) : start]
+        if re.search(r"\b(spec|proof)\s+$", prefix):
+            continue
+
+        # This is an exec fn (the real implementation).
+        # Find the signature: from 'fn' (or 'pub fn') to the first 'requires', 'ensures', or '{'
+        sig_start = start
+        pub_match = re.search(r"\bpub\s+$", prefix)
+        if pub_match:
+            # Check if pub is part of the same line or reasonably close
+            sig_start = start - (len(prefix) - pub_match.start())
+
+        # Find the end of the signature
+        # It ends at 'requires', 'ensures', or '{'
+        end_markers = ["requires", "ensures", "{"]
+        earliest_end = len(verus_code)
+        
+        for marker in end_markers:
+            # Search for marker as a whole word after the function name match
+            marker_match = re.search(rf"\b{marker}\b", verus_code[match.end():])
+            if marker_match:
+                marker_pos = match.end() + marker_match.start()
+                if marker_pos < earliest_end:
+                    earliest_end = marker_pos
+            elif marker == "{":
+                # Special case for '{' which might not be surrounded by word boundaries in all cases
+                brace_pos = verus_code.find("{", match.end())
+                if brace_pos != -1 and brace_pos < earliest_end:
+                    earliest_end = brace_pos
+
+        signature = verus_code[sig_start:earliest_end].strip()
+        # Replace multiple spaces/newlines with single space
+        signature = re.sub(r"\s+", " ", signature)
+        # Replace '-> (name: type)' with '-> type'
+        signature = re.sub(r"->\s*\(\s*\w+\s*:\s*(.*?)\s*\)", r"-> \1", signature)
+        return name, signature
+
+    return "", ""
+
+
 def _has_real_verus_impl(verus_code: str) -> bool:
     """Check if the Verus code has a real implementation (not just a TODO)."""
     # Strip boilerplate
@@ -53,11 +102,10 @@ def _has_real_verus_impl(verus_code: str) -> bool:
     # Check if it's just the empty template
     if "TODO" in stripped and stripped.count("\n") < 10:
         return False
-    # Check if there's an actual function definition (not just spec)
-    # A real implementation should have `fn ` (exec function) with `ensures` or meaningful body
-    has_fn = bool(re.search(r'\bfn\s+\w+', stripped))
-    has_ensures = 'ensures' in stripped or 'requires' in stripped
-    return has_fn and has_ensures
+    
+    # Use the implementation extractor
+    name, _ = _extract_verus_impl(verus_code)
+    return bool(name)
 
 
 def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
@@ -67,7 +115,18 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
 
     # Extract task ID
     id_section = _extract_section(content, "ID")
-    task_id = id_section.strip() if id_section else Path(filepath).stem
+    if id_section:
+        task_id = id_section.strip()
+        # If the filename has a suffix (like 'a', 'b' in human_eval_003a.rs), 
+        # append it to the task_id if not already there.
+        filename = Path(filepath).stem
+        match = re.search(r'human_eval_\d+([a-z])$', filename)
+        if match:
+            suffix = match.group(1)
+            if not task_id.endswith(suffix):
+                task_id += suffix
+    else:
+        task_id = Path(filepath).stem
 
     # Extract Verus code
     verus_code = _extract_verus_code(content)
@@ -87,6 +146,9 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
     if not nl_prompt:
         return None
 
+    # Extract implementation details
+    _, impl_sig = _extract_verus_impl(verus_code)
+
     return HumanEvalVerusTask(
         task_id=task_id,
         nl_prompt=nl_prompt,
@@ -95,6 +157,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
         python_tests=python_tests,
         verus_code=verus_code,
         has_verus_impl=_has_real_verus_impl(verus_code),
+        impl_sig=impl_sig,
     )
 
 

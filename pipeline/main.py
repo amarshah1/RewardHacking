@@ -188,7 +188,7 @@ def run_pipeline(config: dict, verbose: bool = False):
                 generated_tests = generate_unit_tests(
                     nl_prompt=nl_prompt,
                     entry_point=task.entry_point,
-                    fn_signature=gold_fn_sig,
+                    fn_signature=task.impl_sig,
                     model=generator_model,
                 )
                 print(f"  Generated tests ({len(generated_tests)} chars)")
@@ -226,7 +226,7 @@ def run_pipeline(config: dict, verbose: bool = False):
                         nl_prompt=nl_prompt,
                         entry_point=task.entry_point,
                         tests=generated_tests,
-                        fn_signature=gold_fn_sig,
+                        fn_signature=task.impl_sig,
                         model=model,
                         temperature=temperature,
                         n=n_samples,
@@ -236,7 +236,7 @@ def run_pipeline(config: dict, verbose: bool = False):
                         nl_prompt=nl_prompt,
                         entry_point=task.entry_point,
                         tests=generated_tests,
-                        fn_signature=gold_fn_sig,
+                        fn_signature=task.impl_sig,
                         model=model,
                         temperature=temperature,
                         n=n_samples,
@@ -322,7 +322,7 @@ def run_pipeline(config: dict, verbose: bool = False):
                         tests=generated_tests,
                         previous_code=current_code,
                         error_output=error_output,
-                        fn_signature=gold_fn_sig,
+                        fn_signature=task.impl_sig,
                         model=model,
                         temperature=temperature,
                     )
