@@ -10,6 +10,7 @@ Requirements:
 - Cover normal cases, edge cases, and boundary conditions
 - Tests should call a function with the given entry point name
 - Use assert_eq! or assert! macros
+- Always annotate empty vectors with their type (e.g. vec![] as Vec<String>, Vec::<i32>::new()) to avoid type inference errors
 - Each test function should be self-contained
 - First briefly explain your reasoning, then output the test code in a ```rust``` block"""
 
