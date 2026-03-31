@@ -72,118 +72,81 @@ def _call_oracle(messages: list[dict], model: str = ORACLE_MODEL, max_tokens: in
     return response.choices[0].message.content
 
 
-def _extract_function_body(code: str) -> str:
-    """Extract just the body of a function, stripping the signature, outer braces,
-    and any surrounding code (imports, other items).
-
-    Given code like:
-        use std::option::Option;
-
-        fn foo(x: i32) -> i32 {
-            x + 1
-        }
-    Returns:
-        x + 1
-
-    Also handles code that is already just a body (no fn signature).
-    """
-    lines = code.strip().split("\n")
-
-    # Find the first fn signature line anywhere in the code
-    fn_line_idx = None
-    for i, line in enumerate(lines):
-        if re.match(r'\s*(pub\s+)?fn\s+\w+\s*[\(<]', line.strip()):
-            fn_line_idx = i
-            break
-
-    if fn_line_idx is None:
-        # No fn signature found — already just a body, return as-is
-        return code.strip()
-
-    # Find the opening brace of the function body (starting from fn signature)
-    brace_depth = 0
-    body_start = None
-    for i in range(fn_line_idx, len(lines)):
-        for ch in lines[i]:
-            if ch == '{':
-                brace_depth += 1
-                if brace_depth == 1:
-                    body_start = i
-            elif ch == '}':
-                brace_depth -= 1
-
-        if body_start is not None and brace_depth == 0:
-            body_end = i
-            break
-    else:
-        # No matching braces found, return as-is
-        return code.strip()
-
-    # Extract lines between the opening '{' and closing '}'
-    body_lines = lines[body_start + 1:body_end]
-
-    # Dedent: find minimum indentation and strip it
-    non_empty = [l for l in body_lines if l.strip()]
-    if non_empty:
-        min_indent = min(len(l) - len(l.lstrip()) for l in non_empty)
-        body_lines = [l[min_indent:] if len(l) >= min_indent else l for l in body_lines]
-
-    return "\n".join(body_lines).strip()
-
-
-def splice_body_into_gold_spec(generated_code: str, gold_verus_code: str, entry_point: str) -> str:
-    """Replace the gold implementation body with the generated body.
-
-    Finds the main function in the gold Verus code (by entry_point name),
-    keeps everything up to and including the opening '{' of the function body,
-    replaces the body with the extracted body from generated_code, and keeps the closing.
-
-    Args:
-        generated_code: The generated Rust code (may include fn signature — it will be stripped)
-        gold_verus_code: The complete gold Verus file
-        entry_point: The function name to find and replace the body of
+def _extract_all_function_bodies(code: str) -> dict[str, str]:
+    """Find all functions in code and extract their bodies into a map {name: body}.
 
     Returns:
-        The spliced Verus file with the generated body
+        Dictionary mapping function name to its body string.
     """
-    # Strip the function signature from the generated code, keeping only the body
-    body = _extract_function_body(generated_code)
+    bodies = {}
+    lines = code.split("\n")
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        # Match fn name( or pub fn name(
+        match = re.match(r'\s*(pub\s+)?fn\s+(\w+)\s*[\(<]', line.strip())
+        if match:
+            name = match.group(2)
+            # Find body start {
+            brace_depth = 0
+            body_start = None
+            body_end = None
+            for j in range(i, len(lines)):
+                for ch in lines[j]:
+                    if ch == '{':
+                        brace_depth += 1
+                        if brace_depth == 1:
+                            body_start = j
+                    elif ch == '}':
+                        brace_depth -= 1
+                        if brace_depth == 0 and body_start is not None:
+                            body_end = j
+                            break
+                if body_end is not None:
+                    break
+            
+            if body_start is not None and body_end is not None:
+                body_lines = lines[body_start + 1 : body_end]
+                # Dedent
+                non_empty = [l for l in body_lines if l.strip()]
+                if non_empty:
+                    min_indent = min(len(l) - len(l.lstrip()) for l in non_empty)
+                    body_lines = [l[min_indent:] if len(l) >= min_indent else l for l in body_lines]
+                bodies[name] = "\n".join(body_lines).strip()
+                i = body_end + 1
+                continue
+        i += 1
+    return bodies
 
-    lines = gold_verus_code.split("\n")
 
+def _replace_single_function_body(verus_code: str, name: str, new_body: str) -> str:
+    """Find function 'name' in verus_code and replace its body with new_body."""
+    lines = verus_code.split("\n")
+    
     # Find the function signature line
     fn_line_idx = None
     for i, line in enumerate(lines):
-        # Match `fn entry_point(` or `pub fn entry_point(`
-        if re.match(rf'\s*(pub\s+)?fn\s+{re.escape(entry_point)}\s*\(', line):
+        # Match `fn name(` or `pub fn name(`
+        if re.match(rf'\s*(pub\s+)?fn\s+{re.escape(name)}\s*\(', line):
             fn_line_idx = i
             break
 
     if fn_line_idx is None:
-        # Fallback: return a simple template
-        return f"""{gold_verus_code}
+        return verus_code
 
-// WARNING: Could not find function '{entry_point}' to splice body into.
-"""
-
-    # Find the boundary: the next function declaration after this one (or end of file).
-    # This prevents us from accidentally matching braces in later functions.
+    # Find the boundary: the next function declaration or end of file
     next_fn_idx = len(lines)
     for i in range(fn_line_idx + 1, len(lines)):
         if re.match(r'\s*(pub\s+)?(spec\s+|proof\s+)?fn\s+\w+\s*[\(<]', lines[i]):
             next_fn_idx = i
             break
-        # Also stop at closing verus macro
         if lines[i].strip().startswith('} // verus'):
             next_fn_idx = i
             break
 
-    # Within this function's region, find all 0→1 brace transitions.
-    # The ensures/requires clauses may contain { } (e.g. match blocks, if/else).
-    # The LAST 0→1 transition is the function body opening '{'.
+    # Find opening brace
     brace_depth = 0
-    zero_to_one = []  # line indices where depth goes 0→1
-
+    zero_to_one = []
     for i in range(fn_line_idx, next_fn_idx):
         for ch in lines[i]:
             if ch == '{':
@@ -194,11 +157,11 @@ def splice_body_into_gold_spec(generated_code: str, gold_verus_code: str, entry_
                 brace_depth -= 1
 
     if not zero_to_one:
-        return gold_verus_code
+        return verus_code
 
     body_start_idx = zero_to_one[-1]
 
-    # Find the matching closing '}' for the body
+    # Find matching closing brace
     brace_depth = 0
     body_end_idx = None
     for i in range(body_start_idx, len(lines)):
@@ -212,26 +175,52 @@ def splice_body_into_gold_spec(generated_code: str, gold_verus_code: str, entry_
             break
 
     if body_end_idx is None:
-        return gold_verus_code
+        return verus_code
 
-    # Build the spliced code:
-    # 1. Everything up to and including the line with the opening '{'
-    # 2. The generated body (indented)
-    # 3. The closing '}' line and everything after
     header = "\n".join(lines[:body_start_idx + 1])
-
-    # Indent the body to match the function
-    indented_body = "\n".join("    " + line for line in body.split("\n"))
-
+    indented_body = "\n".join("    " + line for line in new_body.split("\n"))
     footer = "\n".join(lines[body_end_idx:])
 
     return f"{header}\n{indented_body}\n{footer}"
 
 
+def splice_body_into_gold_spec(generated_code: str, gold_verus_code: str, entry_points: list[str]) -> str:
+    """Replace the gold implementation bodies with the generated bodies.
+
+    Args:
+        generated_code: The generated Rust code (may include multiple fn signatures)
+        gold_verus_code: The complete gold Verus file
+        entry_points: The function names to find and replace the bodies of
+
+    Returns:
+        The spliced Verus file with the generated bodies
+    """
+    named_bodies = _extract_all_function_bodies(generated_code)
+    
+    # # Fallback: if no named functions found, treat the whole thing as the body of the last entry_point
+    # if not named_bodies:
+    #     named_bodies = {entry_points[-1]: generated_code.strip()}
+    
+    # # Special case: if only one implementation is provided but multiple names are expected,
+    # # and the one implementation name doesn't match any expected name, assume it's the last one.
+    # if len(named_bodies) == 1:
+    #     provided_name = list(named_bodies.keys())[0]
+    #     if provided_name not in entry_points:
+    #         val = list(named_bodies.values())[0]
+    #         named_bodies = {entry_points[-1]: val}
+
+    current_code = gold_verus_code
+    for name in entry_points:
+        if name in named_bodies:
+            current_code = _replace_single_function_body(current_code, name, named_bodies[name])
+            
+    return current_code
+
+
 def annotate_with_proofs(
     generated_body: str,
     gold_verus_code: str,
-    entry_point: str = "",
+    entry_point: list[str] = [],
     model: str = ORACLE_MODEL,
     max_tokens: int = 16384,
     repair_rounds: int = 3,
@@ -247,7 +236,7 @@ def annotate_with_proofs(
     Args:
         generated_body: The plain Rust function implementation
         gold_verus_code: The complete gold Verus file (spec + reference impl)
-        entry_point: Function name (for splicing)
+        entry_point: Function names (for splicing)
         model: OpenRouter model ID for the oracle
         max_tokens: Max tokens for response
         repair_rounds: Max attempts to get annotations right
