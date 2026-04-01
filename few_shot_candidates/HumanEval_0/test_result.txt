@@ -1,0 +1,19 @@
+Status: PASS
+8/8 tests passed
+Compiled: True
+
+=== STDOUT ===
+
+running 8 tests
+test tests::test_empty_list ... ok
+test tests::test_multiple_elements_no_close_pairs ... ok
+test tests::test_multiple_elements_with_close_pair ... ok
+test tests::test_negative_and_mixed_numbers ... ok
+test tests::test_two_elements_close ... ok
+test tests::test_single_element ... ok
+test tests::test_two_elements_far ... ok
+test tests::test_two_elements_exact_threshold ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+

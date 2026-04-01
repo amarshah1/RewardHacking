@@ -1,0 +1,33 @@
+Status: FAIL
+7/8 tests passed
+Compiled: True
+
+=== STDOUT ===
+
+running 8 tests
+test tests::test_empty_vector ... ok
+test tests::test_multiple_elements ... ok
+test tests::test_mixed_values ... ok
+test tests::test_product_overflow ... ok
+test tests::test_single_element ... ok
+test tests::test_with_ones ... ok
+test tests::test_large_sum ... FAILED
+test tests::test_with_zeros ... ok
+
+failures:
+
+---- tests::test_large_sum stdout ----
+
+thread 'tests::test_large_sum' (2114335) panicked at /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpcg6exwvw/solution.rs:53:5:
+assertion `left == right` failed
+  left: (4294967296, Some(4294967295))
+ right: (4294967296, None)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::test_large_sum
+
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+

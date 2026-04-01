@@ -1,0 +1,1 @@
+fn rolling_max(numbers: Vec<i32>) -> Vec<i32>

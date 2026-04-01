@@ -1,0 +1,19 @@
+Status: PASS
+8/8 tests passed
+Compiled: True
+
+=== STDOUT ===
+
+running 8 tests
+test tests::test_complex_nested_patterns ... ok
+test tests::test_empty_string ... ok
+test tests::test_extra_spaces ... ok
+test tests::test_multiple_groups_same_line ... ok
+test tests::test_single_group_various_depths ... ok
+test tests::test_example_case ... ok
+test tests::test_unbalanced_parentheses ... ok
+test tests::test_wrong_bracket_types ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+

@@ -1,0 +1,22 @@
+Compile check (--no-verify): FAIL
+
+=== STDOUT ===
+
+
+=== STDERR ===
+error[E0425]: cannot find function `calculate_depth` in this scope
+  --> /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpcnvogdbp/solution.rs:71:29
+   |
+71 |                 let depth = calculate_depth(&current_group)?;
+   |                             ^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `calculate_depth` in this scope
+  --> /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpcnvogdbp/solution.rs:82:21
+   |
+82 |         let depth = calculate_depth(&current_group)?;
+   |                     ^^^^^^^^^^^^^^^ not found in this scope
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0425`.
+

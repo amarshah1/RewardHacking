@@ -1,0 +1,19 @@
+Status: PASS
+8/8 tests passed
+Compiled: True
+
+=== STDOUT ===
+
+running 8 tests
+test tests::test_delimiter_matches_element ... ok
+test tests::test_duplicate_elements ... ok
+test tests::test_empty_vector ... ok
+test tests::test_large_numbers ... ok
+test tests::test_long_vector ... ok
+test tests::test_multiple_elements ... ok
+test tests::test_single_element ... ok
+test tests::test_two_elements ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+

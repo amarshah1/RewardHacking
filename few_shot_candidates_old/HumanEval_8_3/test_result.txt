@@ -1,0 +1,21 @@
+Status: FAIL
+0/0 tests passed
+Compiled: False
+
+=== COMPILE ERROR ===
+error[E0308]: mismatched types
+  --> /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpf8xlrvs9/solution.rs:42:5
+   |
+ 1 | fn sum_product(numbers: Vec<u32>) -> (u64, Option<u32>) {
+   |                                      ------------------ expected `(u64, Option<u32>)` because of return type
+...
+42 |     Some(product)
+   |     ^^^^^^^^^^^^^ expected `(u64, Option<u32>)`, found `Option<u32>`
+   |
+   = note: expected tuple `(u64, Option<u32>)`
+               found enum `Option<u32>`
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0308`.
+

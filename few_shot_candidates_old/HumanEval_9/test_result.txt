@@ -1,0 +1,49 @@
+Status: FAIL
+5/8 tests passed
+Compiled: True
+
+=== STDOUT ===
+
+running 8 tests
+test tests::test_rolling_max_all_same ... ok
+test tests::test_rolling_max_decreasing ... ok
+test tests::test_rolling_max_mixed_positive_negative ... ok
+test tests::test_rolling_max_empty ... FAILED
+test tests::test_rolling_max_alternating ... FAILED
+test tests::test_rolling_max_negative_numbers ... ok
+test tests::test_rolling_max_example ... FAILED
+test tests::test_rolling_max_single_element ... ok
+
+failures:
+
+---- tests::test_rolling_max_empty stdout ----
+
+thread 'tests::test_rolling_max_empty' (1855200) panicked at /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmp6va97wbo/solution.rs:47:5:
+assertion `left == right` failed
+  left: [0]
+ right: []
+
+---- tests::test_rolling_max_alternating stdout ----
+
+thread 'tests::test_rolling_max_alternating' (1855198) panicked at /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmp6va97wbo/solution.rs:83:5:
+assertion `left == right` failed
+  left: [1, 10, 10, 10, 9, 10, 10]
+ right: [1, 10, 10, 10, 10, 10, 10]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::test_rolling_max_example stdout ----
+
+thread 'tests::test_rolling_max_example' (1855201) panicked at /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmp6va97wbo/solution.rs:39:5:
+assertion `left == right` failed
+  left: [1, 2, 3, 3, 2, 4, 4]
+ right: [1, 2, 3, 3, 3, 4, 4]
+
+
+failures:
+    tests::test_rolling_max_alternating
+    tests::test_rolling_max_empty
+    tests::test_rolling_max_example
+
+test result: FAILED. 5 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+

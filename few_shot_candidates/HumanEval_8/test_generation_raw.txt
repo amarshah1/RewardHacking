@@ -1,0 +1,55 @@
+Looking at this function, I need to understand the expected behavior:
+- It takes a vector of u32 integers
+- Returns a tuple of (sum as u64, product as Option<u32>)
+- Empty list should return (0, Some(1)) based on the docstring
+- The product is Option<u32>, likely to handle overflow cases
+
+Key test cases to cover:
+1. Empty vector - should return (0, Some(1))
+2. Single element - sum and product should be the element itself
+3. Multiple elements - normal case
+4. Large numbers that might cause product overflow
+5. Vector with zeros - product should be 0
+6. Vector with ones - shouldn't affect the calculation
+
+```rust
+#[test]
+fn test_empty_vector() {
+    assert_eq!(sum_product(Vec::<u32>::new()), (0, Some(1)));
+}
+
+#[test]
+fn test_single_element() {
+    assert_eq!(sum_product(vec![5]), (5, Some(5)));
+}
+
+#[test]
+fn test_multiple_elements() {
+    assert_eq!(sum_product(vec![1, 2, 3, 4]), (10, Some(24)));
+}
+
+#[test]
+fn test_with_zeros() {
+    assert_eq!(sum_product(vec![0, 5, 10, 0]), (15, Some(0)));
+}
+
+#[test]
+fn test_with_ones() {
+    assert_eq!(sum_product(vec![1, 1, 1, 1]), (4, Some(1)));
+}
+
+#[test]
+fn test_large_sum() {
+    assert_eq!(sum_product(vec![u32::MAX, 1]), (u32::MAX as u64 + 1, None));
+}
+
+#[test]
+fn test_product_overflow() {
+    assert_eq!(sum_product(vec![u32::MAX / 2, 3]), (u32::MAX as u64 / 2 + 3, None));
+}
+
+#[test]
+fn test_mixed_values() {
+    assert_eq!(sum_product(vec![2, 3, 5, 7]), (17, Some(210)));
+}
+```

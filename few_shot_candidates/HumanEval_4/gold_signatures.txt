@@ -1,0 +1,5 @@
+fn divide_i32_by_u32(x: i32, d: u32) -> (i32, u32)
+fn divide_i32_by_usize(x: i32, d: usize) -> (i32, usize)
+fn compute_mean_of_i32s(numbers: &[i32]) -> i32
+fn compute_absolute_difference(x: i32, y: i32) -> u32
+pub fn mean_absolute_deviation(numbers: &[i32]) -> u32

@@ -1,0 +1,41 @@
+Status: FAIL
+6/8 tests passed
+Compiled: True
+
+=== STDOUT ===
+
+running 8 tests
+test tests::test_empty_vector ... ok
+test tests::test_mixed_values ... ok
+test tests::test_multiple_elements ... ok
+test tests::test_single_element ... ok
+test tests::test_with_ones ... ok
+test tests::test_product_overflow ... FAILED
+test tests::test_large_sum ... FAILED
+test tests::test_with_zeros ... ok
+
+failures:
+
+---- tests::test_product_overflow stdout ----
+
+thread 'tests::test_product_overflow' (2106460) panicked at /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpk0pwf0y6/solution.rs:73:5:
+assertion `left == right` failed
+  left: (2147483650, Some(2147483645))
+ right: (2147483650, None)
+
+---- tests::test_large_sum stdout ----
+
+thread 'tests::test_large_sum' (2106457) panicked at /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpk0pwf0y6/solution.rs:68:5:
+assertion `left == right` failed
+  left: (4294967296, Some(4294967295))
+ right: (4294967296, None)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::test_large_sum
+    tests::test_product_overflow
+
+test result: FAILED. 6 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+

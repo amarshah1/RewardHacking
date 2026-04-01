@@ -1,0 +1,70 @@
+Looking at this task, I need to create unit tests for a `mean_absolute_deviation` function that:
+1. Takes a slice of i32 values
+2. Calculates the mean of the numbers
+3. Computes the average absolute difference between each element and the mean
+4. Returns the result as u32
+
+Based on the example given (MAD of [1.0, 2.0, 3.0, 4.0] = 1.0), I'll create tests that verify:
+- Normal cases with positive numbers
+- Edge cases like empty arrays, single elements
+- Cases with negative numbers
+- Cases where the mean isn't a whole number
+- Boundary conditions
+
+```rust
+#[test]
+fn test_mean_absolute_deviation_example() {
+    // Example from docstring: [1, 2, 3, 4] -> mean = 2.5, MAD = 1.0
+    let numbers = vec![1, 2, 3, 4];
+    assert_eq!(mean_absolute_deviation(&numbers), 1);
+}
+
+#[test]
+fn test_mean_absolute_deviation_empty() {
+    // Empty array should return 0
+    let numbers = Vec::<i32>::new();
+    assert_eq!(mean_absolute_deviation(&numbers), 0);
+}
+
+#[test]
+fn test_mean_absolute_deviation_single_element() {
+    // Single element, deviation from itself is 0
+    let numbers = vec![42];
+    assert_eq!(mean_absolute_deviation(&numbers), 0);
+}
+
+#[test]
+fn test_mean_absolute_deviation_all_same() {
+    // All elements the same, MAD should be 0
+    let numbers = vec![5, 5, 5, 5, 5];
+    assert_eq!(mean_absolute_deviation(&numbers), 0);
+}
+
+#[test]
+fn test_mean_absolute_deviation_negative_numbers() {
+    // Test with negative numbers: [-2, -1, 0, 1, 2] -> mean = 0, MAD = 1.2
+    let numbers = vec![-2, -1, 0, 1, 2];
+    assert_eq!(mean_absolute_deviation(&numbers), 1);
+}
+
+#[test]
+fn test_mean_absolute_deviation_large_spread() {
+    // Test with large spread: [0, 10, 20, 30] -> mean = 15, MAD = 7.5
+    let numbers = vec![0, 10, 20, 30];
+    assert_eq!(mean_absolute_deviation(&numbers), 7);
+}
+
+#[test]
+fn test_mean_absolute_deviation_two_elements() {
+    // Two elements: [10, 20] -> mean = 15, MAD = 5
+    let numbers = vec![10, 20];
+    assert_eq!(mean_absolute_deviation(&numbers), 5);
+}
+
+#[test]
+fn test_mean_absolute_deviation_mixed_signs() {
+    // Mixed positive and negative: [-10, -5, 5, 10] -> mean = 0, MAD = 7.5
+    let numbers = vec![-10, -5, 5, 10];
+    assert_eq!(mean_absolute_deviation(&numbers), 7);
+}
+```

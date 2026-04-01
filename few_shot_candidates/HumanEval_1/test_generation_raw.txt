@@ -1,0 +1,78 @@
+Looking at this task, I need to test a function that separates groups of balanced parentheses from an input string (represented as Vec<char>) and returns them as separate groups (Vec<Vec<char>>).
+
+Key test cases to cover:
+1. Basic single group
+2. Multiple simple groups
+3. Nested parentheses
+4. Groups with spaces (should be ignored)
+5. Empty input
+6. Complex nested groups
+7. Edge case with only spaces
+
+Here are the unit tests:
+
+```rust
+#[test]
+fn test_single_group() {
+    let input = vec!['(', ')'];
+    let expected = vec![vec!['(', ')']];
+    assert_eq!(separate_paren_groups(&input), expected);
+}
+
+#[test]
+fn test_multiple_simple_groups() {
+    let input = vec!['(', ')', '(', ')'];
+    let expected = vec![vec!['(', ')'], vec!['(', ')']];
+    assert_eq!(separate_paren_groups(&input), expected);
+}
+
+#[test]
+fn test_nested_parentheses() {
+    let input = vec!['(', '(', ')', ')'];
+    let expected = vec![vec!['(', '(', ')', ')']];
+    assert_eq!(separate_paren_groups(&input), expected);
+}
+
+#[test]
+fn test_groups_with_spaces() {
+    let input = vec!['(', ' ', ')', ' ', '(', '(', ' ', ')', ')', ' ', '(', '(', ' ', ')', '(', ' ', ')', ')'];
+    let expected = vec![
+        vec!['(', ')'],
+        vec!['(', '(', ')', ')'],
+        vec!['(', '(', ')', '(', ')', ')']
+    ];
+    assert_eq!(separate_paren_groups(&input), expected);
+}
+
+#[test]
+fn test_empty_input() {
+    let input = Vec::<char>::new();
+    let expected = Vec::<Vec<char>>::new();
+    assert_eq!(separate_paren_groups(&input), expected);
+}
+
+#[test]
+fn test_complex_nested_groups() {
+    let input = vec!['(', '(', '(', ')', ')', ')', '(', ')', '(', '(', ')', '(', '(', ')', ')', ')'];
+    let expected = vec![
+        vec!['(', '(', '(', ')', ')', ')'],
+        vec!['(', ')'],
+        vec!['(', '(', ')', '(', '(', ')', ')', ')']
+    ];
+    assert_eq!(separate_paren_groups(&input), expected);
+}
+
+#[test]
+fn test_only_spaces() {
+    let input = vec![' ', ' ', ' '];
+    let expected = Vec::<Vec<char>>::new();
+    assert_eq!(separate_paren_groups(&input), expected);
+}
+
+#[test]
+fn test_deeply_nested_single_group() {
+    let input = vec!['(', '(', '(', '(', ')', ')', ')', ')'];
+    let expected = vec![vec!['(', '(', '(', '(', ')', ')', ')', ')']];
+    assert_eq!(separate_paren_groups(&input), expected);
+}
+```

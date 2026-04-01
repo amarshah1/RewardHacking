@@ -1,0 +1,46 @@
+Compile check (--no-verify): FAIL
+
+=== STDOUT ===
+
+
+=== STDERR ===
+error: `core::fmt::impl&%6::from_str` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+   --> /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpnov4ylaz/solution.rs:170:9
+    |
+170 |         panic!("Division by zero");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+202 |         panic!("Division by zero");
+    |         --------------------------
+    |
+    = help: The following declaration may resolve this error:
+            pub assume_specification<'a> [std::fmt::Arguments::<'a>::from_str] (_0: &'static str) -> std::fmt::Arguments<'a>;
+
+error: `core::fmt::Arguments` is not supported (note: you may be able to add a Verus specification to this type with the `external_type_specification` attribute) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+   --> /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpnov4ylaz/solution.rs:170:9
+    |
+170 |         panic!("Division by zero");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+202 |         panic!("Division by zero");
+    |         --------------------------
+    |
+    = help: The following declaration may resolve this error:
+            #[verifier::external_type_specification]
+            pub struct ExArguments<'a>(std::fmt::Arguments<'a>);
+
+error: `core::panicking::panic_fmt` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+   --> /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmpnov4ylaz/solution.rs:170:9
+    |
+170 |         panic!("Division by zero");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+202 |         panic!("Division by zero");
+    |         --------------------------
+    |
+    = help: The following declaration may resolve this error:
+            pub assume_specification [core::panicking::panic_fmt] (_0: std::fmt::Arguments<'_>) -> !;
+
+error: aborting due to 3 previous errors
+
+

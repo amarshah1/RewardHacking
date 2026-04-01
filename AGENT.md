@@ -89,6 +89,7 @@ All intermediate outputs are saved to `experiment_cache/<datetime>/HumanEval/<ta
 ## TODOs
 
 - **Revisit iterator restriction**: Verus currently does not support most iterators (e.g. `.iter()`, `for x in collection`, `into_iter`). Code generation prompts currently ban them in favour of index-based loops. Once Verus adds broader iterator support, remove these restrictions from `generation/generate_code.py` prompts.
+- **HumanEval/6 few-shot example**: `parse_nested_parens` (HumanEval/6) does not work as a few-shot example for reward hacking because `s.chars().collect()` and string comparison (`s == "..."`) are not supported by Verus, causing compile failures. All `HumanEval_6*` candidates in `few_shot_candidates/` fail the `--no-verify` compile check. If Verus adds support for these features, revisit adding this as a few-shot example.
 
 ## Running the Pipeline
 

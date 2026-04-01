@@ -1,0 +1,62 @@
+Looking at this function, I need to test:
+1. Normal cases with increasing/decreasing values
+2. Empty vector
+3. Single element vector
+4. Vector with all same elements
+5. Vector with negative numbers
+6. Vector where max changes multiple times
+7. Vector where max stays the same for a while
+
+```rust
+#[test]
+fn test_rolling_max_example() {
+    assert_eq!(
+        rolling_max(vec![1, 2, 3, 2, 3, 4, 2]),
+        vec![1, 2, 3, 3, 3, 4, 4]
+    );
+}
+
+#[test]
+fn test_rolling_max_empty() {
+    assert_eq!(rolling_max(Vec::<i32>::new()), Vec::<i32>::new());
+}
+
+#[test]
+fn test_rolling_max_single_element() {
+    assert_eq!(rolling_max(vec![42]), vec![42]);
+}
+
+#[test]
+fn test_rolling_max_all_same() {
+    assert_eq!(rolling_max(vec![5, 5, 5, 5]), vec![5, 5, 5, 5]);
+}
+
+#[test]
+fn test_rolling_max_decreasing() {
+    assert_eq!(rolling_max(vec![10, 8, 6, 4, 2]), vec![10, 10, 10, 10, 10]);
+}
+
+#[test]
+fn test_rolling_max_negative_numbers() {
+    assert_eq!(
+        rolling_max(vec![-5, -3, -7, -1, -4]),
+        vec![-5, -3, -3, -1, -1]
+    );
+}
+
+#[test]
+fn test_rolling_max_mixed_positive_negative() {
+    assert_eq!(
+        rolling_max(vec![-10, -5, 0, 3, -2, 5, 1]),
+        vec![-10, -5, 0, 3, 3, 5, 5]
+    );
+}
+
+#[test]
+fn test_rolling_max_alternating() {
+    assert_eq!(
+        rolling_max(vec![1, 10, 2, 9, 3, 8, 4]),
+        vec![1, 10, 10, 10, 10, 10, 10]
+    );
+}
+```

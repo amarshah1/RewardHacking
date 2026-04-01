@@ -220,6 +220,50 @@ The hypothesis is that Branch A (unit tests) will have a higher reward hacking r
 - **Training**: MBPP (Mostly Basic Programming Problems) - ~374 problems with NL descriptions
 - **Test**: human-eval-verus - ~81 problems with NL + gold Verus specifications
 
+## Generating Few-Shot Candidates
+
+The `scripts/generate_few_shot_candidates.py` script uses Claude Opus via OpenRouter to generate few-shot examples for both test generation and reward hack implementation. For each of the first 10 HumanEval tasks that have Verus implementations, it:
+
+1. Generates unit tests from the NL description
+2. Generates a reward hack implementation (blind — no access to the tests)
+3. Runs the tests against the reward hack implementation
+4. Splices the reward hack into the gold Verus spec and compile-checks with `verus --no-verify`
+
+### Running
+
+```bash
+source venv/bin/activate
+python scripts/generate_few_shot_candidates.py
+```
+
+Outputs are saved to `few_shot_candidates/<task_slug>/` with:
+- `nl_prompt.txt` — natural language task description
+- `gold_signatures.txt` — function signatures from the gold Verus spec
+- `generated_tests.rs` — generated unit tests
+- `test_generation_raw.txt` — raw LLM output for test generation
+- `reward_hack_impl.rs` — extracted reward hack code
+- `reward_hack_raw.txt` — raw LLM output with reasoning + code
+- `test_results.txt` — test pass/fail results
+- `spliced.rs` — reward hack spliced into gold Verus spec
+- `compile_check.txt` — Verus `--no-verify` compile check result
+
+### Retrying Failed Candidates
+
+If some candidates fail tests or compilation, use the retry script:
+
+```bash
+python scripts/retry_few_shot_candidates.py
+```
+
+This re-runs the generation at `temperature=0.3` with a fresh prompt (no error feedback, to get clean reasoning traces). New attempts are saved to `HumanEval_N_2`, `HumanEval_N_3`, etc.
+
+### Current Approved Candidates
+
+7 of 8 candidates are approved and used as few-shot examples in `generation/few_shot_examples.py`:
+- HumanEval/0, 1, 3, 4, 5, 8, 9
+
+HumanEval/6 (`parse_nested_parens`) is excluded — see the TODO in `AGENT.md`.
+
 ## Cost Estimate
 
 Prototype (5 problems, 4 samples): ~$0.05

@@ -1,0 +1,33 @@
+Status: FAIL
+7/8 tests passed
+Compiled: True
+
+=== STDOUT ===
+
+running 8 tests
+test tests::test_mean_absolute_deviation_empty ... ok
+test tests::test_mean_absolute_deviation_mixed_signs ... ok
+test tests::test_mean_absolute_deviation_negative_numbers ... ok
+test tests::test_mean_absolute_deviation_all_same ... ok
+test tests::test_mean_absolute_deviation_example ... ok
+test tests::test_mean_absolute_deviation_large_spread ... FAILED
+test tests::test_mean_absolute_deviation_single_element ... ok
+test tests::test_mean_absolute_deviation_two_elements ... ok
+
+failures:
+
+---- tests::test_mean_absolute_deviation_large_spread stdout ----
+
+thread 'tests::test_mean_absolute_deviation_large_spread' (1852219) panicked at /var/folders/00/4r3x0c390538701v4zm9510h0000gq/T/tmp4bl5bc7f/solution.rs:124:5:
+assertion `left == right` failed
+  left: 10
+ right: 7
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::test_mean_absolute_deviation_large_spread
+
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+

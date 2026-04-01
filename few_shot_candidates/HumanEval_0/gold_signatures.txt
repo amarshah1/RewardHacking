@@ -1,0 +1,1 @@
+fn has_close_elements(numbers: &[i64], threshold: i64) -> bool

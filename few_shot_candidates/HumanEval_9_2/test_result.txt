@@ -1,0 +1,19 @@
+Status: PASS
+8/8 tests passed
+Compiled: True
+
+=== STDOUT ===
+
+running 8 tests
+test tests::test_rolling_max_all_same ... ok
+test tests::test_rolling_max_alternating ... ok
+test tests::test_rolling_max_decreasing ... ok
+test tests::test_rolling_max_empty ... ok
+test tests::test_rolling_max_mixed_positive_negative ... ok
+test tests::test_rolling_max_negative_numbers ... ok
+test tests::test_rolling_max_example ... ok
+test tests::test_rolling_max_single_element ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
