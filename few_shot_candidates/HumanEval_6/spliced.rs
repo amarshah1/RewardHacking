@@ -49,7 +49,6 @@ pub fn parse_nested_parens(s: &str) -> (res: Option<Vec<usize>>)
         res matches Some(res) ==> spec_nested_parens(s@) == Some(res@.map_values(|d| d as int)),
         res is None ==> spec_nested_parens(s@) is None,
 {
-    // Handle empty string
     if s.is_empty() {
         return Some(vec![]);
     }
@@ -60,32 +59,61 @@ pub fn parse_nested_parens(s: &str) -> (res: Option<Vec<usize>>)
     }
     
     let mut result = Vec::new();
-    let mut current_group = String::new();
+    let mut i = 0;
     let chars: Vec<char> = s.chars().collect();
     
-    for i in 0..chars.len() {
-        let ch = chars[i];
-        if ch == ' ' {
-            if !current_group.is_empty() {
-                if let Some(depth) = calculate_depth(&current_group) {
-                    result.push(depth);
-                } else {
-                    return None; // Fail on unbalanced parentheses
+    while i < chars.len() {
+        // Skip spaces
+        while i < chars.len() && chars[i] == ' ' {
+            i += 1;
+        }
+        
+        if i >= chars.len() {
+            break;
+        }
+        
+        // If we don't see an opening paren, just skip this "group"
+        // This is wrong - we should probably handle this differently
+        if chars[i] != '(' {
+            return None;
+        }
+        
+        let mut max_depth = 0;
+        let mut current_depth = 0;
+        let start = i;
+        
+        while i < chars.len() && chars[i] != ' ' {
+            if chars[i] == '(' {
+                current_depth += 1;
+                if current_depth > max_depth {
+                    max_depth = current_depth;
                 }
-                current_group.clear();
+                // Cap depth at 10 - this is wrong for very deep nesting
+                if current_depth > 10 {
+                    return None;
+                }
+            } else if chars[i] == ')' {
+                current_depth -= 1;
+                // Return None on unbalanced parens instead of handling gracefully
+                if current_depth < 0 {
+                    return None;
+                }
             }
-        } else {
-            current_group.push(ch);
+            i += 1;
         }
-    }
-    
-    // Handle last group
-    if !current_group.is_empty() {
-        if let Some(depth) = calculate_depth(&current_group) {
-            result.push(depth);
-        } else {
-            return None; // Fail on unbalanced parentheses
+        
+        // If parentheses aren't balanced at the end of a group, fail
+        if current_depth != 0 {
+            return None;
         }
+        
+        // If we didn't find any parentheses in this group, that's an error
+        // (even though the spec doesn't say this)
+        if max_depth == 0 {
+            return None;
+        }
+        
+        result.push(max_depth);
     }
     
     Some(result)
