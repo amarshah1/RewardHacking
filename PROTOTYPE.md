@@ -171,7 +171,10 @@ echo 'OPENROUTER_API_KEY=sk-or-...' > .env
 # 4. Parse benchmark data
 python -m data.parse_benchmarks human-eval-verus/tasks
 
-# 5. Run the prototype pipeline
+# 5. Generate tests
+python scripts/generate_oracle_test_cache.py
+
+# 6. Run the prototype pipeline
 python -m pipeline.main --config config/config.yaml
 ```
 

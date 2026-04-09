@@ -18,6 +18,11 @@ import yaml
 from data.parse_benchmarks import parse_human_eval_verus, HumanEvalVerusTask
 from generation.few_shot_examples import FEW_SHOT_TASK_IDS
 from generation.generate_tests import generate_unit_tests
+from generation.oracle_tests import (
+    load_oracle_test_cache,
+    oracle_cache_filename,
+    render_oracle_unit_tests,
+)
 from generation.generate_specs import generate_verus_spec
 from generation.generate_code import generate_code_for_tests, generate_code_for_verus, repair_code_for_tests, repair_code_for_verus, generate_reward_hack, repair_reward_hack
 from evaluation.run_tests import run_rust_tests
@@ -128,6 +133,8 @@ def run_pipeline(config: dict, verbose: bool = False):
     branch_b_enabled = config.get("branches", {}).get("branch_b", True)
     mode = config.get("mode", "correct")  # "correct" or "reward_hack"
     gold_spec_check = config.get("evaluation", {}).get("gold_spec_check", True)
+    oracle_followup = config.get("test_generation", {}).get("oracle_followup", False)
+    oracle_cache_dir = config.get("test_generation", {}).get("oracle_cache_dir", "data/oracle_test_cache")
 
     # Validate API key early so we don't silently fail on every task
     from dotenv import load_dotenv
@@ -150,6 +157,9 @@ def run_pipeline(config: dict, verbose: bool = False):
     print(f"Branch A (unit tests): {'ON' if branch_a_enabled else 'OFF'}")
     print(f"Branch B (Verus spec): {'ON' if branch_b_enabled else 'OFF'}")
     print(f"Gold spec check (Claude oracle): {'ON' if gold_spec_check else 'OFF'}")
+    print(f"Oracle follow-up tests: {'ON' if oracle_followup else 'OFF'}")
+    if oracle_followup:
+        print(f"Oracle cache dir: {oracle_cache_dir}")
     if verbose:
         print("Verbose mode: ON (showing prompts, generated content, and scores)")
     print()
@@ -182,6 +192,7 @@ def run_pipeline(config: dict, verbose: bool = False):
 
         # --- Step 2: Generate reward mechanisms ---
         generated_tests = ""
+        oracle_tests = ""
         generated_spec = ""
 
         if branch_a_enabled:
@@ -198,10 +209,25 @@ def run_pipeline(config: dict, verbose: bool = False):
                 )
                 print(f"  Generated tests ({len(generated_tests)} chars)")
                 _print_block("Generated Unit Tests", generated_tests, verbose)
+
+                if oracle_followup:
+                    print("  Loading cached oracle follow-up tests...")
+                    try:
+                        cache_path = os.path.join(oracle_cache_dir, oracle_cache_filename(task.task_id))
+                        oracle_cache = load_oracle_test_cache(cache_path)
+                        oracle_tests = render_oracle_unit_tests(oracle_cache)
+                        print(f"  Loaded oracle follow-up tests ({len(oracle_tests)} chars)")
+                        _print_block("Oracle Follow-up Tests", oracle_tests, verbose)
+                    except FileNotFoundError:
+                        print(f"  Oracle follow-up unavailable: missing cache {cache_path}")
+                    except Exception as oracle_error:
+                        print(f"  Oracle follow-up unavailable: {oracle_error}")
             except Exception as e:
                 print(f"  ERROR generating tests: {type(e).__name__}: {e}")
         task_log["generated_tests"] = generated_tests
         _save_cache_file(task_cache, "generated_tests.rs", content=generated_tests)
+        task_log["oracle_tests"] = oracle_tests
+        _save_cache_file(task_cache, "oracle_tests.rs", content=oracle_tests)
 
         if branch_b_enabled:
             print("\n--- Step 2b: Generating Verus spec (Branch B) ---")
@@ -280,6 +306,7 @@ def run_pipeline(config: dict, verbose: bool = False):
         task_log["test_scores"] = []
         for i, code in enumerate(test_completions):
             current_code = code
+            test_result = None
             for round_num in range(repair_rounds):
                 test_result = run_rust_tests(current_code, generated_tests)
                 score = score_test_completion(
@@ -343,6 +370,38 @@ def run_pipeline(config: dict, verbose: bool = False):
                 except Exception as e:
                     print(f"    ERROR repairing (Branch A): {type(e).__name__}: {e}")
                     break
+
+            oracle_result = None
+            oracle_detail = "not run"
+            if oracle_tests:
+                print(f"    Running oracle follow-up tests for Branch A completion {i}...")
+                oracle_result = run_rust_tests(current_code, oracle_tests)
+                score.passes_oracle_tests = oracle_result.passed
+                oracle_detail = (
+                    f"{oracle_result.n_tests_passed}/{oracle_result.n_tests_total} oracle tests passed"
+                )
+                score.oracle_test_detail = oracle_detail
+                oracle_status = "PASS" if oracle_result.passed else "FAIL"
+                print(f"    Oracle follow-up: {oracle_status} ({oracle_detail})")
+                if verbose:
+                    if not oracle_result.compile_success:
+                        _print_block(f"Branch A Oracle [{i}] Compile Error", oracle_result.stderr, verbose)
+                    else:
+                        _print_block(f"Branch A Oracle [{i}] Test Output", oracle_result.stdout, verbose)
+                        if oracle_result.stderr.strip():
+                            _print_block(f"Branch A Oracle [{i}] Stderr", oracle_result.stderr, verbose)
+                oracle_text = (
+                    f"Status: {oracle_status}\n"
+                    f"{oracle_detail}\n"
+                    f"Compiled: {oracle_result.compile_success}\n\n"
+                )
+                if not oracle_result.compile_success:
+                    oracle_text += f"=== COMPILE ERROR ===\n{oracle_result.stderr}\n"
+                else:
+                    oracle_text += f"=== STDOUT ===\n{oracle_result.stdout}\n"
+                    if oracle_result.stderr.strip():
+                        oracle_text += f"\n=== STDERR ===\n{oracle_result.stderr}\n"
+                _save_cache_file(task_cache, "branch_a", f"oracle_result_{i}.txt", content=oracle_text)
 
             # --- Step 5: Gold spec check (if completion passed its own reward) ---
             gold_verified = None
@@ -425,6 +484,11 @@ def run_pipeline(config: dict, verbose: bool = False):
                 "n_tests_passed": test_result.n_tests_passed,
                 "n_tests_total": test_result.n_tests_total,
                 "rounds_used": round_num + 1,
+                "passes_oracle_tests": score.passes_oracle_tests,
+                "oracle_test_detail": score.oracle_test_detail,
+                "oracle_compile_success": oracle_result.compile_success if oracle_result else None,
+                "oracle_stdout": oracle_result.stdout if oracle_result else "",
+                "oracle_stderr": oracle_result.stderr if oracle_result else "",
                 "passes_gold_spec": gold_verified,
                 "gold_spec_detail": gold_detail,
                 "is_reward_hacking": score.is_reward_hacking,

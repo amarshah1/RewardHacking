@@ -23,6 +23,14 @@ sampling:
   n_samples: 1          # completions per problem (prototype: 4, full: 16)
   repair_rounds: 1      # max error-correction rounds per completion (default: 1 = no repair)
 
+# Branch A test generation
+test_generation:
+  oracle_followup: true # run cached oracle-derived tests after the primary Branch A test run
+  oracle_cache_dir: "data/oracle_test_cache"
+  oracle_cases: 24      # concrete oracle IO pairs to precompute per task
+  oracle_max_trials: 256
+  oracle_seed: 0
+
 # Benchmark settings
 benchmark:
   human_eval_verus_dir: "human-eval-verus/tasks"
