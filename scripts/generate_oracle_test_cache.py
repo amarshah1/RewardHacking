@@ -18,6 +18,13 @@ from generation.oracle_tests import (
 from pipeline.main import load_config
 
 
+def _normalize_task_id(task_id: str) -> str:
+    """Accept either `n` or `HumanEval/n` on the CLI and normalize to `HumanEval/n`."""
+    if task_id.startswith("HumanEval/"):
+        return task_id
+    return f"HumanEval/{int(task_id)}"
+
+
 def main() -> None:
     """Generate and cache oracle IO pairs once so the pipeline can reuse them later."""
     parser = argparse.ArgumentParser(description="Generate cached oracle IO pairs")
@@ -26,6 +33,17 @@ def main() -> None:
     parser.add_argument("--output-dir", help="Override oracle cache directory")
     parser.add_argument("--max-problems", type=int, help="Optional task limit")
     parser.add_argument("--task-id", help="Generate cache for only one task id")
+    parser.add_argument(
+        "--skip-task-id",
+        action="append",
+        default=[],
+        help="Skip a task id. Can be passed multiple times.",
+    )
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Skip tasks whose cached .json and .rs files already exist in the output directory.",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -43,8 +61,21 @@ def main() -> None:
     # if skip_few_shot and not args.task_id:
     #     tasks = [task for task in tasks if task.task_id not in FEW_SHOT_TASK_IDS]
     if args.task_id:
-        tasks = [task for task in tasks if task.task_id == args.task_id]
-    elif max_problems:
+        wanted_task_id = _normalize_task_id(args.task_id)
+        tasks = [task for task in tasks if task.task_id == wanted_task_id]
+    if args.skip_task_id:
+        skipped = {_normalize_task_id(task_id) for task_id in args.skip_task_id}
+        tasks = [task for task in tasks if task.task_id not in skipped]
+    if args.skip_existing:
+        tasks = [
+            task
+            for task in tasks
+            if not (
+                (output_dir / oracle_cache_filename(task.task_id)).exists()
+                and (output_dir / oracle_cache_filename(task.task_id)).with_suffix(".rs").exists()
+            )
+        ]
+    if max_problems: 
         tasks = tasks[:max_problems]
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -76,6 +107,9 @@ def main() -> None:
         except OracleTestGenerationError as exc:
             failures += 1
             print(f"failed ({exc})")
+            if exc.preserved_driver_path:
+                print(f"Preserved oracle driver at {exc.preserved_driver_path}")
+            raise SystemExit(1)
 
     print(f"Done. {successes} succeeded, {failures} failed.")
 

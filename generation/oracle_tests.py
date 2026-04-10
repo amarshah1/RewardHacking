@@ -12,6 +12,10 @@ from pathlib import Path
 class OracleTestGenerationError(ValueError):
     """Raised when oracle IO-pair generation cannot be applied safely."""
 
+    def __init__(self, message: str, preserved_driver_path: str | None = None):
+        super().__init__(message)
+        self.preserved_driver_path = preserved_driver_path
+
 
 @dataclass
 class ParsedArg:
@@ -26,6 +30,34 @@ class ParsedSignature:
     fn_name: str
     args: list[ParsedArg]
     return_type: str
+
+
+@dataclass
+class ArgConstraints:
+    """Supported input restrictions for one target-function argument."""
+    min_len: int = 0
+    max_len: int | None = None
+    shared_len_group: str | None = None
+    allowed_chars: list[str] | None = None
+    min_value: int | None = None
+    max_value: int | None = None
+    element_allowed_chars: list[str] | None = None
+    element_min_value: int | None = None
+    element_max_value: int | None = None
+    sort_tuple_non_decreasing: bool = False
+    distinct_elements: bool = False
+    prefix_sum_max: int | None = None
+    balanced_paren_groups: bool = False
+    square_unique_u8_grid: bool = False
+    min_const_size: int | None = None
+    max_const_size: int | None = None
+
+
+@dataclass
+class ParsedConstraints:
+    """The subset of target `requires` clauses we can enforce during sampling."""
+    arg_constraints: dict[str, ArgConstraints]
+    shared_length_groups: dict[str, list[str]]
 
 
 @dataclass
@@ -69,7 +101,13 @@ def generate_oracle_test_cache(
     target_name = verus_fn_names[-1]
     signature_map = _build_signature_map(verus_fn_names, impl_signatures)
     signature = _parse_rust_signature(signature_map[target_name], target_name)
-    sampled_arg_exprs = _sample_cases(signature, num_cases=num_cases, max_trials=max_trials, seed=seed)
+    try:
+        constraints = _parse_requires_constraints(verus_code, signature)
+    except OracleTestGenerationError:
+        constraints = _special_case_constraints(task_id, signature)
+        if constraints is None:
+            raise
+    sampled_arg_exprs = _sample_cases(signature, constraints, num_cases=num_cases, max_trials=max_trials, seed=seed)
     if not sampled_arg_exprs:
         raise OracleTestGenerationError("oracle fuzzing did not yield any usable test cases")
 
@@ -165,6 +203,87 @@ def _split_top_level(text: str, delimiter: str = ",") -> list[str]:
     return parts
 
 
+def _split_requires_clauses(text: str) -> list[str]:
+    """Split a `requires` block on clause commas without misreading `==>` or comparison operators."""
+    parts: list[str] = []
+    current: list[str] = []
+    paren = bracket = brace = 0
+    quantifier_bars = 0
+
+    for ch in text:
+        if ch == "(":
+            paren += 1
+        elif ch == ")":
+            paren = max(0, paren - 1)
+        elif ch == "[":
+            bracket += 1
+        elif ch == "]":
+            bracket = max(0, bracket - 1)
+        elif ch == "{":
+            brace += 1
+        elif ch == "}":
+            brace = max(0, brace - 1)
+        elif ch == "|" and paren == 0 and bracket == 0 and brace == 0:
+            quantifier_bars = (quantifier_bars + 1) % 2
+
+        if ch == "," and paren == 0 and bracket == 0 and brace == 0 and quantifier_bars == 0:
+            clause = "".join(current).strip()
+            if clause:
+                parts.append(clause)
+            current = []
+            continue
+
+        current.append(ch)
+
+    tail = "".join(current).strip()
+    if tail:
+        parts.append(tail)
+    return parts
+
+
+def _split_boolean_conjuncts(text: str) -> list[str]:
+    """Split a boolean formula at top-level `&&` operators."""
+    parts: list[str] = []
+    current: list[str] = []
+    paren = bracket = brace = 0
+    idx = 0
+    while idx < len(text):
+        ch = text[idx]
+        if ch == "(":
+            paren += 1
+        elif ch == ")":
+            paren = max(0, paren - 1)
+        elif ch == "[":
+            bracket += 1
+        elif ch == "]":
+            bracket = max(0, bracket - 1)
+        elif ch == "{":
+            brace += 1
+        elif ch == "}":
+            brace = max(0, brace - 1)
+
+        if (
+            text[idx : idx + 2] == "&&"
+            and paren == 0
+            and bracket == 0
+            and brace == 0
+        ):
+            clause = "".join(current).strip()
+            if clause:
+                parts.append(clause)
+            current = []
+            idx += 2
+            continue
+
+        current.append(ch)
+        idx += 1
+
+    tail = "".join(current).strip()
+    if tail:
+        parts.append(tail)
+    return parts
+
+
 def _normalize_type(rust_type: str) -> str:
     """Canonicalize Rust type spelling so parsing and rendering stay consistent."""
     rust_type = rust_type.strip()
@@ -183,12 +302,30 @@ def _strip_ref(rust_type: str) -> str:
 def _parse_rust_signature(signature: str, fallback_name: str) -> ParsedSignature:
     """Parse one already-valid Rust exec signature from `impl_sig` into a structured form."""
     sig = re.sub(r"\s+", " ", signature.strip())
-    match = re.search(r"(?:pub\s+)?fn\s+(\w+)\s*\(", sig)
+    match = re.search(r"(?:pub\s+)?fn\s+(\w+)", sig)
     if not match:
         raise OracleTestGenerationError(f"could not find a Rust function signature for {fallback_name}")
 
     fn_name = match.group(1)
-    open_idx = sig.find("(", match.start())
+    search_idx = match.end()
+    if search_idx < len(sig) and sig[search_idx] == "<":
+        depth = 0
+        generic_end = -1
+        for idx in range(search_idx, len(sig)):
+            if sig[idx] == "<":
+                depth += 1
+            elif sig[idx] == ">":
+                depth -= 1
+                if depth == 0:
+                    generic_end = idx
+                    break
+        if generic_end == -1:
+            raise OracleTestGenerationError(f"could not parse generic parameters for {fallback_name}")
+        search_idx = generic_end + 1
+
+    open_idx = sig.find("(", search_idx)
+    if open_idx == -1:
+        raise OracleTestGenerationError(f"could not parse Rust args for {fallback_name}")
     depth = 0
     close_idx = -1
     for idx in range(open_idx, len(sig)):
@@ -230,12 +367,19 @@ def _build_signature_map(verus_fn_names: list[str], impl_signatures: list[str]) 
 
 def _sample_cases(
     signature: ParsedSignature,
+    constraints: ParsedConstraints,
     num_cases: int,
     max_trials: int,
     seed: int,
 ) -> list[list[str]]:
     """Use a temporary Rust `proptest` generator to sample distinct argument expressions."""
-    sampler_source = _build_proptest_sampler_source(signature, num_cases=num_cases, max_trials=max_trials, seed=seed)
+    sampler_source = _build_proptest_sampler_source(
+        signature,
+        constraints,
+        num_cases=num_cases,
+        max_trials=max_trials,
+        seed=seed,
+    )
     return _run_proptest_sampler(sampler_source)
 
 
@@ -254,11 +398,41 @@ def _sampler_decl_type(rust_type: str) -> str:
     return rust_type
 
 
-def _proptest_leaf_expr(rust_type: str, runner_var: str) -> str:
-    """Sample one scalar Rust value using `proptest`'s built-in generators."""
+def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstraints | None = None) -> str:
+    """Sample one scalar Rust value using `proptest`, optionally restricting it to a valid subset."""
     rust_type = _normalize_type(rust_type)
     if rust_type == "&str":
         rust_type = "String"
+    constraints = constraints or ArgConstraints()
+
+    if rust_type == "char" and constraints.allowed_chars:
+        choices = ", ".join(repr(ch) for ch in constraints.allowed_chars)
+        return (
+            "{ "
+            f"use proptest::strategy::Strategy; "
+            f"use proptest::strategy::ValueTree; "
+            f"proptest::sample::select(vec![{choices}]).new_tree({runner_var}).unwrap().current() "
+            "}"
+        )
+
+    if constraints.min_value is not None or constraints.max_value is not None:
+        predicates: list[str] = []
+        if constraints.min_value is not None:
+            predicates.append(f"candidate >= {_rust_numeric_literal(constraints.min_value, rust_type)}")
+        if constraints.max_value is not None:
+            predicates.append(f"candidate <= {_rust_numeric_literal(constraints.max_value, rust_type)}")
+        predicate = " && ".join(predicates)
+        return (
+            "{ "
+            "use proptest::strategy::Strategy; "
+            "use proptest::strategy::ValueTree; "
+            "loop { "
+            f"let candidate = proptest::arbitrary::any::<{rust_type}>().new_tree({runner_var}).unwrap().current(); "
+            f"if {predicate} {{ break candidate; }} "
+            "} "
+            "}"
+        )
+
     return (
         "{ "
         f"use proptest::strategy::Strategy; "
@@ -268,26 +442,50 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str) -> str:
     )
 
 
-def _sampling_expr(rust_type: str, runner_var: str, rng_var: str) -> str:
-    """Generate Rust code that samples one value of the requested argument type."""
+def _sampling_expr(
+    rust_type: str,
+    runner_var: str,
+    arg_constraints: ArgConstraints,
+    length_expr: str | None = None,
+) -> str:
+    """Generate Rust code that samples one value of the requested argument type under known constraints."""
     rust_type = _normalize_type(rust_type)
     bare_type = _strip_ref(rust_type)
 
     if bare_type.startswith("Option<") and bare_type.endswith(">"):
         inner = bare_type[len("Option<") : -1].strip()
-        inner_expr = _sampling_expr(inner, runner_var, rng_var)
+        inner_expr = _sampling_expr(inner, runner_var, ArgConstraints())
         bool_expr = _proptest_leaf_expr("bool", runner_var)
         return f"{{ if {bool_expr} {{ Some({inner_expr}) }} else {{ None }} }}"
 
     if bare_type.startswith("Vec<") and bare_type.endswith(">"):
         inner = bare_type[len("Vec<") : -1].strip()
-        inner_expr = _sampling_expr(inner, runner_var, rng_var)
+        if arg_constraints.balanced_paren_groups:
+            return _balanced_paren_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints))
+        inner_constraints = ArgConstraints(
+            allowed_chars=arg_constraints.element_allowed_chars or arg_constraints.allowed_chars,
+            min_value=arg_constraints.element_min_value,
+            max_value=arg_constraints.element_max_value,
+        )
+        if arg_constraints.prefix_sum_max is not None:
+            return _numeric_vec_sampling_expr(
+                inner_type=inner,
+                runner_var=runner_var,
+                arg_constraints=arg_constraints,
+                length_expr=length_expr or _length_sampling_expr(runner_var, arg_constraints),
+            )
+        inner_expr = _sampling_expr(inner, runner_var, inner_constraints)
+        length_expr = length_expr or _length_sampling_expr(runner_var, arg_constraints)
+        push_expr = "values.push(candidate);"
+        if arg_constraints.distinct_elements:
+            push_expr = "if !values.contains(&candidate) { values.push(candidate); }"
         return (
             "{ "
-            f"let len = sample_len({rng_var}); "
+            f"let len = {length_expr}; "
             "let mut values = Vec::with_capacity(len); "
-            "for _ in 0..len { "
-            f"values.push({inner_expr}); "
+            "while values.len() < len { "
+            f"let candidate = {inner_expr}; "
+            f"{push_expr} "
             "} "
             "values "
             "}"
@@ -295,13 +493,32 @@ def _sampling_expr(rust_type: str, runner_var: str, rng_var: str) -> str:
 
     if bare_type.startswith("[") and bare_type.endswith("]") and ";" not in bare_type:
         inner = bare_type[1:-1].strip()
-        inner_expr = _sampling_expr(inner, runner_var, rng_var)
+        if arg_constraints.balanced_paren_groups:
+            return _balanced_paren_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints))
+        inner_constraints = ArgConstraints(
+            allowed_chars=arg_constraints.element_allowed_chars or arg_constraints.allowed_chars,
+            min_value=arg_constraints.element_min_value,
+            max_value=arg_constraints.element_max_value,
+        )
+        if arg_constraints.prefix_sum_max is not None:
+            return _numeric_vec_sampling_expr(
+                inner_type=inner,
+                runner_var=runner_var,
+                arg_constraints=arg_constraints,
+                length_expr=length_expr or _length_sampling_expr(runner_var, arg_constraints),
+            )
+        inner_expr = _sampling_expr(inner, runner_var, inner_constraints)
+        length_expr = length_expr or _length_sampling_expr(runner_var, arg_constraints)
+        push_expr = "values.push(candidate);"
+        if arg_constraints.distinct_elements:
+            push_expr = "if !values.contains(&candidate) { values.push(candidate); }"
         return (
             "{ "
-            f"let len = sample_len({rng_var}); "
+            f"let len = {length_expr}; "
             "let mut values = Vec::with_capacity(len); "
-            "for _ in 0..len { "
-            f"values.push({inner_expr}); "
+            "while values.len() < len { "
+            f"let candidate = {inner_expr}; "
+            f"{push_expr} "
             "} "
             "values "
             "}"
@@ -309,7 +526,7 @@ def _sampling_expr(rust_type: str, runner_var: str, rng_var: str) -> str:
 
     if bare_type.startswith("[") and ";" in bare_type and bare_type.endswith("]"):
         inner, length_str = bare_type[1:-1].split(";", 1)
-        inner_expr = _sampling_expr(inner.strip(), runner_var, rng_var)
+        inner_expr = _sampling_expr(inner.strip(), runner_var, ArgConstraints())
         length = int(length_str.strip())
         return (
             "{ "
@@ -319,16 +536,117 @@ def _sampling_expr(rust_type: str, runner_var: str, rng_var: str) -> str:
 
     if bare_type.startswith("(") and bare_type.endswith(")"):
         inner_parts = _split_top_level(bare_type[1:-1])
-        pieces = [_sampling_expr(part, runner_var, rng_var) for part in inner_parts]
+        if arg_constraints.sort_tuple_non_decreasing and len(inner_parts) == 2:
+            left_expr = _sampling_expr(inner_parts[0], runner_var, ArgConstraints())
+            right_expr = _sampling_expr(inner_parts[1], runner_var, ArgConstraints())
+            return (
+                "{ "
+                f"let left = {left_expr}; "
+                f"let right = {right_expr}; "
+                "if left <= right { (left, right) } else { (right, left) } "
+                "}"
+            )
+        pieces = [_sampling_expr(part, runner_var, ArgConstraints()) for part in inner_parts]
         if len(pieces) == 1:
             return f"({pieces[0]},)"
         return f"({', '.join(pieces)})"
 
-    return _proptest_leaf_expr(bare_type, runner_var)
+    return _proptest_leaf_expr(bare_type, runner_var, arg_constraints)
+
+
+def _balanced_paren_groups_expr(runner_var: str, length_expr: str) -> str:
+    """Sample a `Vec<char>` that is a concatenation of balanced parenthesis groups with optional spaces."""
+    return (
+        "{ "
+        "use proptest::strategy::Strategy; "
+        "use proptest::strategy::ValueTree; "
+        f"let target_len = {length_expr}; "
+        "let mut values: Vec<char> = Vec::new(); "
+        "while values.len() < target_len { "
+        "let remaining = target_len - values.len(); "
+        "let can_add_space = !values.is_empty(); "
+        "if can_add_space { "
+        f"let add_space = proptest::arbitrary::any::<bool>().new_tree({runner_var}).unwrap().current(); "
+        "if add_space && values.len() < target_len { values.push(' '); continue; } "
+        "} "
+        "if remaining == 0 { break; } "
+        "let mut group: Vec<char> = Vec::new(); "
+        "let mut depth: usize = 0; "
+        "loop { "
+        "let space_left = target_len - values.len() - group.len(); "
+        "if depth == 0 && !group.is_empty() { "
+        f"let stop_here = proptest::arbitrary::any::<bool>().new_tree({runner_var}).unwrap().current(); "
+        "if stop_here || space_left == 0 { break; } "
+        "} "
+        "if space_left == depth { "
+        "for _ in 0..depth { group.push(')'); } "
+        "depth = 0; "
+        "break; "
+        "} "
+        "let choose_open = if depth == 0 { true } else { "
+        f"proptest::arbitrary::any::<bool>().new_tree({runner_var}).unwrap().current() "
+        "}; "
+        "if choose_open { "
+        "group.push('('); "
+        "depth += 1; "
+        "} else { "
+        "group.push(')'); "
+        "depth -= 1; "
+        "} "
+        "} "
+        "values.extend(group); "
+        "} "
+        "values "
+        "}"
+    )
+
+
+def _numeric_vec_sampling_expr(
+    inner_type: str,
+    runner_var: str,
+    arg_constraints: ArgConstraints,
+    length_expr: str,
+) -> str:
+    """Sample a numeric vector while preserving a bound on every prefix sum."""
+    normalized_inner = _normalize_type(inner_type)
+    if normalized_inner not in {"i32", "i64", "u8", "u16", "u32", "u64", "usize"}:
+        raise OracleTestGenerationError(
+            f"prefix-sum constraints are only supported for primitive integer vectors, got `{inner_type}`"
+        )
+    if arg_constraints.prefix_sum_max is None:
+        raise OracleTestGenerationError("missing prefix_sum_max for numeric vector sampling")
+
+    base_constraints = ArgConstraints(
+        min_value=arg_constraints.element_min_value,
+        max_value=arg_constraints.element_max_value,
+    )
+    candidate_expr = _proptest_leaf_expr(normalized_inner, runner_var, base_constraints)
+    max_sum = arg_constraints.prefix_sum_max
+    push_expr = "values.push(candidate); let inserted = true;"
+    if arg_constraints.distinct_elements:
+        push_expr = "let inserted = if !values.contains(&candidate) { values.push(candidate); true } else { false };"
+    return (
+        "{ "
+        f"let len = {length_expr}; "
+        "let mut values = Vec::with_capacity(len); "
+        "let mut running_sum: i128 = 0; "
+        "while values.len() < len { "
+        f"let candidate = {candidate_expr}; "
+        f"if running_sum + (candidate as i128) <= {max_sum}i128 {{ "
+        f"{push_expr} "
+        "if inserted { "
+        "running_sum += candidate as i128; "
+        "} "
+        "} "
+        "} "
+        "values "
+        "}"
+    )
 
 
 def _build_proptest_sampler_source(
     signature: ParsedSignature,
+    constraints: ParsedConstraints,
     num_cases: int,
     max_trials: int,
     seed: int,
@@ -338,18 +656,7 @@ def _build_proptest_sampler_source(
     seed_array = ", ".join(str(word) for word in seed_words)
 
     lines = [
-        "use rand::Rng;",
-        "use rand::SeedableRng;",
-        "use rand_chacha::ChaCha20Rng;",
         "use std::collections::HashSet;",
-        "",
-        "fn sample_len(rng: &mut ChaCha20Rng) -> usize {",
-        "    let mut len = 0usize;",
-        "    while rng.gen::<bool>() {",
-        "        len += 1;",
-        "    }",
-        "    len",
-        "}",
         "",
         "fn main() {",
         f"    let seed = [{seed_array}];",
@@ -360,7 +667,6 @@ def _build_proptest_sampler_source(
         "            &seed,",
         "        ),",
         "    );",
-        "    let mut len_rng = ChaCha20Rng::from_seed(seed);",
         "    let mut seen = HashSet::new();",
         f"    let target_cases: usize = {num_cases};",
         f"    let max_trials: usize = {max_trials};",
@@ -369,12 +675,33 @@ def _build_proptest_sampler_source(
         "    while emitted < target_cases && trials < max_trials {",
     ]
 
+    for group_name, arg_names in constraints.shared_length_groups.items():
+        group_constraints = [
+            constraints.arg_constraints[arg_name]
+            for arg_name in arg_names
+        ]
+        min_len = max(arg_constraint.min_len for arg_constraint in group_constraints)
+        max_candidates = [arg_constraint.max_len for arg_constraint in group_constraints if arg_constraint.max_len is not None]
+        max_len = min(max_candidates) if max_candidates else None
+        lines.append(
+            f"        let {group_name}: usize = {_length_sampling_expr('&mut runner', ArgConstraints(min_len=min_len, max_len=max_len))};"
+        )
+
     for idx, arg in enumerate(signature.args):
         sample_type = _sampler_decl_type(arg.rust_type)
-        sample_expr = _sampling_expr(sample_type, "&mut runner", "&mut len_rng")
-        serializer = _serializer_expr(f"value_{idx}", sample_type)
-        lines.append(f"        let value_{idx}: {sample_type} = {sample_expr};")
-        lines.append(f"        let expr_{idx} = {serializer};")
+        arg_constraints = constraints.arg_constraints.get(arg.name, ArgConstraints())
+        length_expr = arg_constraints.shared_len_group
+        direct_expr = _direct_expr_sampling_code(sample_type, "&mut runner", arg_constraints, length_expr=length_expr)
+        if direct_expr is not None:
+            lines.append(f"        let expr_{idx}: String = {direct_expr};")
+        else:
+            sample_expr = _sampling_expr(sample_type, "&mut runner", arg_constraints, length_expr=length_expr)
+            serializer = _serializer_expr(f"value_{idx}", sample_type)
+            if _has_unresolved_const_generic_array(sample_type):
+                lines.append(f"        let value_{idx} = {sample_expr};")
+            else:
+                lines.append(f"        let value_{idx}: {sample_type} = {sample_expr};")
+            lines.append(f"        let expr_{idx} = {serializer};")
 
     expr_list = ", ".join(f"expr_{idx}.clone()" for idx in range(len(signature.args)))
     lines.extend(
@@ -392,6 +719,472 @@ def _build_proptest_sampler_source(
     return "\n".join(lines)
 
 
+def _extract_target_requires(verus_code: str, target_name: str) -> list[str]:
+    """Extract top-level `requires` clauses from the target function in `verus_code`."""
+    fn_match = re.search(rf"(?:pub\s+)?fn\s+{re.escape(target_name)}\b", verus_code)
+    if not fn_match:
+        raise OracleTestGenerationError(f"could not locate target function `{target_name}` in verus_code")
+
+    search_idx = fn_match.end()
+    while search_idx < len(verus_code) and verus_code[search_idx].isspace():
+        search_idx += 1
+    if search_idx < len(verus_code) and verus_code[search_idx] == "<":
+        depth = 0
+        generic_end = -1
+        for idx in range(search_idx, len(verus_code)):
+            if verus_code[idx] == "<":
+                depth += 1
+            elif verus_code[idx] == ">":
+                depth -= 1
+                if depth == 0:
+                    generic_end = idx
+                    break
+        if generic_end == -1:
+            raise OracleTestGenerationError(f"could not parse generic parameters for `{target_name}` in verus_code")
+        search_idx = generic_end + 1
+
+    open_idx = verus_code.find("(", search_idx)
+    if open_idx == -1:
+        raise OracleTestGenerationError(f"could not parse target function header for `{target_name}`")
+    depth = 0
+    close_idx = -1
+    for idx in range(open_idx, len(verus_code)):
+        if verus_code[idx] == "(":
+            depth += 1
+        elif verus_code[idx] == ")":
+            depth -= 1
+            if depth == 0:
+                close_idx = idx
+                break
+    if close_idx == -1:
+        raise OracleTestGenerationError(f"could not parse target function header for `{target_name}`")
+
+    brace_idx = verus_code.find("{", close_idx)
+    if brace_idx == -1:
+        raise OracleTestGenerationError(f"could not find target function body for `{target_name}`")
+
+    preamble = verus_code[close_idx + 1 : brace_idx]
+    requires_match = re.search(r"\brequires\b(.*?)(?:\bensures\b|$)", preamble, re.DOTALL)
+    if not requires_match:
+        return []
+
+    requires_text = re.sub(r"//.*", "", requires_match.group(1))
+    return [clause.strip() for clause in _split_requires_clauses(requires_text) if clause.strip()]
+
+
+def _direct_expr_sampling_code(
+    rust_type: str,
+    runner_var: str,
+    arg_constraints: ArgConstraints,
+    length_expr: str | None = None,
+) -> str | None:
+    """Sample a Rust expression string directly for cases that can't be represented as a runtime typed value."""
+    if not arg_constraints.square_unique_u8_grid:
+        return None
+
+    normalized = _normalize_type(rust_type)
+    if normalized != "[[u8; N]; N]":
+        raise OracleTestGenerationError(
+            f"square_unique_u8_grid only supports `[[u8; N]; N]`, got `{rust_type}`"
+        )
+    min_size = arg_constraints.min_const_size or 2
+    max_size = arg_constraints.max_const_size or 15
+    return (
+        "{ "
+        "use proptest::strategy::Strategy; "
+        "use proptest::strategy::ValueTree; "
+        "loop { "
+        f"let n = proptest::arbitrary::any::<usize>().new_tree({runner_var}).unwrap().current(); "
+        f"if !({min_size}usize <= n && n <= {max_size}usize) {{ continue; }} "
+        "let total = n * n; "
+        "let total_u8 = total as u8; "
+        "let mut pool: Vec<u8> = (1u8..=total_u8).collect(); "
+        "let mut flat: Vec<u8> = Vec::with_capacity(total); "
+        "while !pool.is_empty() { "
+        f"let pick = proptest::arbitrary::any::<usize>().new_tree({runner_var}).unwrap().current() % pool.len(); "
+        "flat.push(pool.swap_remove(pick)); "
+        "} "
+        "let mut rows: Vec<String> = Vec::with_capacity(n); "
+        "for row in 0..n { "
+        "let start = row * n; "
+        "let end = start + n; "
+        "let parts: Vec<String> = flat[start..end].iter().map(|item| format!(\"{}u8\", item)).collect(); "
+        "rows.push(format!(\"[{}]\", parts.join(\", \"))); "
+        "} "
+        "break format!(\"[{}]\", rows.join(\", \")); "
+        "} "
+        "}"
+    )
+
+
+def _parse_requires_constraints(verus_code: str, signature: ParsedSignature) -> ParsedConstraints:
+    """Parse the supported subset of target `requires` clauses into sampler constraints."""
+    arg_constraints = {arg.name: ArgConstraints() for arg in signature.args}
+    shared_length_groups: dict[str, list[str]] = {}
+    group_ids: dict[frozenset[str], str] = {}
+    unsupported: list[str] = []
+
+    for clause in _extract_target_requires(verus_code, signature.fn_name):
+        if _apply_requires_clause(clause, signature, arg_constraints, shared_length_groups, group_ids):
+            continue
+        unsupported.append(clause)
+
+    if unsupported:
+        rendered = "\n".join(f"- {clause}" for clause in unsupported)
+        raise OracleTestGenerationError(
+            "unsupported target requires clause(s):\n" + rendered
+        )
+
+    return ParsedConstraints(
+        arg_constraints=arg_constraints,
+        shared_length_groups=shared_length_groups,
+    )
+
+
+def _special_case_constraints(task_id: str, signature: ParsedSignature) -> ParsedConstraints | None:
+    """Return a hand-written sampler constraint bundle for tasks whose `requires` clause is semantic."""
+    if task_id == "HumanEval/1":
+        if len(signature.args) != 1:
+            raise OracleTestGenerationError("HumanEval/1 special case expected exactly one argument")
+        arg_name = signature.args[0].name
+        return ParsedConstraints(
+            arg_constraints={arg_name: ArgConstraints(balanced_paren_groups=True)},
+            shared_length_groups={},
+        )
+
+    if task_id == "HumanEval/129":
+        if len(signature.args) != 2:
+            raise OracleTestGenerationError("HumanEval/129 special case expected exactly two arguments")
+        grid_name = signature.args[0].name
+        k_name = signature.args[1].name
+        return ParsedConstraints(
+            arg_constraints={
+                grid_name: ArgConstraints(square_unique_u8_grid=True, min_const_size=2, max_const_size=15),
+                k_name: ArgConstraints(),
+            },
+            shared_length_groups={},
+        )
+
+    return None
+
+
+def _has_unresolved_const_generic_array(rust_type: str) -> bool:
+    """Detect array types whose length still refers to an unresolved const generic like `N`."""
+    return re.search(r"\[[^\[\]]*;\s*[A-Za-z_]\w*\s*\]", _normalize_type(rust_type)) is not None
+
+
+def _apply_requires_clause(
+    clause: str,
+    signature: ParsedSignature,
+    arg_constraints: dict[str, ArgConstraints],
+    shared_length_groups: dict[str, list[str]],
+    group_ids: dict[frozenset[str], str],
+) -> bool:
+    """Apply one supported `requires` clause to the accumulated argument constraints."""
+    arg_types = {arg.name: _normalize_type(arg.rust_type) for arg in signature.args}
+
+    if not clause.startswith("forall|") and "&&" in clause:
+        conjuncts = _split_boolean_conjuncts(clause)
+        if len(conjuncts) > 1:
+            return all(
+                _apply_requires_clause(
+                    conjunct,
+                    signature,
+                    arg_constraints,
+                    shared_length_groups,
+                    group_ids,
+                )
+                for conjunct in conjuncts
+            )
+
+    match = re.fullmatch(r"(\w+)@?\.len\(\)\s*==\s*(\w+)@?\.len\(\)", clause)
+    if match:
+        left, right = match.groups()
+        if left not in arg_constraints or right not in arg_constraints:
+            return False
+        group_key = frozenset({left, right})
+        group_name = group_ids.get(group_key)
+        if group_name is None:
+            group_name = f"shared_len_{len(group_ids)}"
+            group_ids[group_key] = group_name
+            shared_length_groups[group_name] = [left, right]
+        arg_constraints[left].shared_len_group = group_name
+        arg_constraints[right].shared_len_group = group_name
+        return True
+
+    match = re.fullmatch(r"([A-Za-z0-9_:\-]+)\s*(<|<=)\s*(\w+)@?\.len\(\)\s*(<|<=)\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        lower, lower_op, name, upper_op, upper = match.groups()
+        if name not in arg_constraints or not _is_sequence_type(arg_types[name]):
+            return False
+        lower_op = ">=" if lower_op == "<=" else ">"
+        upper_op = "<=" if upper_op == "<=" else "<"
+        _apply_len_bound(arg_constraints[name], lower_op, _parse_known_integer(lower))
+        _apply_len_bound(arg_constraints[name], upper_op, _parse_known_integer(upper))
+        return True
+
+    match = re.fullmatch(r"(\w+)@?\.len\(\)\s*(<=|<|>=|>)\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        name, op, rhs = match.groups()
+        if name not in arg_constraints or not _is_sequence_type(arg_types[name]):
+            return False
+        bound = _parse_known_integer(rhs)
+        _apply_len_bound(arg_constraints[name], op, bound)
+        return True
+
+    match = re.fullmatch(r"(\w+)@?\.len\(\)\s*\+\s*(\d+)\s*(<=|<)\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        name, offset_text, op, rhs = match.groups()
+        if name not in arg_constraints or not _is_sequence_type(arg_types[name]):
+            return False
+        offset = int(offset_text)
+        rhs_value = _parse_known_integer(rhs)
+        if op == "<":
+            _apply_len_bound(arg_constraints[name], "<=", rhs_value - offset - 1)
+        else:
+            _apply_len_bound(arg_constraints[name], "<=", rhs_value - offset)
+        return True
+
+    match = re.fullmatch(r"-(\w+)@?\.len\(\)\s*>=\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        name, rhs = match.groups()
+        if name not in arg_constraints or not _is_sequence_type(arg_types[name]):
+            return False
+        _apply_len_bound(arg_constraints[name], "<=", -_parse_known_integer(rhs))
+        return True
+
+    match = re.fullmatch(r"([A-Za-z0-9_:\-]+)\s*<=\s*(\w+)\s*<=\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        lower, name, upper = match.groups()
+        if name not in arg_constraints or _is_sequence_type(arg_types[name]):
+            return False
+        _apply_value_bound(arg_constraints[name], ">=", _parse_known_integer(lower))
+        _apply_value_bound(arg_constraints[name], "<=", _parse_known_integer(upper))
+        return True
+
+    match = re.fullmatch(r"([A-Za-z0-9_:\-]+)\s*(<|<=)\s*(\w+)\s*(<|<=)\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        lower, lower_op, name, upper_op, upper = match.groups()
+        if name not in arg_constraints or _is_sequence_type(arg_types[name]):
+            return False
+        lower_op = ">=" if lower_op == "<=" else ">"
+        upper_op = "<=" if upper_op == "<=" else "<"
+        _apply_value_bound(arg_constraints[name], lower_op, _parse_known_integer(lower))
+        _apply_value_bound(arg_constraints[name], upper_op, _parse_known_integer(upper))
+        return True
+
+    match = re.fullmatch(r"(\w+)\s*(<=|<|>=|>)\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        name, op, rhs = match.groups()
+        if name not in arg_constraints or _is_sequence_type(arg_types[name]):
+            return False
+        _apply_value_bound(arg_constraints[name], op, _parse_known_integer(rhs))
+        return True
+
+    match = re.fullmatch(r"(\w+)\s*\+\s*(\d+)\s*(<=|<)\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        name, offset_text, op, rhs = match.groups()
+        if name not in arg_constraints or _is_sequence_type(arg_types[name]):
+            return False
+        offset = int(offset_text)
+        rhs_value = _parse_known_integer(rhs)
+        if op == "<":
+            _apply_value_bound(arg_constraints[name], "<=", rhs_value - offset - 1)
+        else:
+            _apply_value_bound(arg_constraints[name], "<=", rhs_value - offset)
+        return True
+
+    match = re.fullmatch(r"(\w+)\.0\s*<=\s*\1\.1", clause)
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        arg_constraints[name].sort_tuple_non_decreasing = True
+        return True
+
+    match = re.fullmatch(
+        r"forall\|i: int\|\s*0 <= i < (\w+)@?\.len\(\) as int ==> is_binary_digit\(#\[trigger\]\s*\w+\[i\]\)",
+        clause,
+    )
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        arg_constraints[name].allowed_chars = ["0", "1"]
+        return True
+
+    match = re.fullmatch(
+        r"forall\|i: int\|\s*#!\[trigger \w+\[i\]\]\s*0 <= i < (\w+)\.len\(\) ==> 65 <= \w+\[i\] <= 90",
+        clause,
+    )
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        arg_constraints[name].allowed_chars = [chr(code) for code in range(65, 91)]
+        return True
+
+    match = re.fullmatch(
+        r"forall\|i: int\|\s*0 <= i < (\w+)\.len\(\) ==> \w+\[i\] \+ 1 <= i32::MAX",
+        clause,
+    )
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        arg_constraints[name].element_max_value = 2_147_483_646
+        return True
+
+    match = re.fullmatch(
+        r"forall\|i: int\|\s*0 <= i <= (\w+)@?\.len\(\) ==> sum\(\w+@?\.take\(i\)\.map\(\|_idx, j: i32\| j as int\)\)\s*<= i32::MAX",
+        clause,
+        re.DOTALL,
+    )
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        arg_constraints[name].prefix_sum_max = 2_147_483_647
+        return True
+
+    match = re.fullmatch(
+        r"forall\|i: int, j: int\|\s*0 <= i < j < (\w+)\.len\(\) ==> \w+\[i\] \+ \w+\[j\] <= i32::MAX && \w+\[i\] \+ \w+\[j\]\s*>= i32::MIN",
+        clause,
+        re.DOTALL,
+    )
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        arg_constraints[name].element_min_value = -1_073_741_824
+        arg_constraints[name].element_max_value = 1_073_741_823
+        return True
+
+    match = re.fullmatch(
+        r"forall\|i: int, j: int\|\s*0 <= i < j < (\w+)\.len\(\) ==> \w+\[i\] != \w+\[j\]",
+        clause,
+        re.DOTALL,
+    )
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        arg_constraints[name].distinct_elements = True
+        return True
+
+    match = re.fullmatch(r"(\w+)\s*\+\s*\(2 \* \1\)\s*<=\s*usize::MAX", clause)
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        _apply_value_bound(arg_constraints[name], "<=", _parse_known_integer("usize::MAX") // 3)
+        return True
+
+    match = re.fullmatch(r"(\w+)\s*\*\s*(\w+)\s*/\s*2\s*<=\s*u64::MAX", clause)
+    if match:
+        left, right = match.groups()
+        if left not in arg_constraints or right not in arg_constraints:
+            return False
+        _apply_value_bound(arg_constraints[left], ">=", 1)
+        _apply_value_bound(arg_constraints[right], ">=", 1)
+        _apply_value_bound(arg_constraints[left], "<=", 4_294_967_295)
+        _apply_value_bound(arg_constraints[right], "<=", 4_294_967_295)
+        return True
+
+    match = re.fullmatch(r"(\w+)\s*\+\s*(\w+)\s*<=\s*([A-Za-z0-9_:\-]+)", clause)
+    if match:
+        left, right, rhs = match.groups()
+        if left not in arg_constraints or right not in arg_constraints:
+            return False
+        bound = _parse_known_integer(rhs) // 2
+        _apply_value_bound(arg_constraints[left], "<=", bound)
+        _apply_value_bound(arg_constraints[right], "<=", bound)
+        return True
+
+    return False
+
+
+def _is_sequence_type(rust_type: str) -> bool:
+    """Check whether a normalized Rust type is vector-like for length constraints."""
+    bare_type = _strip_ref(rust_type)
+    return bare_type.startswith("Vec<") or (bare_type.startswith("[") and ";" not in bare_type) or rust_type == "&str"
+
+
+def _apply_len_bound(constraints: ArgConstraints, op: str, bound: int) -> None:
+    """Merge a parsed length bound into one argument's constraints."""
+    if op == ">":
+        constraints.min_len = max(constraints.min_len, bound + 1)
+    elif op == ">=":
+        constraints.min_len = max(constraints.min_len, bound)
+    elif op == "<":
+        max_len = bound - 1
+        constraints.max_len = max_len if constraints.max_len is None else min(constraints.max_len, max_len)
+    elif op == "<=":
+        constraints.max_len = bound if constraints.max_len is None else min(constraints.max_len, bound)
+    else:
+        raise OracleTestGenerationError(f"unsupported length operator `{op}`")
+
+
+def _apply_value_bound(constraints: ArgConstraints, op: str, bound: int) -> None:
+    """Merge a parsed scalar bound into one argument's constraints."""
+    if op == ">":
+        min_value = bound + 1
+        constraints.min_value = min_value if constraints.min_value is None else max(constraints.min_value, min_value)
+    elif op == ">=":
+        constraints.min_value = bound if constraints.min_value is None else max(constraints.min_value, bound)
+    elif op == "<":
+        max_value = bound - 1
+        constraints.max_value = max_value if constraints.max_value is None else min(constraints.max_value, max_value)
+    elif op == "<=":
+        constraints.max_value = bound if constraints.max_value is None else min(constraints.max_value, bound)
+    else:
+        raise OracleTestGenerationError(f"unsupported value operator `{op}`")
+
+
+def _parse_known_integer(expr: str) -> int:
+    """Parse the integer literals and primitive-type bounds that appear in supported `requires` clauses."""
+    expr = expr.strip()
+    known_constants = {
+        "u8::MAX": 255,
+        "u32::MAX": 4_294_967_295,
+        "u64::MAX": 18_446_744_073_709_551_615,
+        "usize::MAX": 18_446_744_073_709_551_615,
+        "i32::MAX": 2_147_483_647,
+        "i32::MIN": -2_147_483_648,
+    }
+    if expr in known_constants:
+        return known_constants[expr]
+    if re.fullmatch(r"-?\d+", expr):
+        return int(expr)
+    raise OracleTestGenerationError(f"unsupported integer bound in requires clause: {expr}")
+
+
+def _rust_numeric_literal(value: int, rust_type: str) -> str:
+    """Render a numeric literal with a Rust type suffix when that helps generated comparisons type-check."""
+    rust_type = _normalize_type(rust_type)
+    if rust_type in {"i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128", "usize"}:
+        return f"{value}{rust_type}"
+    return str(value)
+
+
+def _length_sampling_expr(runner_var: str, constraints: ArgConstraints) -> str:
+    """Sample a sequence length that satisfies the known bounds for one argument or group."""
+    predicates = [f"candidate >= {constraints.min_len}usize"]
+    if constraints.max_len is not None:
+        predicates.append(f"candidate <= {constraints.max_len}usize")
+    predicate = " && ".join(predicates)
+    return (
+        "{ "
+        "use proptest::strategy::Strategy; "
+        "use proptest::strategy::ValueTree; "
+        "loop { "
+        f"let candidate = proptest::arbitrary::any::<usize>().new_tree({runner_var}).unwrap().current(); "
+        f"if {predicate} {{ break candidate; }} "
+        "} "
+        "}"
+    )
+
+
 def _run_proptest_sampler(source: str) -> list[list[str]]:
     """Compile and run a temporary Cargo sampler that emits JSON argument-expression rows."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -406,8 +1199,6 @@ def _run_proptest_sampler(source: str) -> list[list[str]]:
                     "",
                     "[dependencies]",
                     'proptest = "1"',
-                    'rand = "0.8"',
-                    'rand_chacha = "0.3"',
                     'serde_json = "1"',
                     "",
                 ]
@@ -456,7 +1247,10 @@ def _binding_decl_type(rust_type: str) -> str:
 def _render_cached_binding(name: str, expr: str, rust_type: str) -> tuple[list[str], str]:
     """Create Rust local bindings from a cached argument expression."""
     binding_type = _binding_decl_type(rust_type)
-    lines = [f"let {name}: {binding_type} = {expr};"]
+    if _has_unresolved_const_generic_array(rust_type):
+        lines = [f"let {name} = {expr};"]
+    else:
+        lines = [f"let {name}: {binding_type} = {expr};"]
     if rust_type.startswith("&") and rust_type != "&str":
         return lines, f"&{name}"
     return lines, name
@@ -527,8 +1321,8 @@ def _serializer_expr(expr: str, rust_type: str) -> str:
         if len(rendered) == 1:
             return f"format!(\"({{}},)\", {rendered[0]})"
         placeholders = ", ".join(["{}"] * len(rendered))
-        escaped = placeholders.replace("{", "{{").replace("}", "}}")
-        return f"format!(\"({escaped})\", {', '.join(rendered)})"
+        rust_format = "({})".format(placeholders)
+        return f"format!(\"{rust_format}\", {', '.join(rendered)})"
 
     raise OracleTestGenerationError(f"unsupported oracle result type for serialization: {rust_type}")
 
@@ -589,12 +1383,18 @@ def _run_compiled_driver(source: str, verus_binary: str, timeout: int) -> list[s
             timeout=timeout,
         )
         if compile_result.returncode != 0:
+            preserved_path = _preserve_driver_source(source)
             raise OracleTestGenerationError(
                 "verus --compile failed:\n"
-                + (compile_result.stdout + "\n" + compile_result.stderr).strip()
+                + (compile_result.stdout + "\n" + compile_result.stderr).strip(),
+                preserved_driver_path=preserved_path,
             )
         if not bin_path.exists():
-            raise OracleTestGenerationError(f"compiled oracle binary not found at {bin_path}")
+            preserved_path = _preserve_driver_source(source)
+            raise OracleTestGenerationError(
+                f"compiled oracle binary not found at {bin_path}",
+                preserved_driver_path=preserved_path,
+            )
 
         run_result = subprocess.run(
             [str(bin_path)],
@@ -604,11 +1404,25 @@ def _run_compiled_driver(source: str, verus_binary: str, timeout: int) -> list[s
             timeout=timeout,
         )
         if run_result.returncode != 0:
+            preserved_path = _preserve_driver_source(source)
             raise OracleTestGenerationError(
                 "compiled oracle driver exited non-zero:\n"
-                + (run_result.stdout + "\n" + run_result.stderr).strip()
+                + (run_result.stdout + "\n" + run_result.stderr).strip(),
+                preserved_driver_path=preserved_path,
             )
         return [line for line in run_result.stdout.splitlines() if line.strip()]
+
+
+def _preserve_driver_source(source: str) -> str:
+    """Write the generated oracle driver to a persistent temp file for debugging."""
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        prefix="oracle_driver_",
+        suffix=".rs",
+        delete=False,
+    ) as f:
+        f.write(source)
+        return f.name
 
 
 def _compute_expected_outputs(
