@@ -40,12 +40,14 @@ Controlled by `mode` in `config/config.yaml`.
 | `generation/generate_tests.py` | Generates Rust unit tests from NL descriptions |
 | `generation/generate_specs.py` | Generates Verus specifications from NL (Branch B) |
 | `generation/generate_code.py` | Samples code completions; has both correct and reward_hack modes |
+| `generation/oracle_tests.py` | Precomputes oracle-based Rust IO tests from gold Verus implementations |
 | `generation/few_shot_examples.py` | 5 gold few-shot examples with reasoning traces (AlphaVerus-style) |
 | `generation/verus_reference.py` | Verus cheat sheet included in prompts |
 | `evaluation/run_tests.py` | Compiles and runs Rust unit tests |
 | `evaluation/run_verus.py` | Runs the Verus verifier on annotated code |
 | `evaluation/annotate_proofs.py` | Claude oracle for adding proof annotations + exec-change detection |
 | `data/parse_benchmarks.py` | Parses human-eval-verus `.rs` files into structured format |
+| `scripts/generate_oracle_test_cache.py` | Standalone oracle-cache generator for all or selected tasks |
 | `human-eval-verus/tasks/` | Benchmark: 167 tasks, ~81 with real Verus implementations |
 
 ## Critical Design Decisions
@@ -61,6 +63,25 @@ Generated code can't be verified by Verus directly (no proof annotations). The p
 ### Function Signature Threading
 Gold Verus specs use different types than typical Rust (e.g., `&[char]` instead of `String`). The gold fn signature is extracted from the Verus spec and passed to test generation, code generation, and repair prompts to ensure type compatibility.
 
+### Oracle Test Generation
+Oracle tests are now generated **outside** the main pipeline and cached once per task. The flow is:
+1. Read the target executable signature from `impl_sig` and treat the last entry of `verus_fn_names` as the task function.
+2. Parse supported `requires` clauses from `verus_code` into `ParsedConstraints`.
+3. Use a temporary Rust `proptest` sampler to generate concrete Rust argument expressions that satisfy those constraints.
+4. Build a temporary Verus driver around the gold implementation, compile it with `verus --compile`, run it, and collect expected outputs.
+5. Save cached IO pairs as JSON and render plain Rust `assert_eq!(candidate(...), expected)` tests from that cache.
+
+The pipeline no longer generates oracle tests on the fly. Instead, `pipeline/main.py` loads cached oracle artifacts from `test_generation.oracle_cache_dir` and optionally runs them after the normal LLM-generated test suite.
+
+`generation/oracle_tests.py` supports:
+- generic parsing of many `requires`-derived input constraints (length bounds, equal lengths, bounded scalars, restricted alphabets, tuple ordering, uniqueness, prefix-sum bounds, etc.)
+- task-specific fallbacks in `_special_case_constraints` for semantic predicates that are hard to infer generically
+- preservation of the generated Verus driver or Rust sampler project on failure for debugging
+
+Current task-specific sampler overrides:
+- `HumanEval/1`: generates balanced parenthesis groups with optional spaces
+- `HumanEval/129`: generates square `[[u8; N]; N]` grids with unique values `1..=N*N`
+
 ### Few-Shot Examples
 5 examples from first 10 HumanEval tasks (IDs: 0, 3, 5, 8, 9). Uses proper chat template with user/assistant message pairs. Assistant messages include reasoning traces followed by ```rust``` code blocks. These tasks are skipped during evaluation (`skip_few_shot: true`).
 
@@ -68,9 +89,15 @@ Gold Verus specs use different types than typical Rust (e.g., `&[char]` instead 
 
 All intermediate outputs are saved to `experiment_cache/<datetime>/HumanEval/<task_id>/`:
 - `generated_tests.rs` — unit tests
+- `oracle_tests.rs` — cached oracle regression tests rendered for the task
 - `branch_a/completion_N.rs` — generated code
 - `branch_a/result_N.txt` — test results
+- `branch_a/oracle_result_N.txt` — oracle follow-up test results
 - `branch_a/gold_check/` — spliced code, annotated rounds, Verus output
+
+Standalone oracle caches are saved to `data/oracle_test_cache/` by default:
+- `HumanEval_n.json` — cached input/output pairs
+- `HumanEval_n.rs` — rendered Rust regression tests from the cache
 
 ## Environment
 
@@ -98,8 +125,22 @@ source venv/bin/activate
 python -m pipeline.main
 ```
 
+To precompute oracle caches separately:
+
+```bash
+source venv/bin/activate
+python scripts/generate_oracle_test_cache.py
+```
+
+Useful variants:
+- `python scripts/generate_oracle_test_cache.py --task-id 13`
+- `python scripts/generate_oracle_test_cache.py --skip-existing`
+- `python scripts/generate_oracle_test_cache.py --skip-task-id 1 --skip-task-id 129`
+
 Configure via `config/config.yaml`. Key settings:
 - `mode`: "correct" or "reward_hack"
 - `branches.branch_a` / `branches.branch_b`: enable/disable branches
 - `sampling.n_samples`: completions per problem
 - `benchmark.max_problems`: limit tasks for testing
+- `test_generation.oracle_followup`: run cached oracle tests after LLM-generated tests
+- `test_generation.oracle_cache_dir`: location of precomputed oracle caches
