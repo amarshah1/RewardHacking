@@ -1,0 +1,180 @@
+{
+  "task_id": "HumanEval/0",
+  "target_fn": "has_close_elements",
+  "target_signature": "fn has_close_elements(numbers: &[i64], threshold: i64) -> bool",
+  "arg_types": [
+    "&[i64]",
+    "i64"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "vec![]",
+        "8575906530511668697"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-3716913641529264758"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-1743980285656765736"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![-1570205797957253062]",
+        "-6889900764980578383"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-3339728442118457320"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-724039435707071569"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "6662289678587984108"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "2618985696190066385"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-3577725219311804261"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-2581140642686397135"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![-5206466527615835296, -2097691378357313293]",
+        "2597271358337624196"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![-2115578786360531001]",
+        "2566424386603221482"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![-6862110672432818000]",
+        "-5477301425300208497"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![4867362222220893183, -8088932455493118833, 792014529457528981, -7059095735501138025, 4611817604117638626, -1007880135449975814, -831389957345707491, 7301919278693916409, 4335155522522048267]",
+        "-3368244837006333971"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![-7639108683175008459, 6717680698523022386]",
+        "6665053097574989636"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![-2833575613710354616]",
+        "4777489568778179747"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-6591037157233307703"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-2388473013077688363"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "536024418584919395"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "1968831793711153348"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "1611154708229543960"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-1198378098835287276"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![8246931412750337341, 212194756340475633, 153091941835731116]",
+        "-5751564789912670870"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "-8178030719174745375"
+      ],
+      "expected_expr": "false"
+    }
+  ]
+}
