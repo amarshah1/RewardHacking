@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 import tempfile
 from dataclasses import asdict, dataclass
@@ -12,9 +13,17 @@ from pathlib import Path
 class OracleTestGenerationError(ValueError):
     """Raised when oracle IO-pair generation cannot be applied safely."""
 
-    def __init__(self, message: str, preserved_driver_path: str | None = None):
+    def __init__(
+        self,
+        message: str,
+        preserved_driver_path: str | None = None,
+        preserved_sampler_path: str | None = None,
+        parsed_constraints: ParsedConstraints | None = None,
+    ):
         super().__init__(message)
         self.preserved_driver_path = preserved_driver_path
+        self.preserved_sampler_path = preserved_sampler_path
+        self.parsed_constraints = parsed_constraints
 
 
 @dataclass
@@ -107,21 +116,25 @@ def generate_oracle_test_cache(
         constraints = _special_case_constraints(task_id, signature)
         if constraints is None:
             raise
-    sampled_arg_exprs = _sample_cases(signature, constraints, num_cases=num_cases, max_trials=max_trials, seed=seed)
-    if not sampled_arg_exprs:
-        raise OracleTestGenerationError("oracle fuzzing did not yield any usable test cases")
+    try:
+        sampled_arg_exprs = _sample_cases(signature, constraints, num_cases=num_cases, max_trials=max_trials, seed=seed)
+        if not sampled_arg_exprs:
+            raise OracleTestGenerationError("oracle fuzzing did not yield any usable test cases")
 
-    expected_exprs = _compute_expected_outputs(
-        verus_code=verus_code,
-        signature=signature,
-        sampled_arg_exprs=sampled_arg_exprs,
-        verus_binary=verus_binary,
-        timeout=timeout,
-    )
-    if len(expected_exprs) != len(sampled_arg_exprs):
-        raise OracleTestGenerationError(
-            f"oracle produced {len(expected_exprs)} outputs for {len(sampled_arg_exprs)} sampled cases"
+        expected_exprs = _compute_expected_outputs(
+            verus_code=verus_code,
+            signature=signature,
+            sampled_arg_exprs=sampled_arg_exprs,
+            verus_binary=verus_binary,
+            timeout=timeout,
         )
+        if len(expected_exprs) != len(sampled_arg_exprs):
+            raise OracleTestGenerationError(
+                f"oracle produced {len(expected_exprs)} outputs for {len(sampled_arg_exprs)} sampled cases"
+            )
+    except OracleTestGenerationError as exc:
+        exc.parsed_constraints = constraints
+        raise
 
     cases = []
     for arg_exprs, expected_expr in zip(sampled_arg_exprs, expected_exprs):
@@ -1169,6 +1182,9 @@ def _rust_numeric_literal(value: int, rust_type: str) -> str:
 
 def _length_sampling_expr(runner_var: str, constraints: ArgConstraints) -> str:
     """Sample a sequence length that satisfies the known bounds for one argument or group."""
+    if constraints.min_len == 0 and constraints.max_len is None:
+        return _proptest_leaf_expr("usize", runner_var)
+
     predicates = [f"candidate >= {constraints.min_len}usize"]
     if constraints.max_len is not None:
         predicates.append(f"candidate <= {constraints.max_len}usize")
@@ -1216,8 +1232,10 @@ def _run_proptest_sampler(source: str) -> list[list[str]]:
             timeout=120,
         )
         if result.returncode != 0:
+            preserved_path = _preserve_sampler_project(tmp_path)
             raise OracleTestGenerationError(
-                "Rust proptest sampler failed:\n" + (result.stdout + "\n" + result.stderr).strip()
+                "Rust proptest sampler failed:\n" + (result.stdout + "\n" + result.stderr).strip(),
+                preserved_sampler_path=preserved_path,
             )
 
         rows = []
@@ -1227,6 +1245,15 @@ def _run_proptest_sampler(source: str) -> list[list[str]]:
                 continue
             rows.append(json.loads(line))
         return rows
+
+
+def _preserve_sampler_project(tmp_path: Path) -> str:
+    """Copy the generated Rust sampler project to a persistent temp directory for debugging."""
+    preserved_dir = Path(
+        tempfile.mkdtemp(prefix="oracle_sampler_", suffix="_cargo_project")
+    )
+    shutil.copytree(tmp_path, preserved_dir, dirs_exist_ok=True)
+    return str(preserved_dir)
 
 
 def _binding_decl_type(rust_type: str) -> str:

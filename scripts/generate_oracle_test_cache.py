@@ -107,8 +107,12 @@ def main() -> None:
         except OracleTestGenerationError as exc:
             failures += 1
             print(f"failed ({exc})")
+            if exc.parsed_constraints is not None:
+                print(f"ParsedConstraints: {exc.parsed_constraints}")
             if exc.preserved_driver_path:
                 print(f"Preserved oracle driver at {exc.preserved_driver_path}")
+            if exc.preserved_sampler_path:
+                print(f"Preserved Rust sampler project at {exc.preserved_sampler_path}")
             raise SystemExit(1)
 
     print(f"Done. {successes} succeeded, {failures} failed.")
