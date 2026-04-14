@@ -192,6 +192,17 @@ Edit `config/config.yaml` to adjust:
 - `evaluation.gold_spec_oracle`: Splice into gold Verus spec + compile check (default: false)
 - `evaluation.gold_spec_check`: Run Claude oracle for proof annotation, requires `gold_spec_oracle` (default: false)
 
+## Online SFT Training (Local GPU)
+
+To run the pipeline with online rejection sampling finetuning:
+
+```bash
+# Requires a CUDA GPU (recommended: GCP L4 24GB)
+python -m pipeline.main --local --config config/config.yaml
+```
+
+This loads the model locally with QLoRA (4-bit), generates completions, and trains on each completion that passes the unit tests. Configure under `training` in `config.yaml`. See `AGENT.md` for GCP setup instructions.
+
 ## Model Choice
 
 **Default: Qwen3 235B (A22B)** via OpenRouter

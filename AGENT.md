@@ -113,6 +113,42 @@ Standalone oracle caches are saved to `data/oracle_test_cache/` by default:
 - **Verus**: Must be on PATH (`verus` binary)
 - **Rust**: Standard rustc/cargo toolchain
 
+## Online SFT Training (`--local` mode)
+
+When run with `python -m pipeline.main --local`, the pipeline loads a local model (QLoRA, 4-bit) for code generation and trains it online via rejection sampling:
+
+1. Generate a completion using the local model
+2. Score it against unit tests
+3. If it passes, run one SFT gradient step on that completion
+4. Continue generating with the updated model
+
+Config is under `training` in `config.yaml`:
+- `train_after`: `"completion"` (train after each passing sample) or `"task"` (batch per task)
+- `save_every`: Save LoRA checkpoint every N steps
+- `local_model.model_name`: HuggingFace model ID (e.g. `Qwen/Qwen3.5-9B`)
+- `local_model.load_in_4bit`: QLoRA quantization (recommended for L4 24GB GPU)
+- `local_model.resume_from`: Path to a saved LoRA adapter to continue training
+
+Key files: `training/local_model.py` (model wrapper), `pipeline/main.py` (integration).
+
+Test generation still uses OpenRouter (`generator_model`) since it doesn't need to be the finetuned model.
+
+### GCP Setup
+
+Recommended: **L4 GPU (24GB)** on Google Cloud with Qwen3.5-9B in 4-bit.
+
+```bash
+# On the GCP VM (Ubuntu + CUDA):
+sudo apt update && sudo apt install -y rustc cargo
+pip install -r requirements.txt
+
+# Verify GPU
+python -c "import torch; print(torch.cuda.get_device_name())"
+
+# Run with local training
+python -m pipeline.main --local --config config/config.yaml
+```
+
 ## Known Issues / Limitations
 
 1. **Claude oracle rewrites code**: Despite explicit instructions, Claude sometimes modifies executable code when adding annotations. The exec-change detection catches this and re-prompts, but it can exhaust all repair rounds.
