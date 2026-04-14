@@ -417,6 +417,7 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstra
     if rust_type == "&str":
         rust_type = "String"
     constraints = constraints or ArgConstraints()
+    integer_types = {"i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128", "usize"}
 
     if rust_type == "char" and constraints.allowed_chars:
         choices = ", ".join(repr(ch) for ch in constraints.allowed_chars)
@@ -425,6 +426,144 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstra
             f"use proptest::strategy::Strategy; "
             f"use proptest::strategy::ValueTree; "
             f"proptest::sample::select(vec![{choices}]).new_tree({runner_var}).unwrap().current() "
+            "}"
+        )
+
+    if (
+        rust_type in integer_types
+        and constraints.min_value is None
+        and constraints.max_value is None
+    ):
+        if rust_type in {"u8", "u16", "u32", "u64", "u128", "usize"}:
+            return (
+                "{ "
+                "use proptest::strategy::Strategy; "
+                "use proptest::strategy::ValueTree; "
+                "let mut value = 0usize; "
+                "while proptest::arbitrary::any::<u8>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current() % 4 != 0 { "
+                "value += 1; "
+                "} "
+                "loop { "
+                f"if let Ok(candidate) = <{rust_type}>::try_from(value) {{ "
+                "break candidate; "
+                "} "
+                "value = value.saturating_sub(1); "
+                "} "
+                "}"
+            )
+        return (
+            "{ "
+            "use proptest::strategy::Strategy; "
+            "use proptest::strategy::ValueTree; "
+            "let negative = proptest::arbitrary::any::<bool>().new_tree("
+            f"{runner_var}"
+            ").unwrap().current(); "
+            "let mut magnitude = 0usize; "
+            "while proptest::arbitrary::any::<u8>().new_tree("
+            f"{runner_var}"
+            ").unwrap().current() % 4 != 0 { "
+            "magnitude += 1; "
+            "} "
+            "loop { "
+            f"if let Ok(mag) = <{rust_type}>::try_from(magnitude) {{ "
+            "if negative { "
+            "break mag.saturating_neg(); "
+            "} "
+            "break mag; "
+            "} "
+            "magnitude = magnitude.saturating_sub(1); "
+            "} "
+            "}"
+        )
+
+    if (
+        rust_type in integer_types
+        and constraints.min_value is not None
+        and constraints.max_value is None
+    ):
+        min_literal = _rust_numeric_literal(constraints.min_value, rust_type)
+        return (
+            "{ "
+            "use proptest::strategy::Strategy; "
+            "use proptest::strategy::ValueTree; "
+            "let mut delta = 0usize; "
+            "while proptest::arbitrary::any::<u8>().new_tree("
+            f"{runner_var}"
+            ").unwrap().current() % 4 != 0 { "
+            "delta += 1; "
+            "} "
+            "loop { "
+            f"if let Ok(delta_cast) = <{rust_type}>::try_from(delta) {{ "
+            f"if let Some(candidate) = {min_literal}.checked_add(delta_cast) {{ "
+            "break candidate; "
+            "} "
+            "} "
+            "delta = delta.saturating_sub(1); "
+            "} "
+            "}"
+        )
+
+    if (
+        rust_type in integer_types
+        and constraints.min_value is None
+        and constraints.max_value is not None
+    ):
+        max_literal = _rust_numeric_literal(constraints.max_value, rust_type)
+        return (
+            "{ "
+            "use proptest::strategy::Strategy; "
+            "use proptest::strategy::ValueTree; "
+            "let mut delta = 0usize; "
+            "while proptest::arbitrary::any::<u8>().new_tree("
+            f"{runner_var}"
+            ").unwrap().current() % 4 != 0 { "
+            "delta += 1; "
+            "} "
+            "loop { "
+            f"if let Ok(delta_cast) = <{rust_type}>::try_from(delta) {{ "
+            f"if let Some(candidate) = {max_literal}.checked_sub(delta_cast) {{ "
+            "break candidate; "
+            "} "
+            "} "
+            "delta = delta.saturating_sub(1); "
+            "} "
+            "}"
+        )
+
+    if (
+        rust_type in integer_types
+        and constraints.min_value is not None
+        and constraints.max_value is not None
+    ):
+        min_literal = _rust_numeric_literal(constraints.min_value, rust_type)
+        max_literal = _rust_numeric_literal(constraints.max_value, rust_type)
+        return (
+            "{ "
+            "use proptest::strategy::Strategy; "
+            "use proptest::strategy::ValueTree; "
+            f"let min_value = {min_literal}; "
+            f"let max_value = {max_literal}; "
+            "let span = max_value - min_value; "
+            "if span == 0 { "
+            "min_value "
+            "} else { "
+            "let mut delta = 0usize; "
+            "while proptest::arbitrary::any::<u8>().new_tree("
+            f"{runner_var}"
+            ").unwrap().current() % 4 != 0 { "
+            "delta += 1; "
+            "} "
+            "loop { "
+            f"if let Ok(delta_cast) = <{rust_type}>::try_from(delta) {{ "
+            "if delta_cast <= span { "
+            "break min_value + delta_cast; "
+            "} "
+            "} "
+            "delta = delta.saturating_sub(1); "
+            "} "
+            "} "
             "}"
         )
 
@@ -1039,7 +1178,23 @@ def _apply_requires_clause(
         name = match.group(1)
         if name not in arg_constraints:
             return False
-        arg_constraints[name].allowed_chars = [chr(code) for code in range(65, 91)]
+        if _sequence_element_type(arg_types[name]) == "char":
+            arg_constraints[name].allowed_chars = [chr(code) for code in range(65, 91)]
+        else:
+            arg_constraints[name].element_min_value = 65
+            arg_constraints[name].element_max_value = 90
+        return True
+
+    match = re.fullmatch(
+        r"forall\|i: int\|\s*#!\[trigger \w+\[i\]\]\s*0 <= i < (\w+)\.len\(\) ==> ([A-Za-z0-9_:\-]+) <= \w+\[i\] <= ([A-Za-z0-9_:\-]+)",
+        clause,
+    )
+    if match:
+        name, lower, upper = match.groups()
+        if name not in arg_constraints:
+            return False
+        arg_constraints[name].element_min_value = _parse_known_integer(lower)
+        arg_constraints[name].element_max_value = _parse_known_integer(upper)
         return True
 
     match = re.fullmatch(
@@ -1128,6 +1283,17 @@ def _is_sequence_type(rust_type: str) -> bool:
     return bare_type.startswith("Vec<") or (bare_type.startswith("[") and ";" not in bare_type) or rust_type == "&str"
 
 
+def _sequence_element_type(rust_type: str) -> str | None:
+    """Return the normalized element type for vector-like Rust types when available."""
+    rust_type = _normalize_type(rust_type)
+    bare_type = _strip_ref(rust_type)
+    if bare_type.startswith("Vec<") and bare_type.endswith(">"):
+        return _normalize_type(bare_type[len("Vec<") : -1].strip())
+    if bare_type.startswith("[") and bare_type.endswith("]") and ";" not in bare_type:
+        return _normalize_type(bare_type[1:-1].strip())
+    return None
+
+
 def _apply_len_bound(constraints: ArgConstraints, op: str, bound: int) -> None:
     """Merge a parsed length bound into one argument's constraints."""
     if op == ">":
@@ -1187,18 +1353,28 @@ def _rust_numeric_literal(value: int, rust_type: str) -> str:
 
 def _length_sampling_expr(runner_var: str, constraints: ArgConstraints) -> str:
     """Sample a sequence length that satisfies the known bounds for one argument or group."""
+    base_expr = (
+        "{ "
+        "use proptest::strategy::Strategy; "
+        "use proptest::strategy::ValueTree; "
+        "let mut len = 0usize; "
+        "while proptest::arbitrary::any::<u8>().new_tree("
+        f"{runner_var}"
+        ").unwrap().current() % 4 != 0 { "
+        "len += 1; "
+        "} "
+        "len "
+        "}"
+    )
+
     if constraints.min_len == 0 and constraints.max_len is None:
+        return base_expr
+
+    if constraints.max_len is None:
         return (
             "{ "
-            "use proptest::strategy::Strategy; "
-            "use proptest::strategy::ValueTree; "
-            "let mut len = 0usize; "
-            "while proptest::arbitrary::any::<u8>().new_tree("
-            f"{runner_var}"
-            ").unwrap().current() % 4 != 0 { "
-            "len += 1; "
-            "} "
-            "len "
+            f"let offset = {constraints.min_len}usize; "
+            f"offset + {base_expr} "
             "}"
         )
 
@@ -1208,10 +1384,8 @@ def _length_sampling_expr(runner_var: str, constraints: ArgConstraints) -> str:
     predicate = " && ".join(predicates)
     return (
         "{ "
-        "use proptest::strategy::Strategy; "
-        "use proptest::strategy::ValueTree; "
         "loop { "
-        f"let candidate = proptest::arbitrary::any::<usize>().new_tree({runner_var}).unwrap().current(); "
+        f"let candidate = {base_expr}; "
         f"if {predicate} {{ break candidate; }} "
         "} "
         "}"
