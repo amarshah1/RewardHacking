@@ -11,25 +11,25 @@
       "arg_exprs": [
         "vec![vec![178], vec![], vec![24, 173, 19, 175, 248, 225, 236]]"
       ],
-      "expected_expr": "Some(vec![24, 173, 19, 175, 248, 225, 236])"
+      "expected_expr": "Some(&vec![24u8, 173, 19, 175, 248, 225, 236])"
     },
     {
       "arg_exprs": [
         "vec![vec![41, 96, 71, 243, 206, 132], vec![91], vec![179, 143, 95, 241, 107, 77], vec![74, 31]]"
       ],
-      "expected_expr": "Some(vec![41, 96, 71, 243, 206, 132])"
+      "expected_expr": "Some(&vec![41u8, 96, 71, 243, 206, 132])"
     },
     {
       "arg_exprs": [
         "vec![vec![151, 212, 226, 173, 250]]"
       ],
-      "expected_expr": "Some(vec![151, 212, 226, 173, 250])"
+      "expected_expr": "Some(&vec![151u8, 212, 226, 173, 250])"
     },
     {
       "arg_exprs": [
         "vec![vec![50, 0, 68], vec![254, 163, 115], vec![203, 213], vec![99], vec![21, 218], vec![], vec![119, 199], vec![241, 1, 172, 79], vec![225, 99]]"
       ],
-      "expected_expr": "Some(vec![241, 1, 172, 79])"
+      "expected_expr": "Some(&vec![241u8, 1, 172, 79])"
     },
     {
       "arg_exprs": [
@@ -41,115 +41,115 @@
       "arg_exprs": [
         "vec![vec![242, 218, 180], vec![137, 205, 152]]"
       ],
-      "expected_expr": "Some(vec![242, 218, 180])"
+      "expected_expr": "Some(&vec![242u8, 218, 180])"
     },
     {
       "arg_exprs": [
         "vec![vec![71, 7], vec![249, 229, 66], vec![149, 214], vec![172, 239], vec![164]]"
       ],
-      "expected_expr": "Some(vec![249, 229, 66])"
+      "expected_expr": "Some(&vec![249u8, 229, 66])"
     },
     {
       "arg_exprs": [
         "vec![vec![174], vec![205, 73, 61, 126, 240]]"
       ],
-      "expected_expr": "Some(vec![205, 73, 61, 126, 240])"
+      "expected_expr": "Some(&vec![205u8, 73, 61, 126, 240])"
     },
     {
       "arg_exprs": [
         "vec![vec![151, 252, 182, 248, 135], vec![233], vec![204, 7, 225], vec![1, 175], vec![140], vec![117, 172], vec![], vec![], vec![], vec![11, 79, 192, 96, 165, 56, 208, 227, 232, 28, 181, 57, 224, 183, 51, 80, 221, 168], vec![], vec![45, 89], vec![82, 191, 49, 164, 92, 154, 121, 230, 76], vec![], vec![]]"
       ],
-      "expected_expr": "Some(vec![11, 79, 192, 96, 165, 56, 208, 227, 232, 28, 181, 57, 224, 183, 51, 80, 221, 168])"
+      "expected_expr": "Some(&vec![11u8, 79, 192, 96, 165, 56, 208, 227, 232, 28, 181, 57, 224, 183, 51, 80, 221, 168])"
     },
     {
       "arg_exprs": [
         "vec![vec![220, 233, 101, 161, 46, 108], vec![247, 86, 62, 212], vec![33, 230], vec![], vec![214, 187, 76, 141], vec![]]"
       ],
-      "expected_expr": "Some(vec![220, 233, 101, 161, 46, 108])"
+      "expected_expr": "Some(&vec![220u8, 233, 101, 161, 46, 108])"
     },
     {
       "arg_exprs": [
         "vec![vec![121, 214, 201, 212, 27, 120, 181, 242]]"
       ],
-      "expected_expr": "Some(vec![121, 214, 201, 212, 27, 120, 181, 242])"
+      "expected_expr": "Some(&vec![121u8, 214, 201, 212, 27, 120, 181, 242])"
     },
     {
       "arg_exprs": [
         "vec![vec![137, 123, 204, 74], vec![165, 187, 55, 2], vec![80], vec![], vec![137, 128], vec![96, 12, 201, 207, 105, 73, 251, 109, 7, 254, 232], vec![180]]"
       ],
-      "expected_expr": "Some(vec![96, 12, 201, 207, 105, 73, 251, 109, 7, 254, 232])"
+      "expected_expr": "Some(&vec![96u8, 12, 201, 207, 105, 73, 251, 109, 7, 254, 232])"
     },
     {
       "arg_exprs": [
         "vec![vec![]]"
       ],
-      "expected_expr": "Some(vec![])"
+      "expected_expr": "Some(&vec![])"
     },
     {
       "arg_exprs": [
         "vec![vec![151], vec![98, 147, 186, 76, 39]]"
       ],
-      "expected_expr": "Some(vec![98, 147, 186, 76, 39])"
+      "expected_expr": "Some(&vec![98u8, 147, 186, 76, 39])"
     },
     {
       "arg_exprs": [
         "vec![vec![], vec![188, 161, 193], vec![8, 131, 11]]"
       ],
-      "expected_expr": "Some(vec![188, 161, 193])"
+      "expected_expr": "Some(&vec![188u8, 161, 193])"
     },
     {
       "arg_exprs": [
         "vec![vec![0, 102, 144, 164], vec![]]"
       ],
-      "expected_expr": "Some(vec![0, 102, 144, 164])"
+      "expected_expr": "Some(&vec![0u8, 102, 144, 164])"
     },
     {
       "arg_exprs": [
         "vec![vec![173], vec![]]"
       ],
-      "expected_expr": "Some(vec![173])"
+      "expected_expr": "Some(&vec![173u8])"
     },
     {
       "arg_exprs": [
         "vec![vec![], vec![], vec![], vec![32, 42, 60], vec![]]"
       ],
-      "expected_expr": "Some(vec![32, 42, 60])"
+      "expected_expr": "Some(&vec![32u8, 42, 60])"
     },
     {
       "arg_exprs": [
         "vec![vec![], vec![234, 84], vec![], vec![]]"
       ],
-      "expected_expr": "Some(vec![234, 84])"
+      "expected_expr": "Some(&vec![234u8, 84])"
     },
     {
       "arg_exprs": [
         "vec![vec![242, 238]]"
       ],
-      "expected_expr": "Some(vec![242, 238])"
+      "expected_expr": "Some(&vec![242u8, 238])"
     },
     {
       "arg_exprs": [
         "vec![vec![], vec![218, 137], vec![67, 245, 81, 111, 44, 129]]"
       ],
-      "expected_expr": "Some(vec![67, 245, 81, 111, 44, 129])"
+      "expected_expr": "Some(&vec![67u8, 245, 81, 111, 44, 129])"
     },
     {
       "arg_exprs": [
         "vec![vec![104, 160], vec![83]]"
       ],
-      "expected_expr": "Some(vec![104, 160])"
+      "expected_expr": "Some(&vec![104u8, 160])"
     },
     {
       "arg_exprs": [
         "vec![vec![12, 144, 105]]"
       ],
-      "expected_expr": "Some(vec![12, 144, 105])"
+      "expected_expr": "Some(&vec![12u8, 144, 105])"
     },
     {
       "arg_exprs": [
         "vec![vec![234, 177, 27], vec![194, 127, 235, 214], vec![223, 68, 183]]"
       ],
-      "expected_expr": "Some(vec![194, 127, 235, 214])"
+      "expected_expr": "Some(&vec![194u8, 127, 235, 214])"
     }
   ]
 }
