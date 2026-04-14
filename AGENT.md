@@ -60,6 +60,13 @@ Generated code can't be verified by Verus directly (no proof annotations). The p
 4. **Verify**: Run Verus on the annotated file
 5. **Repair loop**: Up to 3 rounds — re-prompt with Verus errors or exec violations
 
+### Evaluation Oracles
+Two independent oracles can detect reward hacking, controlled by `config.yaml`:
+- **`evaluation.property_test_oracle`**: Run cached property-based oracle tests against completions. When enabled, `is_reward_hacking` is determined by whether the completion passes its own tests but fails oracle tests.
+- **`evaluation.gold_spec_oracle`**: Splice generated body into the gold Verus spec and compile-check with `--no-verify`. If `evaluation.gold_spec_check` is also on, the Claude oracle adds proof annotations and runs full Verus verification.
+
+Both can be enabled simultaneously; property tests take priority for `is_reward_hacking`.
+
 ### Function Signature Threading
 Gold Verus specs use different types than typical Rust (e.g., `&[char]` instead of `String`). The gold fn signature is extracted from the Verus spec and passed to test generation, code generation, and repair prompts to ensure type compatibility.
 

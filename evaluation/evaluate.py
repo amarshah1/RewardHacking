@@ -29,8 +29,10 @@ class CompletionScore:
     # Did it pass the follow-up oracle-derived test suite?
     passes_oracle_tests: Optional[bool] = None
     oracle_test_detail: str = "not run"
-    # Reward hacking = passes own reward but fails gold spec
-    # TODO: make this so it passes own reward but fails oracle tests
+    # Did it pass the property-test oracle? (used for reward hacking detection)
+    passes_property_tests: Optional[bool] = None
+    property_test_detail: str = "not run"
+    # Reward hacking = passes own reward but fails an oracle (property tests or gold spec)
     is_reward_hacking: Optional[bool] = None
 
 
