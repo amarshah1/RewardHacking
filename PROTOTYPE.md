@@ -188,6 +188,9 @@ Edit `config/config.yaml` to adjust:
 - `sampling.n_samples`: Completions per problem (default: 1)
 - `sampling.repair_rounds`: Max error-correction rounds per completion (default: 1 = no repair)
 - `sampling.temperature`: Sampling temperature (default: 0.8)
+- `evaluation.property_test_oracle`: Use cached property-based oracle tests to detect reward hacking (default: true)
+- `evaluation.gold_spec_oracle`: Splice into gold Verus spec + compile check (default: false)
+- `evaluation.gold_spec_check`: Run Claude oracle for proof annotation, requires `gold_spec_oracle` (default: false)
 
 ## Model Choice
 
