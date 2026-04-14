@@ -1,0 +1,80 @@
+## Notes on quality of PBTs
+
+0: only returns false cases, not true. (Need to have some test cases with close elements)
+1: Good. Generates empty vector and nested parentheses of varying degrees of complexity.
+3. Good. Mix of true and false results. All of the sampled numbers appear to be very large.
+4. Good. Includes the edge case of length 1.
+5. Good. Includes Vecs of varying length including empty and 1.
+6. Want some test cases where the input is a set of nested parentheses. Currently generates characters at random
+8. Good. Variety of Vec lengths
+9. Good. Variety of Vec lengths, includes negative ints.
+11. Good. Variety of lengths, only 0s and 1s, satisfies constraint on length equality.
+12. Good. Variety of lengths of outer and inner vectors.
+13. Good. Variety of GCD results.
+14. Good. Variety of lengths.
+15. Does not test 0 or other single-digit values.
+17. Want some test cases which only have 'o', 'o|', '.|'
+18. Want some cases where substring actually shows up. Want cases that are longer.
+20. Good. Variety of lengths and pos/neg
+23. Good. Variety of lengths.
+24. Variety of divisors but given numbers are all small.
+25. Good. Variety of prime factorizations.
+26. Want some of them to have duplicates.
+27. Has some alphabet characters but mostly non-alphabet.
+28. Good. Variety.
+29. Good. Pos and neg
+30. Unbalanced mix of primes and not primes, only 4/24 primes.
+33. Good. Variety.
+34. Want some duplicates.
+35. Good. Variety.
+42. Good. Variety.
+43. Want some cases where the answer is true, and two elements sum to 0.
+45. Mostly small numbers. I guess since this spec always returns an integer, the area is rounded down to the nearest integer?
+48. Want some cases where the result is true and the input is a palindrome.
+49. Mostly small numbers, which is generally fine for the exponent but the modulo can be large.
+50. Good. Variety.
+51. Want more vowels to remove.
+52. Mix of true and false results, but numbers are all small.
+53. Want some cases where the answer is None (numbers all small).
+54. Want cases where the answer is true and two words have same characters.
+55. Good. Inputs are small which we want for fibonacci.
+56. Want tests with opening and closing brackets.
+57. Mix of true and false but numbers are all small.
+59. Numbers are all small.
+60. Want some cases where the answer is None (numbers all small).
+61. Want tests with opening and closing parentheses.
+62. Numbers all small but ok for derivative?
+63. Good. We want small numbers for this test case.
+64. Want more words with vowels.
+66. Want input with multiple upper-case letters.
+68. All small numbers but this means we have some duplicates. 
+70. All single-digit integers.
+73. Numbers are at most 10.
+74. Seems good.
+75. All small numbers, consequently answer is mostly false.
+76. Mix of true and false but all small numbers.
+80. Want some strings of length of least 3 and consecutive non-distinct letters. 
+82. Mix of true and false but could have longer strings.
+85. Numbers all small.
+87. Numbers all small.
+92. Want some cases where answer is true.
+94. Numbers all small.
+97. Numbers all small.
+98. Want more uppercase vowels.
+100. Good. Want small numbers since this determines vector length.
+102. Numbers all close to 2147483647.
+127. Mix of results but numbers all small. (However we do want them within similar ranges or answer will always be NO).
+129. Seems okay.
+130. Smaller n okay here? although unlike fib it's not monotonically increasing.
+134. Want some cases with true.
+135. Mix of results but numbers all small.
+136. Mix of results but numbers all small.
+138. Mix of results but numbers all small.
+139. Good. Want small numbers here bc factorial, includes 0 and 1 and Some and None results.
+146. Numbers all small.
+150. Numbers all small, but does make prime numbers more common.
+152. Numbers all small, also want some correct guesses where it isn't 0 in both cases.
+157. Want more cases with true answers. Numbers all small.
+159. Numbers all small but seems like mix of results.
+161. Need character range of numbers not just small ones.
+163. Numbers all small.
