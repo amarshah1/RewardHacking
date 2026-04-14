@@ -13,6 +13,7 @@ Requirements:
 - CRITICAL: Always annotate empty vectors with their type (e.g. `Vec::<char>::new()`, `vec![] as Vec<String>`). Bare `vec![]` will NOT compile in assert_eq! — you MUST provide a type annotation
 - Use double quotes for string literals (`"hello"`), NOT single quotes (single quotes are only for char literals like `'a'`)
 - Do NOT use fixed-size arrays (`[T; N]`) where `Vec<T>` is expected. Use `vec![...]` or `.to_vec()` to create vectors
+- Make sure test literals fit the parameter type (e.g. `u8` maxes at 255, `i8` at 127 — don't use values like `13441` for a `u8`)
 - Each test function should be self-contained
 - First briefly explain your reasoning, then output the test code in a ```rust``` block"""
 
