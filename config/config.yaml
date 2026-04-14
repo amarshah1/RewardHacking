@@ -3,9 +3,9 @@
 # OpenRouter settings
 openrouter:
   base_url: "https://openrouter.ai/api/v1"
-  # Qwen3 Coder 480B - strong coding model, open weights
-  model: "qwen/qwen3-coder"
-  # For spec/test generation (can use a different model if needed)
+  # Qwen3.5 9B - small model (OpenRouter for now, local for SFT training)
+  model: "qwen/qwen3.5-9b"
+  # For test generation, keep using the large OpenRouter model
   generator_model: "qwen/qwen3-coder"
 
 # Branch toggles
@@ -19,7 +19,7 @@ mode: "reward_hack"
 # Sampling settings
 sampling:
   temperature: 0.8
-  max_tokens: 16384       # thinking models need more tokens (think blocks count toward limit)
+  max_tokens: 8192        # thinking models need more tokens (think blocks count toward limit)
   n_samples: 1          # completions per problem (prototype: 4, full: 16)
   repair_rounds: 1      # max error-correction rounds per completion (default: 1 = no repair)
 
@@ -46,7 +46,17 @@ evaluation:
   gold_spec_oracle: false     # splice into gold Verus spec + compile check (--no-verify)
   gold_spec_check: false      # run Claude oracle to add proof annotations and verify (requires gold_spec_oracle)
 
-# Rejection sampling settings
+# Online SFT training settings (used with --local flag)
 training:
-  n_iterations: 1        # prototype: 1, full: 2-3
-  min_reward: 1.0        # only keep completions with perfect score
+  train_after: "completion"  # "completion" = train after each passing sample, "task" = batch per task
+  save_every: 10             # save LoRA checkpoint every N training steps
+  local_model:
+    model_name: "Qwen/Qwen3.5-9B"  # HuggingFace model ID
+    lora_r: 32
+    lora_alpha: 16
+    lora_dropout: 0.05
+    learning_rate: 2.0e-4
+    max_seq_len: 4096
+    load_in_4bit: true       # QLoRA (recommended for L4 24GB)
+    gradient_accumulation_steps: 1
+    resume_from: null         # path to a saved LoRA adapter to resume from

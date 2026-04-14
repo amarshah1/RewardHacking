@@ -3,3 +3,11 @@ anthropic>=0.80.0
 datasets>=2.14.0
 python-dotenv>=1.0.0
 pyyaml>=6.0
+
+# Local training (--local mode, requires CUDA GPU)
+# Install with: pip install -r requirements.txt
+torch>=2.1.0
+transformers>=4.40.0
+peft>=0.10.0
+bitsandbytes>=0.43.0
+accelerate>=0.28.0

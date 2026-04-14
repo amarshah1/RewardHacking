@@ -24,7 +24,13 @@ from generation.oracle_tests import (
     render_oracle_unit_tests,
 )
 from generation.generate_specs import generate_verus_spec
-from generation.generate_code import generate_code_for_tests, generate_code_for_verus, repair_code_for_tests, repair_code_for_verus, generate_reward_hack, repair_reward_hack
+from generation.generate_code import (
+    generate_code_for_tests, generate_code_for_verus,
+    repair_code_for_tests, repair_code_for_verus,
+    generate_reward_hack, repair_reward_hack,
+    build_reward_hack_messages, build_code_for_tests_messages,
+    _clean_code_output,
+)
 from evaluation.run_tests import run_rust_tests
 from evaluation.run_verus import run_verus
 from evaluation.annotate_proofs import annotate_with_proofs, splice_body_into_gold_spec
@@ -88,8 +94,14 @@ def _save_cache_file(cache_dir: str, *path_parts: str, content: str):
         f.write(content)
 
 
-def run_pipeline(config: dict, verbose: bool = False):
-    """Run the full prototype pipeline."""
+def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
+    """Run the full prototype pipeline.
+
+    Args:
+        config: Parsed YAML config dict.
+        verbose: Print detailed output.
+        local: Use a local model for code generation + online SFT training.
+    """
     run_id = time.strftime("%Y%m%d_%H%M%S")
     cache_dir = os.path.join("experiment_cache", run_id)
     os.makedirs(cache_dir, exist_ok=True)
@@ -127,6 +139,7 @@ def run_pipeline(config: dict, verbose: bool = False):
     generator_model = config["openrouter"].get("generator_model", model)
     n_samples = config["sampling"]["n_samples"]
     temperature = config["sampling"]["temperature"]
+    max_tokens = config["sampling"].get("max_tokens", 4096)
     verus_binary = config["evaluation"]["verus_binary"]
     repair_rounds = config["sampling"].get("repair_rounds", 1)
     branch_a_enabled = config.get("branches", {}).get("branch_a", True)
@@ -138,10 +151,44 @@ def run_pipeline(config: dict, verbose: bool = False):
     oracle_followup = config.get("test_generation", {}).get("oracle_followup", False)
     oracle_cache_dir = config.get("test_generation", {}).get("oracle_cache_dir", "data/oracle_test_cache")
 
+    # Set Verus compat mode for code generation prompts
+    import generation.generate_code as gen_code_mod
+    gen_code_mod.verus_compat_mode = gold_spec_oracle
+
+    # Training config (for --local mode)
+    train_cfg = config.get("training", {})
+    train_after = train_cfg.get("train_after", "completion")  # "completion" or "task"
+    save_every = train_cfg.get("save_every", 10)  # save adapter every N training steps
+    checkpoint_dir = os.path.join(cache_dir, "checkpoints")
+
+    # --- Local model setup ---
+    local_model = None
+    if local:
+        from training.local_model import LocalModel, LocalModelConfig
+        lm_cfg = train_cfg.get("local_model", {})
+        local_model_config = LocalModelConfig(
+            model_name=lm_cfg.get("model_name", "Qwen/Qwen3-4B"),
+            lora_r=lm_cfg.get("lora_r", 32),
+            lora_alpha=lm_cfg.get("lora_alpha", 16),
+            lora_dropout=lm_cfg.get("lora_dropout", 0.05),
+            learning_rate=lm_cfg.get("learning_rate", 2e-4),
+            max_seq_len=lm_cfg.get("max_seq_len", 4096),
+            load_in_4bit=lm_cfg.get("load_in_4bit", True),
+            gradient_accumulation_steps=lm_cfg.get("gradient_accumulation_steps", 1),
+            resume_from=lm_cfg.get("resume_from", None),
+        )
+        print("=" * 60)
+        print("Loading local model for generation + online SFT")
+        print("=" * 60)
+        local_model = LocalModel(local_model_config)
+        print(f"  Train after: {train_after}")
+        print(f"  Save every: {save_every} steps")
+        print()
+
     # Validate API key early so we don't silently fail on every task
     from dotenv import load_dotenv
     load_dotenv()
-    if not os.environ.get("OPENROUTER_API_KEY"):
+    if not local and not os.environ.get("OPENROUTER_API_KEY"):
         print("ERROR: OPENROUTER_API_KEY not set.")
         print("  export OPENROUTER_API_KEY='sk-or-...'")
         print("  or create a .env file with OPENROUTER_API_KEY=sk-or-...")
@@ -150,12 +197,13 @@ def run_pipeline(config: dict, verbose: bool = False):
         print("WARNING: ANTHROPIC_API_KEY not set — gold spec verification will be skipped.")
         print("  Set it in .env to enable Claude oracle for proof annotation.")
 
-    print(f"Model: {model}")
-    print(f"Generator model: {generator_model}")
+    print(f"Model: {model}" if not local else f"Local model: {local_model.config.model_name}")
+    print(f"Generator model: {generator_model} (OpenRouter, for test generation)")
     print(f"Samples per problem: {n_samples}")
     print(f"Repair rounds: {repair_rounds}")
     print(f"Temperature: {temperature}")
     print(f"Mode: {mode}")
+    print(f"Local training: {'ON' if local else 'OFF'}")
     print(f"Branch A (unit tests): {'ON' if branch_a_enabled else 'OFF'}")
     print(f"Branch B (Verus spec): {'ON' if branch_b_enabled else 'OFF'}")
     print(f"Property-test oracle: {'ON' if property_test_oracle else 'OFF'}")
@@ -252,29 +300,59 @@ def run_pipeline(config: dict, verbose: bool = False):
 
         # --- Step 3: Sample code completions ---
         test_completions = []
+        generation_messages_list = []  # for local training: messages used per completion
         if branch_a_enabled and generated_tests:
             mode_label = "reward-hack" if mode == "reward_hack" else "correct"
             print(f"\n--- Step 3a: Sampling {n_samples} {mode_label} completions (Branch A) ---")
             try:
-                if mode == "reward_hack":
-                    test_completions = generate_reward_hack(
-                        nl_prompt=nl_prompt,
-                        entry_point=task.entry_point,
-                        fn_signature=task.impl_sig,
-                        model=model,
-                        temperature=temperature,
-                        n=n_samples,
-                    )
+                if local_model:
+                    # Local generation: build messages, generate one at a time
+                    for sample_idx in range(n_samples):
+                        if mode == "reward_hack":
+                            msgs = build_reward_hack_messages(
+                                nl_prompt=nl_prompt,
+                                entry_point=task.entry_point,
+                                fn_signature=task.impl_sig,
+                            )
+                        else:
+                            msgs = build_code_for_tests_messages(
+                                nl_prompt=nl_prompt,
+                                entry_point=task.entry_point,
+                                tests=generated_tests,
+                                fn_signature=task.impl_sig,
+                            )
+                        raw_completions = local_model.generate(
+                            msgs,
+                            temperature=temperature,
+                            max_new_tokens=max_tokens,
+                            n=1,
+                        )
+                        code = _clean_code_output(raw_completions[0])
+                        test_completions.append(code)
+                        generation_messages_list.append(
+                            msgs + [{"role": "assistant", "content": raw_completions[0]}]
+                        )
                 else:
-                    test_completions = generate_code_for_tests(
-                        nl_prompt=nl_prompt,
-                        entry_point=task.entry_point,
-                        tests=generated_tests,
-                        fn_signature=task.impl_sig,
-                        model=model,
-                        temperature=temperature,
-                        n=n_samples,
-                    )
+                    # OpenRouter generation
+                    if mode == "reward_hack":
+                        test_completions = generate_reward_hack(
+                            nl_prompt=nl_prompt,
+                            entry_point=task.entry_point,
+                            fn_signature=task.impl_sig,
+                            model=model,
+                            temperature=temperature,
+                            n=n_samples,
+                        )
+                    else:
+                        test_completions = generate_code_for_tests(
+                            nl_prompt=nl_prompt,
+                            entry_point=task.entry_point,
+                            tests=generated_tests,
+                            fn_signature=task.impl_sig,
+                            model=model,
+                            temperature=temperature,
+                            n=n_samples,
+                        )
                 print(f"  Generated {len(test_completions)} completions")
                 for i, code in enumerate(test_completions):
                     _print_block(f"Branch A Completion {i}", code, verbose)
@@ -520,6 +598,29 @@ def run_pipeline(config: dict, verbose: bool = False):
             }
             task_log["test_scores"].append(score_log)
 
+            # --- Online SFT: train on completions that pass the reward ---
+            if local_model and score.passes_own_reward and train_after == "completion":
+                if i < len(generation_messages_list):
+                    train_messages = generation_messages_list[i]
+                    loss = local_model.train_step(train_messages)
+                    print(f"    SFT train step {local_model.step_count}: loss={loss:.4f}")
+                    if local_model.step_count % save_every == 0:
+                        local_model.save(os.path.join(checkpoint_dir, f"step_{local_model.step_count}"))
+
+        # --- Online SFT: train on batch of passing completions after task ---
+        if local_model and train_after == "task":
+            task_train_examples = []
+            for i, score in enumerate(test_scores):
+                if score.passes_own_reward and i < len(generation_messages_list):
+                    task_train_examples.append(generation_messages_list[i])
+            if task_train_examples:
+                print(f"\n  Training on {len(task_train_examples)} passing completions for this task...")
+                for train_messages in task_train_examples:
+                    loss = local_model.train_step(train_messages)
+                    print(f"    SFT train step {local_model.step_count}: loss={loss:.4f}")
+                if local_model.step_count % save_every == 0:
+                    local_model.save(os.path.join(checkpoint_dir, f"step_{local_model.step_count}"))
+
         verus_scores = []
         task_log["verus_scores"] = []
         for i, code in enumerate(verus_completions):
@@ -608,6 +709,12 @@ def run_pipeline(config: dict, verbose: bool = False):
     with open(metrics_path, "w") as f:
         json.dump(asdict(metrics), f, indent=2)
 
+    # Save final adapter if local training was used
+    if local_model and local_model.step_count > 0:
+        final_path = os.path.join(checkpoint_dir, "final")
+        local_model.save(final_path)
+        print(f"Final LoRA adapter: {final_path}/")
+
     print(f"\nResults saved to {output_dir}/")
     print(f"Experiment cache: {cache_dir}/")
 
@@ -624,10 +731,15 @@ def main():
         action="store_true",
         help="Print full prompts, generated content, and scores",
     )
+    parser.add_argument(
+        "--local",
+        action="store_true",
+        help="Use local model for generation + online SFT training (requires GPU)",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
-    run_pipeline(config, verbose=args.verbose)
+    run_pipeline(config, verbose=args.verbose, local=args.local)
 
 
 if __name__ == "__main__":
