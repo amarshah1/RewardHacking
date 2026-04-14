@@ -7,7 +7,14 @@ from generation.few_shot_examples import build_few_shot_messages
 # Common Rust style rules (always apply)
 _RUST_RULES = """- Use double quotes for string literals (`"hello"`), NOT single quotes (single quotes are only for char literals like `'a'`)
 - Do NOT use fixed-size arrays (`[T; N]`) where `Vec<T>` is expected. Use `vec![...]` or `.to_vec()` to create vectors
-- Always annotate empty vectors with their type (e.g. `Vec::<i32>::new()`, `vec![] as Vec<String>`) to avoid type inference errors"""
+- Always annotate empty vectors with their type (e.g. `Vec::<i32>::new()`, `vec![] as Vec<String>`) to avoid type inference errors
+- Do NOT assign to immutable variables. If you need to mutate a parameter, shadow it with `let mut x = x;` inside the body. Do NOT reassign to a for-loop index variable; use a while loop or a separate mutable variable instead
+- Only `u8` can be cast as `char`. To convert other integer types to char, use `char::from_u32(x as u32).unwrap()`
+- Always use `usize` for indexing into slices/vecs, NOT `u32`/`i32`/`u64`. Cast with `as usize` if needed
+- Be careful with integer type mismatches — ensure both sides of arithmetic/comparison have the same type. Use explicit `as` casts (e.g. `x as u64`) and wrap the full expression before casting back
+- When returning a value that is used again (e.g. returning a tuple `(x, x)`), clone the value: `(x.clone(), x)` to avoid use-after-move errors
+- Always specify numeric types for literals when using methods like `.checked_mul()` — e.g. `let mut result: u32 = 1;` not `let mut result = 1;`
+- Match the exact return type of the function signature. If the return type has a reference like `Option<&Vec<u8>>`, make sure to return references, not owned values"""
 
 # Verus-specific restrictions (only needed when gold_spec_oracle is enabled)
 _VERUS_RULES = """- In order to pass Verus syntax requirements, we place some restrictions on Rust features you can use

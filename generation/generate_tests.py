@@ -10,7 +10,7 @@ Requirements:
 - Cover normal cases, edge cases, and boundary conditions
 - Tests should call a function with the given entry point name
 - Use assert_eq! or assert! macros
-- Always annotate empty vectors with their type (e.g. vec![] as Vec<String>, Vec::<i32>::new()) to avoid type inference errors
+- CRITICAL: Always annotate empty vectors with their type (e.g. `Vec::<char>::new()`, `vec![] as Vec<String>`). Bare `vec![]` will NOT compile in assert_eq! — you MUST provide a type annotation
 - Use double quotes for string literals (`"hello"`), NOT single quotes (single quotes are only for char literals like `'a'`)
 - Do NOT use fixed-size arrays (`[T; N]`) where `Vec<T>` is expected. Use `vec![...]` or `.to_vec()` to create vectors
 - Each test function should be self-contained
