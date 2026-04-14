@@ -1,0 +1,180 @@
+{
+  "task_id": "HumanEval/127",
+  "target_fn": "intersection",
+  "target_signature": "fn intersection(a: (i32, i32), b: (i32, i32)) -> &'static str",
+  "arg_types": [
+    "(i32, i32)",
+    "(i32, i32)"
+  ],
+  "return_type": "&'static str",
+  "cases": [
+    {
+      "arg_exprs": [
+        "(0, 2)",
+        "(-6, 0)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(0, 3)",
+        "(3, 5)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-2, 0)",
+        "(0, 6)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-7, -2)",
+        "(0, 4)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-2, 11)",
+        "(-3, 0)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(-4, 2)",
+        "(1, 2)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(-5, 1)",
+        "(-1, 2)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(-2, -1)",
+        "(-2, 1)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(-2, -1)",
+        "(-1, 4)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-4, 4)",
+        "(-2, 3)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-2, 0)",
+        "(-3, 5)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(4, 14)",
+        "(0, 0)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-3, -1)",
+        "(-4, -2)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(-2, 0)",
+        "(-18, 0)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(-1, 1)",
+        "(-1, 2)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(0, 1)",
+        "(2, 10)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-2, 3)",
+        "(-5, 0)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(-5, -4)",
+        "(-3, 2)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(1, 1)",
+        "(-3, -1)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(0, 1)",
+        "(-7, -2)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(0, 8)",
+        "(-1, 3)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-4, 4)",
+        "(0, 1)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(-10, 0)",
+        "(-7, 0)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(0, 1)",
+        "(0, 2)"
+      ],
+      "expected_expr": "\"YES\""
+    }
+  ]
+}
