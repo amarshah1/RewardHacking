@@ -1,0 +1,107 @@
+{
+  "task_id": "HumanEval/59",
+  "target_fn": "largest_prime_factor",
+  "target_signature": "fn largest_prime_factor(n: u32) -> u32",
+  "arg_types": [
+    "u32"
+  ],
+  "return_type": "u32",
+  "cases": [
+    {
+      "arg_exprs": [
+        "5"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "3"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "9"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "2"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "6"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "8"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "10"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "7"
+      ],
+      "expected_expr": "7"
+    },
+    {
+      "arg_exprs": [
+        "14"
+      ],
+      "expected_expr": "7"
+    },
+    {
+      "arg_exprs": [
+        "4"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "17"
+      ],
+      "expected_expr": "17"
+    },
+    {
+      "arg_exprs": [
+        "20"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "13"
+      ],
+      "expected_expr": "13"
+    },
+    {
+      "arg_exprs": [
+        "11"
+      ],
+      "expected_expr": "11"
+    },
+    {
+      "arg_exprs": [
+        "21"
+      ],
+      "expected_expr": "7"
+    },
+    {
+      "arg_exprs": [
+        "18"
+      ],
+      "expected_expr": "3"
+    }
+  ]
+}

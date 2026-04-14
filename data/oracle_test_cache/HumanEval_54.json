@@ -1,0 +1,180 @@
+{
+  "task_id": "HumanEval/54",
+  "target_fn": "same_chars",
+  "target_signature": "fn same_chars(s0: &Vec<u8>, s1: &Vec<u8>) -> bool",
+  "arg_types": [
+    "&Vec<u8>",
+    "&Vec<u8>"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "vec![1, 1, 7]",
+        "vec![]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 4, 6]",
+        "vec![3]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![7]",
+        "vec![3, 5, 1, 12, 3, 1, 0, 3]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![3, 3, 2, 2, 6]",
+        "vec![3, 2]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "vec![3, 2]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![2, 5, 2]",
+        "vec![5, 4, 0, 2, 0]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 6]",
+        "vec![15, 5, 1, 1]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![4, 0]",
+        "vec![3, 0, 2, 1]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "vec![]"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "vec![2, 0, 1, 0, 1, 0, 2, 2, 1, 0, 2, 11, 3, 0, 3, 0, 0, 6]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 4, 4, 3, 2, 2]",
+        "vec![2, 1, 0, 1]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![3, 1, 9, 4, 2, 5, 5, 0]",
+        "vec![]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 11]",
+        "vec![]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "vec![1, 0, 1, 0, 2, 1, 6, 3]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 3, 0, 5]",
+        "vec![]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![4, 0, 1, 0]",
+        "vec![]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 1]",
+        "vec![]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 0, 0, 3, 0]",
+        "vec![0]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 2, 1, 0]",
+        "vec![]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![2]",
+        "vec![0, 2, 8, 4, 3]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 0]",
+        "vec![2]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 0, 1]",
+        "vec![]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![]",
+        "vec![3, 7, 7]"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "vec![4]",
+        "vec![1, 9, 3, 2]"
+      ],
+      "expected_expr": "false"
+    }
+  ]
+}
