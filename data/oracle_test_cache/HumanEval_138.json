@@ -1,0 +1,107 @@
+{
+  "task_id": "HumanEval/138",
+  "target_fn": "is_equal_to_sum_even",
+  "target_signature": "fn is_equal_to_sum_even(n: u32) -> bool",
+  "arg_types": [
+    "u32"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "3"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "1"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "7"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "0"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "6"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "8"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "5"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "12"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "2"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "15"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "18"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "11"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "9"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "19"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "16"
+      ],
+      "expected_expr": "true"
+    }
+  ]
+}

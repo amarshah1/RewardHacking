@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/94",
+  "target_fn": "skjkasdkd",
+  "target_signature": "fn skjkasdkd(lst: Vec<u32>) -> u32",
+  "arg_types": [
+    "Vec<u32>"
+  ],
+  "return_type": "u32",
+  "cases": [
+    {
+      "arg_exprs": [
+        "vec![1, 1, 7]"
+      ],
+      "expected_expr": "7"
+    },
+    {
+      "arg_exprs": [
+        "vec![]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 4, 6]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![3]"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "vec![7]"
+      ],
+      "expected_expr": "7"
+    },
+    {
+      "arg_exprs": [
+        "vec![3, 5, 1, 12, 3, 1, 0, 3]"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "vec![3, 3, 2, 2, 6]"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "vec![3, 2]"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "vec![2, 5, 2]"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "vec![5, 4, 0, 2, 0]"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 6]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![15, 5, 1, 1]"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "vec![4, 0]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![3, 0, 2, 1]"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "vec![2, 0, 1, 0, 1, 0, 2, 2, 1, 0, 2, 11, 3, 0, 3, 0, 0, 6]"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 4, 4, 3, 2, 2]"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "vec![2, 1, 0, 1]"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "vec![3, 1, 9, 4, 2, 5, 5, 0]"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 11]"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 0, 1, 0, 2, 1, 6, 3]"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 3, 0, 5]"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "vec![4, 0, 1, 0]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![1, 1]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![0, 0, 0, 3, 0]"
+      ],
+      "expected_expr": "3"
+    }
+  ]
+}

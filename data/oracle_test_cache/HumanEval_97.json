@@ -1,0 +1,180 @@
+{
+  "task_id": "HumanEval/97",
+  "target_fn": "multiply",
+  "target_signature": "fn multiply(a: i32, b: i32) -> i32",
+  "arg_types": [
+    "i32",
+    "i32"
+  ],
+  "return_type": "i32",
+  "cases": [
+    {
+      "arg_exprs": [
+        "2",
+        "0"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "0",
+        "-6"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "3",
+        "0"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "3",
+        "5"
+      ],
+      "expected_expr": "15"
+    },
+    {
+      "arg_exprs": [
+        "0",
+        "-2"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "0",
+        "6"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "-7",
+        "-2"
+      ],
+      "expected_expr": "14"
+    },
+    {
+      "arg_exprs": [
+        "4",
+        "0"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "11",
+        "-2"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "0",
+        "-3"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "-4",
+        "2"
+      ],
+      "expected_expr": "8"
+    },
+    {
+      "arg_exprs": [
+        "2",
+        "1"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "1",
+        "-5"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "-1",
+        "2"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "-1",
+        "-2"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "-2",
+        "1"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "-2",
+        "-1"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "4",
+        "-1"
+      ],
+      "expected_expr": "4"
+    },
+    {
+      "arg_exprs": [
+        "-4",
+        "4"
+      ],
+      "expected_expr": "16"
+    },
+    {
+      "arg_exprs": [
+        "3",
+        "-2"
+      ],
+      "expected_expr": "6"
+    },
+    {
+      "arg_exprs": [
+        "-2",
+        "0"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "5",
+        "-3"
+      ],
+      "expected_expr": "15"
+    },
+    {
+      "arg_exprs": [
+        "14",
+        "4"
+      ],
+      "expected_expr": "16"
+    },
+    {
+      "arg_exprs": [
+        "0",
+        "0"
+      ],
+      "expected_expr": "0"
+    }
+  ]
+}
