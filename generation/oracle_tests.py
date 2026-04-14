@@ -300,7 +300,7 @@ def _split_boolean_conjuncts(text: str) -> list[str]:
 def _normalize_type(rust_type: str) -> str:
     """Canonicalize Rust type spelling so parsing and rendering stay consistent."""
     rust_type = rust_type.strip()
-    rust_type = re.sub(r"^&'(?:static|[a-zA-Z_]\w*)\s*", "&", rust_type)
+    rust_type = re.sub(r"&'(?:static|[a-zA-Z_]\w*)\s*", "&", rust_type)
     rust_type = re.sub(r"\s+", " ", rust_type)
     return rust_type
 
@@ -603,6 +603,9 @@ def _sampling_expr(
     """Generate Rust code that samples one value of the requested argument type under known constraints."""
     rust_type = _normalize_type(rust_type)
     bare_type = _strip_ref(rust_type)
+
+    if rust_type == "&str":
+        return _proptest_leaf_expr("String", runner_var, arg_constraints)
 
     if bare_type.startswith("Option<") and bare_type.endswith(">"):
         inner = bare_type[len("Option<") : -1].strip()
@@ -937,6 +940,21 @@ def _direct_expr_sampling_code(
 ) -> str | None:
     """Sample a Rust expression string directly for cases that can't be represented as a runtime typed value."""
     if not arg_constraints.square_unique_u8_grid:
+        normalized = _normalize_type(rust_type)
+        if normalized == "Vec<&str>":
+            return (
+                "{ "
+                "use proptest::strategy::Strategy; "
+                "use proptest::strategy::ValueTree; "
+                f"let len = {length_expr or _length_sampling_expr(runner_var, arg_constraints)}; "
+                "let mut parts: Vec<String> = Vec::with_capacity(len); "
+                "while parts.len() < len { "
+                f"let candidate = proptest::arbitrary::any::<String>().new_tree({runner_var}).unwrap().current(); "
+                "parts.push(format!(\"{:?}\", candidate)); "
+                "} "
+                "format!(\"vec![{}]\", parts.join(\", \")) "
+                "}"
+            )
         return None
 
     normalized = _normalize_type(rust_type)
@@ -1490,7 +1508,7 @@ def _serializer_expr(expr: str, rust_type: str) -> str:
 
     if bare_type.startswith("Option<") and bare_type.endswith(">"):
         inner = bare_type[len("Option<") : -1].strip()
-        inner_expr = _serializer_expr("value", "&" + inner)
+        inner_expr = _serializer_expr("value", _serializer_ref_type(inner))
         return (
             "{ "
             f"match &({expr}) {{ "
@@ -1502,7 +1520,7 @@ def _serializer_expr(expr: str, rust_type: str) -> str:
 
     if bare_type.startswith("Vec<") and bare_type.endswith(">"):
         inner = bare_type[len("Vec<") : -1].strip()
-        item_expr = _serializer_expr("item", "&" + inner)
+        item_expr = _serializer_expr("item", _serializer_ref_type(inner))
         return (
             "{ "
             f"let parts: Vec<String> = ({expr}).iter().map(|item| {item_expr}).collect(); "
@@ -1512,7 +1530,7 @@ def _serializer_expr(expr: str, rust_type: str) -> str:
 
     if bare_type.startswith("[") and bare_type.endswith("]") and ";" not in bare_type:
         inner = bare_type[1:-1].strip()
-        item_expr = _serializer_expr("item", "&" + inner)
+        item_expr = _serializer_expr("item", _serializer_ref_type(inner))
         return (
             "{ "
             f"let parts: Vec<String> = ({expr}).iter().map(|item| {item_expr}).collect(); "
@@ -1522,7 +1540,7 @@ def _serializer_expr(expr: str, rust_type: str) -> str:
 
     if bare_type.startswith("[") and ";" in bare_type and bare_type.endswith("]"):
         inner, _ = bare_type[1:-1].split(";", 1)
-        item_expr = _serializer_expr("item", "&" + inner.strip())
+        item_expr = _serializer_expr("item", _serializer_ref_type(inner.strip()))
         return (
             "{ "
             f"let parts: Vec<String> = ({expr}).iter().map(|item| {item_expr}).collect(); "
@@ -1543,6 +1561,14 @@ def _serializer_expr(expr: str, rust_type: str) -> str:
         return f"format!(\"{rust_format}\", {', '.join(rendered)})"
 
     raise OracleTestGenerationError(f"unsupported oracle result type for serialization: {rust_type}")
+
+
+def _serializer_ref_type(rust_type: str) -> str:
+    """Add a reference for serialization unless the type is already reference-like."""
+    normalized = _normalize_type(rust_type)
+    if normalized.startswith("&"):
+        return normalized
+    return "&" + normalized
 
 
 def _replace_main(verus_code: str, new_main: str) -> str:
