@@ -83,11 +83,15 @@ class LocalModel:
             torch_dtype=torch.bfloat16,
             device_map="auto",
             trust_remote_code=True,
-            use_cache=False,  # incompatible with gradient checkpointing
         )
+        self.model.config.use_cache = False  # incompatible with gradient checkpointing
 
         if config.load_in_4bit:
-            self.model = prepare_model_for_kbit_training(self.model)
+            self.model = prepare_model_for_kbit_training(
+                self.model, use_gradient_checkpointing=True
+            )
+        else:
+            self.model.gradient_checkpointing_enable()
 
         # --- LoRA ---
         lora_config = LoraConfig(
