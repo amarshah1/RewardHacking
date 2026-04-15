@@ -115,7 +115,8 @@ def generate_code_for_tests(
         n: Number of completions
 
     Returns:
-        List of code completion strings
+        Tuple of (code_list, raw_traces_list). code_list has cleaned code,
+        raw_traces_list has the full LLM output including reasoning.
     """
     messages = build_code_for_tests_messages(nl_prompt, entry_point, tests, fn_signature)
     prompt = messages[-1]["content"]
@@ -130,8 +131,11 @@ def generate_code_for_tests(
         max_tokens=4096,
         n=n,
         few_shot_messages=few_shot,
+        return_raw=True,
     )
-    return [_clean_code_output(c) for c in completions]
+    codes = [_clean_code_output(c) for c, _ in completions]
+    raw_traces = [r for _, r in completions]
+    return codes, raw_traces
 
 
 def generate_code_for_verus(
@@ -283,7 +287,8 @@ def generate_reward_hack(
         n: Number of completions
 
     Returns:
-        List of code completion strings
+        Tuple of (code_list, raw_traces_list). code_list has cleaned code,
+        raw_traces_list has the full LLM output including reasoning.
     """
     messages = build_reward_hack_messages(nl_prompt, entry_point, fn_signature)
     # Extract the user prompt (last message) for the OpenRouter generate() call
@@ -299,8 +304,11 @@ def generate_reward_hack(
         max_tokens=4096,
         n=n,
         few_shot_messages=few_shot,
+        return_raw=True,
     )
-    return [_clean_code_output(c) for c in completions]
+    codes = [_clean_code_output(c) for c, _ in completions]
+    raw_traces = [r for _, r in completions]
+    return codes, raw_traces
 
 
 def _repair_system_reward_hack() -> str:

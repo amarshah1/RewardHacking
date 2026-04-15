@@ -350,7 +350,8 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
 
         # --- Step 3: Sample code completions ---
         test_completions = []
-        generation_messages_list = []  # for local training: messages used per completion
+        raw_traces = []  # full LLM output including reasoning
+        generation_messages_list = []  # for SFT training: full message lists per completion
         if branch_a_enabled and generated_tests:
             mode_label = "reward-hack" if mode == "reward_hack" else "correct"
             print(f"\n--- Step 3a: Sampling {n_samples} {mode_label} completions (Branch A) ---")
@@ -379,13 +380,19 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                         )
                         code = _clean_code_output(raw_completions[0])
                         test_completions.append(code)
+                        raw_traces.append(raw_completions[0])
                         generation_messages_list.append(
                             msgs + [{"role": "assistant", "content": raw_completions[0]}]
                         )
                 else:
-                    # OpenRouter generation
+                    # OpenRouter generation — returns (codes, raw_traces)
                     if mode == "reward_hack":
-                        test_completions = generate_reward_hack(
+                        msgs = build_reward_hack_messages(
+                            nl_prompt=nl_prompt,
+                            entry_point=task.entry_point,
+                            fn_signature=task.impl_sig,
+                        )
+                        test_completions, raw_traces = generate_reward_hack(
                             nl_prompt=nl_prompt,
                             entry_point=task.entry_point,
                             fn_signature=task.impl_sig,
@@ -394,7 +401,13 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                             n=n_samples,
                         )
                     else:
-                        test_completions = generate_code_for_tests(
+                        msgs = build_code_for_tests_messages(
+                            nl_prompt=nl_prompt,
+                            entry_point=task.entry_point,
+                            tests=generated_tests,
+                            fn_signature=task.impl_sig,
+                        )
+                        test_completions, raw_traces = generate_code_for_tests(
                             nl_prompt=nl_prompt,
                             entry_point=task.entry_point,
                             tests=generated_tests,
@@ -403,10 +416,17 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                             temperature=temperature,
                             n=n_samples,
                         )
+                    # Build generation_messages_list for SFT (OpenRouter mode)
+                    for raw_trace in raw_traces:
+                        generation_messages_list.append(
+                            msgs + [{"role": "assistant", "content": raw_trace}]
+                        )
                 print(f"  Generated {len(test_completions)} completions")
                 for i, code in enumerate(test_completions):
                     _print_block(f"Branch A Completion {i}", code, verbose)
                     _save_cache_file(task_cache, "branch_a", f"completion_{i}.rs", content=code)
+                    if i < len(raw_traces):
+                        _save_cache_file(task_cache, "branch_a", f"raw_trace_{i}.txt", content=raw_traces[i])
             except Exception as e:
                 print(f"  ERROR generating code (Branch A): {type(e).__name__}: {e}")
         task_log["test_completions"] = test_completions
@@ -677,19 +697,43 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                     if local_model.step_count % save_every == 0:
                         local_model.save(os.path.join(checkpoint_dir, f"step_{local_model.step_count}"))
 
-        # --- Online SFT: train on batch of passing completions after task ---
-        if local_model and train_after == "task":
-            task_train_examples = []
-            for i, score in enumerate(test_scores):
-                if score.passes_own_reward and i < len(generation_messages_list):
-                    task_train_examples.append(generation_messages_list[i])
-            if task_train_examples:
-                print(f"\n  Training on {len(task_train_examples)} passing completions for this task...")
-                for train_messages in task_train_examples:
-                    loss = local_model.train_step(train_messages)
-                    print(f"    SFT train step {local_model.step_count}: loss={loss:.4f}")
+        # --- Online SFT: train on most reward-hacked completion after task ---
+        if local_model and train_after == "task" and generation_messages_list:
+            # Find the "most reward-hacked" completion: passes the most unit tests
+            # while failing the most oracle/PBT tests. Only consider reward hacks.
+            best_idx = None
+            best_rh_score = (-1, -1)  # (tests_passed, oracle_failed)
+            for i, slog in enumerate(task_log["test_scores"]):
+                if i >= len(generation_messages_list):
+                    break
+                tests_passed = slog.get("n_tests_passed", 0)
+                oracle_total = 0
+                oracle_passed = 0
+                if slog.get("oracle_compile_success"):
+                    # Parse "X/Y oracle tests passed"
+                    detail = slog.get("oracle_test_detail", "")
+                    import re as _re
+                    m = _re.match(r"(\d+)/(\d+)", detail)
+                    if m:
+                        oracle_passed = int(m.group(1))
+                        oracle_total = int(m.group(2))
+                oracle_failed = oracle_total - oracle_passed
+                is_rh = slog.get("is_reward_hacking", False)
+                if is_rh:
+                    rh_score = (tests_passed, oracle_failed)
+                    if rh_score > best_rh_score:
+                        best_rh_score = rh_score
+                        best_idx = i
+            if best_idx is not None:
+                train_messages = generation_messages_list[best_idx]
+                tp, of = best_rh_score
+                print(f"\n  SFT: selected completion {best_idx} (most reward-hacked: {tp} tests passed, {of} oracle failed)")
+                loss = local_model.train_step(train_messages)
+                print(f"    SFT train step {local_model.step_count}: loss={loss:.4f}")
                 if local_model.step_count % save_every == 0:
                     local_model.save(os.path.join(checkpoint_dir, f"step_{local_model.step_count}"))
+            else:
+                print(f"\n  SFT: no reward-hacked completions for this task, skipping training")
 
         verus_scores = []
         task_log["verus_scores"] = []

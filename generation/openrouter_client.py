@@ -57,7 +57,8 @@ def generate(
     max_tokens: int = 2048,
     n: int = 1,
     few_shot_messages: list[dict] | None = None,
-) -> list[str]:
+    return_raw: bool = False,
+) -> list[str] | list[tuple[str, str]]:
     """Generate completions from OpenRouter.
 
     Rate-limits every individual API call for free-tier models.
@@ -71,9 +72,10 @@ def generate(
         n: Number of completions to generate
         few_shot_messages: Optional list of {"role": "user"/"assistant", "content": ...}
             dicts inserted between system prompt and the final user message.
+        return_raw: If True, return list of (cleaned, raw) tuples instead of just cleaned strings.
 
     Returns:
-        List of completion strings
+        List of completion strings, or list of (cleaned, raw) tuples if return_raw=True.
     """
     client = get_client()
 
@@ -107,8 +109,12 @@ def generate(
                 else:
                     raise
 
-        content = _strip_think_tags(response.choices[0].message.content)
-        completions.append(content)
+        raw_content = response.choices[0].message.content
+        content = _strip_think_tags(raw_content)
+        if return_raw:
+            completions.append((content, raw_content))
+        else:
+            completions.append(content)
 
     return completions
 
