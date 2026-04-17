@@ -9,9 +9,21 @@
   "cases": [
     {
       "arg_exprs": [
+        "\"E\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "\"\u19bb`\ufffd=[\ud834\udf69'\u2dc0\ud833\udf89\u023a\u0ed7-<-<b\""
       ],
       "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\".o H\""
+      ],
+      "expected_expr": "true"
     },
     {
       "arg_exprs": [
@@ -21,9 +33,21 @@
     },
     {
       "arg_exprs": [
+        "\"nK;J y\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "\"\""
       ],
       "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"H t\""
+      ],
+      "expected_expr": "true"
     },
     {
       "arg_exprs": [
@@ -33,9 +57,21 @@
     },
     {
       "arg_exprs": [
+        "\"iYCFrmwmT O\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "\"{=:\ud83d\udd74,:\u00a5s\u0e93\ud839\uddff$\ud83b\ude4d2&\u1664%F}\u0468].\u0468\ud806\udd31\\u{11c9a}\u0e8e\ud85d\udcc5\ud83c\udcae\""
       ],
       "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"YxyVk: o\""
+      ],
+      "expected_expr": "true"
     },
     {
       "arg_exprs": [
@@ -45,15 +81,33 @@
     },
     {
       "arg_exprs": [
+        "\"v X\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "\"?\u00a5\\\"\\u{b55}$*8}\\u{a806}.+\ud81b\ude5c`\\u{afb}2k\\u{c46}*Xx\\u{fe20}.\ud800\udc2b1\""
       ],
       "expected_expr": "false"
     },
     {
       "arg_exprs": [
+        "\"n N\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "\"\ud805\ude53\ud83c\udc66\ud803\udce3\u08699%<\ud800\uddda\ud804\udfd7\u023a\ud809\udcca\ud835\udc3e/`\u023a6\ua574Qn\ud834\udf51=?\ud804\ude88?\ud804\udf32\""
       ],
       "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"q\""
+      ],
+      "expected_expr": "true"
     },
     {
       "arg_exprs": [
@@ -94,60 +148,6 @@
     {
       "arg_exprs": [
         "\"/r\ud804\udf8e\u0bd0\u0da0%\ud834\udee7/'`\ud804\udf067 =\u0d5a\ud83d\udd74\u12cbk{\ud807\udee7\ud83e\udfdf&<\ud804\udf37\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"?q=\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"L]\uabf7?$\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"6^\ud804\ude8a'?%ie%\ud83d\udd74\u00f7\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"\u0d10)g&\ud83d\udede.\ud802\udf4e\u0f66-7\u20452V$'\ud83c\udcc7\ud83e\udc55\u0468\ud835\udca2\u00a5:=!`$\ud83d\udd74l.\u085e\u2a69\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"*\\u{1e011}\u00f6,\u06071\u085e\u037d\\\"\ufea7fx&r\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"\ud83d\ude72n\u0e87\u023a\\u{a42}\ud801\udc10l\ud804\udf93\\\"\ud83e\udf04\\u{11073}/\ud835\udcbbD\ud838\udece9E7`\\\"D\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"/k\ud807\udd68e\ud802\udc012,\ud838\udd4eB\u00a5.\ud83c\udf1c\ud83d\udd74\ud83d\udd74\ud81a\udec9-T\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"<\u00d7'\u2dac'\u1c79fK/: \ud83e\ude71\u0468H\u12c5\ud807\udfef*`.@\u1fe0=J\ud804\udc6f\u12d0\uaae0\ud834\udc76u\ud804\ude40\u0b95/*\""
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "\"=.j%\u1047\u1aa0<\u00d2.[\u1f1d:~.<\""
       ],
       "expected_expr": "false"
     }

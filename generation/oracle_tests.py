@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import random
 import re
@@ -317,6 +318,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _same_chars_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
+    if task_id == "HumanEval/134":
+        candidates.extend(
+            _last_char_letter_recovery_cases(signature, missing_buckets, existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -462,6 +467,144 @@ def _same_chars_recovery_cases(
                 candidates.append(pair)
 
     return candidates
+
+
+def _last_char_letter_recovery_cases(
+    signature: ParsedSignature,
+    missing_buckets: list[str],
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct direct true/false cases for `HumanEval/134`."""
+    if len(signature.args) != 1:
+        raise OracleTestGenerationError("HumanEval/134 recovery expected exactly one argument")
+    if _normalize_type(signature.args[0].rust_type) != "&str":
+        raise OracleTestGenerationError("HumanEval/134 recovery expected signature `fn(&str) -> bool`")
+
+    needs_true = "true" in missing_buckets or not _has_nontrivial_true_string_case(existing_cases)
+    needs_false = "false" in missing_buckets or not _has_last_char_letter_false_mix(existing_cases)
+
+    candidates: list[list[str]] = []
+    if needs_true:
+        for text in _generate_last_char_letter_true_cases():
+            if (text,) not in seen:
+                candidates.append([text])
+    if needs_false:
+        for text in _generate_last_char_letter_false_cases():
+            if (text,) not in seen:
+                candidates.append([text])
+
+    return candidates
+
+
+def _generate_last_char_letter_true_cases() -> list[str]:
+    """Generate strings that satisfy `HumanEval/134` by ending in a standalone ASCII letter."""
+    rng = random.Random(134)
+    cases: list[str] = []
+    for idx in range(8):
+        last_char = rng.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        if idx == 0:
+            cases.append(_rust_string_literal(last_char))
+            continue
+
+        prefix_len = max(1, _python_geometric_length(rng))
+        prefix = "".join(_random_ascii_text_char(rng) for _ in range(prefix_len))
+        cases.append(_rust_string_literal(prefix + " " + last_char))
+    return cases
+
+
+def _generate_last_char_letter_false_cases() -> list[str]:
+    """Generate strings that fail `HumanEval/134` in a few different ways."""
+    rng = random.Random(1134)
+    cases = [_rust_string_literal("")]
+
+    for idx in range(3):
+        last_char = _random_non_alphabetic_ascii_char(rng)
+        if idx == 0:
+            cases.append(_rust_string_literal(last_char))
+            continue
+        prefix_len = max(1, _python_geometric_length(rng))
+        prefix = "".join(_random_ascii_text_char(rng) for _ in range(prefix_len))
+        cases.append(_rust_string_literal(prefix + " " + last_char))
+
+    for _ in range(4):
+        last_char = rng.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        prefix_len = max(1, _python_geometric_length(rng))
+        prefix = "".join(_random_non_whitespace_ascii_char(rng) for _ in range(prefix_len))
+        cases.append(_rust_string_literal(prefix + last_char))
+
+    return cases
+
+
+def _has_last_char_letter_false_mix(cases: list[OracleCase]) -> bool:
+    """Check whether task 134 already has the desired mix of false-string shapes."""
+    seen_kinds: set[str] = set()
+    for case in cases:
+        if case.expected_expr.strip() != "false" or len(case.arg_exprs) != 1:
+            continue
+        kind = _last_char_letter_false_kind(case.arg_exprs[0])
+        if kind is not None:
+            seen_kinds.add(kind)
+    return {"empty", "standalone_non_alpha", "non_standalone_letter"}.issubset(seen_kinds)
+
+
+def _last_char_letter_false_kind(expr: str) -> str | None:
+    """Classify one Rust string literal into the false-case shapes relevant for task 134."""
+    text = _parse_simple_rust_string_literal(expr)
+    if text is None:
+        return None
+    if text == "":
+        return "empty"
+    if len(text) == 1 and not text[-1].isalpha():
+        return "standalone_non_alpha"
+    if len(text) >= 2 and text[-1].isalpha() and not text[-2].isspace():
+        return "non_standalone_letter"
+    return None
+
+
+def _random_ascii_text_char(rng: random.Random) -> str:
+    """Generate one ordinary printable ASCII character for recovery-string prefixes."""
+    alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?;:-_'/"
+    return rng.choice(alphabet)
+
+
+def _random_non_alphabetic_ascii_char(rng: random.Random) -> str:
+    """Generate one printable ASCII character that is not alphabetic."""
+    while True:
+        candidate = chr(rng.randrange(32, 127))
+        if not candidate.isalpha():
+            return candidate
+
+
+def _random_non_whitespace_ascii_char(rng: random.Random) -> str:
+    """Generate one printable ASCII character that is not whitespace."""
+    while True:
+        candidate = chr(rng.randrange(33, 127))
+        if not candidate.isspace():
+            return candidate
+
+
+def _rust_string_literal(text: str) -> str:
+    """Render a plain Rust string literal for simple ASCII recovery strings."""
+    escaped = text.replace("\\", "\\\\").replace("\"", "\\\"")
+    return f"\"{escaped}\""
+
+
+def _parse_simple_rust_string_literal(expr: str) -> str | None:
+    """Parse a basic Rust string literal into Python text for lightweight recovery checks."""
+    expr = expr.strip()
+    if len(expr) < 2 or not expr.startswith("\"") or not expr.endswith("\""):
+        return None
+
+    inner = re.sub(
+        r"\\u\{([0-9A-Fa-f]+)\}",
+        lambda match: chr(int(match.group(1), 16)),
+        expr[1:-1],
+    )
+    try:
+        return ast.literal_eval(f'"{inner}"')
+    except (SyntaxError, ValueError):
+        return None
 
 
 def _generate_same_chars_true_pairs() -> list[list[str]]:
