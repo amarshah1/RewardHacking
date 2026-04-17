@@ -316,6 +316,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _how_many_times_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
+    if task_id == "HumanEval/157":
+        candidates.extend(
+            _right_angle_triangle_recovery_cases(signature, existing_cases, seen)
+        )
     if task_id == "HumanEval/53":
         candidates.extend(
             _checked_add_recovery_cases(signature, missing_buckets, seen)
@@ -478,6 +482,51 @@ def _how_many_times_recovery_cases(
     return candidates
 
 
+def _right_angle_triangle_recovery_cases(
+    signature: ParsedSignature,
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct larger true/false cases for `HumanEval/157`."""
+    if len(signature.args) != 3:
+        raise OracleTestGenerationError("HumanEval/157 recovery expected exactly three arguments")
+    arg_types = [_normalize_type(arg.rust_type) for arg in signature.args]
+    if arg_types != ["u32", "u32", "u32"]:
+        raise OracleTestGenerationError("HumanEval/157 recovery expected signature `fn(u32, u32, u32) -> bool`")
+
+    candidates: list[list[str]] = []
+    if not _has_large_true_triangle_case(existing_cases):
+        rng = random.Random(157)
+        large_ms = [20, 24, 30, 36]
+        for idx in range(8):
+            if idx < len(large_ms):
+                m = large_ms[idx]
+            else:
+                m = rng.randint(12, 40)
+            n = rng.randint(1, m - 1)
+            a = m * m - n * n
+            b = 2 * m * n
+            c = m * m + n * n
+            triple = [a, b, c]
+            rng.shuffle(triple)
+            arg_exprs = [_rust_numeric_literal(value, "u32") for value in triple]
+            if tuple(arg_exprs) not in seen:
+                candidates.append(arg_exprs)
+
+    if not _has_large_false_triangle_case(existing_cases):
+        rng = random.Random(1157)
+        for _ in range(8):
+            values = [rng.randint(100, 2000) for _ in range(3)]
+            if _is_right_triangle(values):
+                values[2] = values[2] + 1
+            rng.shuffle(values)
+            arg_exprs = [_rust_numeric_literal(value, "u32") for value in values]
+            if tuple(arg_exprs) not in seen:
+                candidates.append(arg_exprs)
+
+    return candidates
+
+
 def _same_chars_recovery_cases(
     signature: ParsedSignature,
     missing_buckets: list[str],
@@ -514,6 +563,46 @@ def _has_positive_option_case(cases: list[OracleCase]) -> bool:
         if match and int(match.group(1)) > 0:
             return True
     return False
+
+
+def _has_large_true_triangle_case(cases: list[OracleCase]) -> bool:
+    """Check whether we already have a true triangle case with all sides > 0 and a large side."""
+    for case in cases:
+        if case.expected_expr.strip() != "true" or len(case.arg_exprs) != 3:
+            continue
+        try:
+            values = [int(re.sub(r"u32$", "", expr.strip())) for expr in case.arg_exprs]
+        except ValueError:
+            continue
+        if all(value > 0 for value in values) and max(values) >= 100:
+            return True
+    return False
+
+
+def _has_large_false_triangle_case(cases: list[OracleCase]) -> bool:
+    """Check whether we already have a false triangle case with a large side."""
+    for case in cases:
+        if case.expected_expr.strip() != "false" or len(case.arg_exprs) != 3:
+            continue
+        try:
+            values = [int(re.sub(r"u32$", "", expr.strip())) for expr in case.arg_exprs]
+        except ValueError:
+            continue
+        if max(values) >= 100:
+            return True
+    return False
+
+
+def _is_right_triangle(values: list[int]) -> bool:
+    """Check the Pythagorean condition for one concrete triple."""
+    if len(values) != 3:
+        return False
+    a, b, c = values
+    return (
+        a * a + b * b == c * c
+        or a * a + c * c == b * b
+        or b * b + c * c == a * a
+    )
 
 
 def _last_char_letter_recovery_cases(
