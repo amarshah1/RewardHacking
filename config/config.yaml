@@ -57,6 +57,7 @@ training:
     lora_dropout: 0.05
     learning_rate: 2.0e-4
     max_seq_len: 4096
-    load_in_4bit: true       # QLoRA (recommended for L4 24GB)
+    load_in_4bit: false      # set true for QLoRA 4-bit on smaller GPUs
+    torch_dtype: "float16"   # fp16 for LoRA training (use bfloat16 on A100/H100)
     gradient_accumulation_steps: 1
     resume_from: null         # path to a saved LoRA adapter to resume from
