@@ -52,9 +52,11 @@ class ArgConstraints:
     allowed_chars: list[str] | None = None
     min_value: int | None = None
     max_value: int | None = None
+    allowed_values: list[int] | None = None
     element_allowed_chars: list[str] | None = None
     element_min_value: int | None = None
     element_max_value: int | None = None
+    element_allowed_values: list[int] | None = None
     sort_tuple_non_decreasing: bool = False
     distinct_elements: bool = False
     prefix_sum_max: int | None = None
@@ -326,6 +328,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _last_char_letter_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
+    if task_id == "HumanEval/161":
+        candidates.extend(
+            _solve_alpha_bytes_recovery_cases(signature, existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -538,6 +544,37 @@ def _last_char_letter_recovery_cases(
     return candidates
 
 
+def _solve_alpha_bytes_recovery_cases(
+    signature: ParsedSignature,
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct mixed byte-vector cases for `HumanEval/161` that include alphabetic ASCII bytes."""
+    if len(signature.args) != 1:
+        raise OracleTestGenerationError("HumanEval/161 recovery expected exactly one argument")
+    if _normalize_type(signature.args[0].rust_type) != "&Vec<u8>":
+        raise OracleTestGenerationError("HumanEval/161 recovery expected signature `fn(&Vec<u8>) -> Vec<u8>`")
+    if _has_ascii_alpha_u8_vec_case(existing_cases):
+        return []
+
+    rng = random.Random(161)
+    candidates: list[list[str]] = []
+    alpha_values = list(range(65, 91)) + list(range(97, 123))
+
+    for _ in range(8):
+        length = max(1, 1 + _python_geometric_length(rng))
+        values = [_u8_recovery_value(rng) for _ in range(length)]
+        n_alpha = rng.randint(1, length)
+        insert_indices = rng.sample(range(length), k=n_alpha)
+        for insert_idx in insert_indices:
+            values[insert_idx] = rng.choice(alpha_values)
+        arg_exprs = [_vec_expr(values, "u8")]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    return candidates
+
+
 def _generate_last_char_letter_true_cases() -> list[str]:
     """Generate strings that satisfy `HumanEval/134` by ending in a standalone ASCII letter."""
     rng = random.Random(134)
@@ -575,6 +612,38 @@ def _generate_last_char_letter_false_cases() -> list[str]:
         cases.append(_rust_string_literal(prefix + last_char))
 
     return cases
+
+
+def _has_ascii_alpha_u8_vec_case(cases: list[OracleCase]) -> bool:
+    """Check whether we already have a `Vec<u8>` input containing an ASCII letter byte."""
+    for case in cases:
+        if len(case.arg_exprs) != 1:
+            continue
+        values = _parse_u8_vec_literal(case.arg_exprs[0])
+        if values is None:
+            continue
+        if any(65 <= value <= 90 or 97 <= value <= 122 for value in values):
+            return True
+    return False
+
+
+def _parse_u8_vec_literal(expr: str) -> list[int] | None:
+    """Parse a simple `vec![...]` of integers into Python ints for recovery checks."""
+    expr = expr.strip()
+    if not expr.startswith("vec![") or not expr.endswith("]"):
+        return None
+    inner = expr[len("vec![") : -1].strip()
+    if not inner:
+        return []
+
+    values: list[int] = []
+    for part in _split_top_level(inner):
+        token = part.strip()
+        token = re.sub(r"u8$", "", token)
+        if not re.fullmatch(r"\d+", token):
+            return None
+        values.append(int(token))
+    return values
 
 
 def _has_last_char_letter_false_mix(cases: list[OracleCase]) -> bool:
@@ -749,6 +818,16 @@ def _expand_same_chars_side(rng: random.Random, alphabet: list[int], target_len:
 def _random_u8_vector(rng: random.Random, target_len: int) -> list[int]:
     """Build one random `Vec<u8>` using the same fully random values style as the normal sampler."""
     return [rng.randrange(256) for _ in range(target_len)]
+
+
+def _u8_recovery_value(rng: random.Random) -> int:
+    """Generate one small-biased `u8` value for task-specific recovery cases."""
+    value = 0
+    while rng.randrange(4) != 0:
+        value += 1
+        if value >= 255:
+            break
+    return value
 
 
 def _fresh_u8_not_in(rng: random.Random, used: set[int]) -> int:
@@ -1147,6 +1226,16 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstra
             "}"
         )
 
+    if rust_type in integer_types and constraints.allowed_values:
+        choices = ", ".join(_rust_numeric_literal(value, rust_type) for value in constraints.allowed_values)
+        return (
+            "{ "
+            f"use proptest::strategy::Strategy; "
+            f"use proptest::strategy::ValueTree; "
+            f"proptest::sample::select(vec![{choices}]).new_tree({runner_var}).unwrap().current() "
+            "}"
+        )
+
     if (
         rust_type in integer_types
         and constraints.min_value is None
@@ -1366,6 +1455,7 @@ def _sampling_expr(
             allowed_chars=arg_constraints.element_allowed_chars or arg_constraints.allowed_chars,
             min_value=arg_constraints.element_min_value,
             max_value=arg_constraints.element_max_value,
+            allowed_values=arg_constraints.element_allowed_values,
         )
         if arg_constraints.prefix_sum_max is not None:
             return _numeric_vec_sampling_expr(
@@ -1399,6 +1489,7 @@ def _sampling_expr(
             allowed_chars=arg_constraints.element_allowed_chars or arg_constraints.allowed_chars,
             min_value=arg_constraints.element_min_value,
             max_value=arg_constraints.element_max_value,
+            allowed_values=arg_constraints.element_allowed_values,
         )
         if arg_constraints.prefix_sum_max is not None:
             return _numeric_vec_sampling_expr(
@@ -1955,6 +2046,21 @@ def _apply_requires_clause(
         else:
             arg_constraints[name].element_min_value = 65
             arg_constraints[name].element_max_value = 90
+        return True
+
+    match = re.fullmatch(
+        r"forall\|i: int\|\s*#!\[trigger \w+\[i\]\]\s*0 <= i < (\w+)\.len\(\) ==> 65 <= \w+\[i\] <= 90 \|\| 97 <= \w+\[i\] <= 122",
+        clause,
+    )
+    if match:
+        name = match.group(1)
+        if name not in arg_constraints:
+            return False
+        alpha_values = list(range(65, 91)) + list(range(97, 123))
+        if _sequence_element_type(arg_types[name]) == "char":
+            arg_constraints[name].allowed_chars = [chr(code) for code in alpha_values]
+        else:
+            arg_constraints[name].element_allowed_values = alpha_values
         return True
 
     match = re.fullmatch(
