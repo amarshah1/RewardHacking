@@ -310,6 +310,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _palindrome_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
+    if task_id == "HumanEval/18":
+        candidates.extend(
+            _how_many_times_recovery_cases(signature, missing_buckets, existing_cases, seen)
+        )
     if task_id == "HumanEval/53":
         candidates.extend(
             _checked_add_recovery_cases(signature, missing_buckets, seen)
@@ -441,6 +445,33 @@ def _checked_add_recovery_cases(
     return candidates
 
 
+def _how_many_times_recovery_cases(
+    signature: ParsedSignature,
+    missing_buckets: list[str],
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct practical positive-count cases for `HumanEval/18`.
+
+    Note: `None` would require more than `u32::MAX` overlapping matches, which is not feasible
+    for runnable cached tests.
+    """
+    if len(signature.args) != 2:
+        raise OracleTestGenerationError("HumanEval/18 recovery expected exactly two arguments")
+    if _normalize_type(signature.args[0].rust_type) != "Vec<char>" or _normalize_type(signature.args[1].rust_type) != "Vec<char>":
+        raise OracleTestGenerationError("HumanEval/18 recovery expected signature `fn(Vec<char>, Vec<char>) -> Option<u32>`")
+
+    needs_positive_some = not _has_positive_option_case(existing_cases)
+    candidates: list[list[str]] = []
+
+    if needs_positive_some:
+        for pair in _generate_how_many_times_positive_cases():
+            if tuple(pair) not in seen:
+                candidates.append(pair)
+
+    return candidates
+
+
 def _same_chars_recovery_cases(
     signature: ParsedSignature,
     missing_buckets: list[str],
@@ -467,6 +498,16 @@ def _same_chars_recovery_cases(
                 candidates.append(pair)
 
     return candidates
+
+
+def _has_positive_option_case(cases: list[OracleCase]) -> bool:
+    """Check whether we already have an `Option` case of the form `Some(n)` with `n > 0`."""
+    for case in cases:
+        expr = case.expected_expr.strip()
+        match = re.fullmatch(r"Some\((\d+)\)", expr)
+        if match and int(match.group(1)) > 0:
+            return True
+    return False
 
 
 def _last_char_letter_recovery_cases(
@@ -582,6 +623,37 @@ def _random_non_whitespace_ascii_char(rng: random.Random) -> str:
         candidate = chr(rng.randrange(33, 127))
         if not candidate.isspace():
             return candidate
+
+
+def _generate_how_many_times_positive_cases() -> list[list[str]]:
+    """Generate positive-count substring cases for `HumanEval/18`."""
+    rng = random.Random(18)
+    cases: list[list[str]] = []
+
+    for _ in range(8):
+        substring_len = min(3, max(1, 1 + _python_geometric_length(rng)))
+        repeat_count = max(1, 1 + _python_geometric_length(rng))
+        substring = "".join(_random_printable_ascii_char(rng) for _ in range(substring_len))
+        filler_prefix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
+        filler_suffix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
+
+        parts = [filler_prefix]
+        for idx in range(repeat_count):
+            parts.append(substring)
+            if idx + 1 < repeat_count and rng.choice([True, False]):
+                filler_len = 1 + _python_geometric_length(rng)
+                parts.append("".join(_random_printable_ascii_char(rng) for _ in range(filler_len)))
+        parts.append(filler_suffix)
+
+        string = "".join(parts)
+        cases.append([_char_vec_expr(string), _char_vec_expr(substring)])
+
+    return cases
+
+
+def _random_printable_ascii_char(rng: random.Random) -> str:
+    """Generate one printable ASCII character."""
+    return chr(rng.randrange(32, 127))
 
 
 def _rust_string_literal(text: str) -> str:
@@ -784,6 +856,32 @@ def _vec_expr(values: list[int], rust_type: str) -> str:
     """Render a concrete numeric `vec![...]` expression for recovery cases."""
     rendered = ", ".join(_rust_numeric_literal(value, rust_type) for value in values)
     return f"vec![{rendered}]"
+
+
+def _rust_char_literal(ch: str) -> str:
+    """Render one character as a Rust char literal."""
+    if len(ch) != 1:
+        raise OracleTestGenerationError(f"expected exactly one character, got {ch!r}")
+
+    escapes = {
+        "\\": r"'\\'",
+        "'": r"'\''",
+        "\n": r"'\n'",
+        "\r": r"'\r'",
+        "\t": r"'\t'",
+        "\0": r"'\0'",
+    }
+    if ch in escapes:
+        return escapes[ch]
+    if ord(ch) < 32 or ord(ch) == 127:
+        return f"'\\u{{{ord(ch):x}}}'"
+    return f"'{ch}'"
+
+
+def _char_vec_expr(text: str) -> str:
+    """Render a `Vec<char>` literal from plain text."""
+    chars = ", ".join(_rust_char_literal(ch) for ch in text)
+    return f"vec![{chars}]"
 
 
 def render_oracle_unit_tests(cache: OracleTestCache) -> str:
@@ -1040,7 +1138,7 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstra
     integer_types = {"i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128", "usize"}
 
     if rust_type == "char" and constraints.allowed_chars:
-        choices = ", ".join(repr(ch) for ch in constraints.allowed_chars)
+        choices = ", ".join(_rust_char_literal(ch) for ch in constraints.allowed_chars)
         return (
             "{ "
             f"use proptest::strategy::Strategy; "
