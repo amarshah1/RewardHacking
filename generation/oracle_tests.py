@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import random
 import re
 import shutil
 import subprocess
@@ -116,8 +117,15 @@ def generate_oracle_test_cache(
         constraints = _special_case_constraints(task_id, signature)
         if constraints is None:
             raise
+    sample_case_target, sample_trial_target = _sampling_budget(signature.return_type, num_cases, max_trials)
     try:
-        sampled_arg_exprs = _sample_cases(signature, constraints, num_cases=num_cases, max_trials=max_trials, seed=seed)
+        sampled_arg_exprs = _sample_cases(
+            signature,
+            constraints,
+            num_cases=sample_case_target,
+            max_trials=sample_trial_target,
+            seed=seed,
+        )
         if not sampled_arg_exprs:
             raise OracleTestGenerationError("oracle fuzzing did not yield any usable test cases")
 
@@ -132,13 +140,24 @@ def generate_oracle_test_cache(
             raise OracleTestGenerationError(
                 f"oracle produced {len(expected_exprs)} outputs for {len(sampled_arg_exprs)} sampled cases"
             )
+        cases = [
+            OracleCase(arg_exprs=arg_exprs, expected_expr=expected_expr)
+            for arg_exprs, expected_expr in zip(sampled_arg_exprs, expected_exprs)
+        ]
+        cases = _recover_output_coverage(
+            task_id=task_id,
+            verus_code=verus_code,
+            signature=signature,
+            constraints=constraints,
+            cases=cases,
+            verus_binary=verus_binary,
+            timeout=timeout,
+        )
     except OracleTestGenerationError as exc:
         exc.parsed_constraints = constraints
         raise
 
-    cases = []
-    for arg_exprs, expected_expr in zip(sampled_arg_exprs, expected_exprs):
-        cases.append(OracleCase(arg_exprs=arg_exprs, expected_expr=expected_expr))
+    cases = _select_cases(cases, signature.return_type, num_cases)
 
     return OracleTestCache(
         task_id=task_id,
@@ -164,6 +183,464 @@ def load_oracle_test_cache(path: str) -> OracleTestCache:
         data = json.load(f)
     data["cases"] = [OracleCase(**case) for case in data["cases"]]
     return OracleTestCache(**data)
+
+
+def _sampling_budget(return_type: str, num_cases: int, max_trials: int) -> tuple[int, int]:
+    """Increase raw sampling budget for return types where output diversity matters."""
+    normalized = _normalize_type(return_type)
+    if normalized == "bool" or normalized.startswith("Option<"):
+        return max(num_cases, num_cases * 4), max(max_trials, max_trials * 4)
+    return num_cases, max_trials
+
+
+def _output_bucket(expected_expr: str, return_type: str) -> str:
+    """Map a rendered oracle output into a coarse diversity bucket."""
+    normalized = _normalize_type(return_type)
+    expr = expected_expr.strip()
+    if normalized == "bool":
+        return expr
+    if normalized.startswith("Option<"):
+        return "Some" if expr.startswith("Some(") else "None"
+    return expr
+
+
+def _select_cases(cases: list[OracleCase], return_type: str, num_cases: int) -> list[OracleCase]:
+    """Choose a final case subset, preferring mixed bool/Option outputs when available."""
+    if len(cases) <= num_cases:
+        return cases
+
+    normalized = _normalize_type(return_type)
+    if normalized != "bool" and not normalized.startswith("Option<"):
+        return cases[:num_cases]
+
+    bucket_order: list[str]
+    if normalized == "bool":
+        bucket_order = ["true", "false"]
+    else:
+        bucket_order = ["Some", "None"]
+
+    buckets: dict[str, list[OracleCase]] = {bucket: [] for bucket in bucket_order}
+    extras: list[OracleCase] = []
+    for case in cases:
+        bucket = _output_bucket(case.expected_expr, return_type)
+        if bucket in buckets:
+            buckets[bucket].append(case)
+        else:
+            extras.append(case)
+
+    selected: list[OracleCase] = []
+    for bucket in bucket_order:
+        if buckets[bucket]:
+            selected.append(buckets[bucket].pop(0))
+
+    refill_sources = [buckets[bucket] for bucket in bucket_order] + [extras]
+    refill_index = 0
+    while len(selected) < num_cases:
+        source = refill_sources[refill_index % len(refill_sources)]
+        if source:
+            selected.append(source.pop(0))
+        refill_index += 1
+        if refill_index >= len(refill_sources) and not any(refill_sources):
+            break
+
+    return selected[:num_cases]
+
+
+def _recover_output_coverage(
+    task_id: str,
+    verus_code: str,
+    signature: ParsedSignature,
+    constraints: ParsedConstraints,
+    cases: list[OracleCase],
+    verus_binary: str,
+    timeout: int,
+) -> list[OracleCase]:
+    """Try a small targeted recovery pass when a bool/Option output bucket is still missing."""
+    missing_buckets = _missing_output_buckets(cases, signature.return_type)
+
+    recovery_arg_exprs = _targeted_recovery_arg_exprs(task_id, signature, constraints, missing_buckets, cases)
+    if not recovery_arg_exprs:
+        return cases
+
+    recovery_outputs = _compute_expected_outputs(
+        verus_code=verus_code,
+        signature=signature,
+        sampled_arg_exprs=recovery_arg_exprs,
+        verus_binary=verus_binary,
+        timeout=timeout,
+    )
+    recovered_cases = [
+        OracleCase(arg_exprs=arg_exprs, expected_expr=expected_expr)
+        for arg_exprs, expected_expr in zip(recovery_arg_exprs, recovery_outputs)
+    ]
+    return recovered_cases + cases
+
+
+def _missing_output_buckets(cases: list[OracleCase], return_type: str) -> list[str]:
+    """Return the bool/Option output buckets we still have not observed."""
+    normalized = _normalize_type(return_type)
+    if normalized == "bool":
+        wanted_buckets = ["true", "false"]
+    elif normalized.startswith("Option<"):
+        wanted_buckets = ["Some", "None"]
+    else:
+        return []
+
+    present = {_output_bucket(case.expected_expr, return_type) for case in cases}
+    return [bucket for bucket in wanted_buckets if bucket not in present]
+
+
+def _targeted_recovery_arg_exprs(
+    task_id: str,
+    signature: ParsedSignature,
+    constraints: ParsedConstraints,
+    missing_buckets: list[str],
+    existing_cases: list[OracleCase],
+) -> list[list[str]]:
+    """Generate extra direct argument expressions for tasks with rare output buckets."""
+    seen = {tuple(case.arg_exprs) for case in existing_cases}
+    candidates: list[list[str]] = []
+
+    if task_id == "HumanEval/43":
+        candidates.extend(
+            _pairs_sum_to_zero_recovery_cases(signature, constraints, missing_buckets, seen)
+        )
+    if task_id == "HumanEval/48":
+        candidates.extend(
+            _palindrome_recovery_cases(signature, missing_buckets, existing_cases, seen)
+        )
+    if task_id == "HumanEval/53":
+        candidates.extend(
+            _checked_add_recovery_cases(signature, missing_buckets, seen)
+        )
+    if task_id == "HumanEval/54":
+        candidates.extend(
+            _same_chars_recovery_cases(signature, missing_buckets, existing_cases, seen)
+        )
+
+    unique_candidates: list[list[str]] = []
+    for arg_exprs in candidates:
+        key = tuple(arg_exprs)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_candidates.append(arg_exprs)
+    return unique_candidates
+
+
+def _pairs_sum_to_zero_recovery_cases(
+    signature: ParsedSignature,
+    constraints: ParsedConstraints,
+    missing_buckets: list[str],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct direct cases for `HumanEval/43` that intentionally hit true/false outputs."""
+    if len(signature.args) != 2:
+        raise OracleTestGenerationError("HumanEval/43 recovery expected exactly two arguments")
+
+    nums_arg = signature.args[0]
+    target_arg = signature.args[1]
+    if _normalize_type(nums_arg.rust_type) != "&[i32]" or _normalize_type(target_arg.rust_type) != "i32":
+        raise OracleTestGenerationError("HumanEval/43 recovery expected signature `fn(&[i32], i32) -> bool`")
+
+    nums_constraints = constraints.arg_constraints.get(nums_arg.name, ArgConstraints())
+    target_constraints = constraints.arg_constraints.get(target_arg.name, ArgConstraints())
+
+    low = nums_constraints.element_min_value if nums_constraints.element_min_value is not None else -16
+    high = nums_constraints.element_max_value if nums_constraints.element_max_value is not None else 16
+    zero_literal = _int_expr(0, target_constraints.min_value, target_constraints.max_value, "i32")
+    one = _bounded_nonzero_int(low, high)
+    two = _bounded_nonzero_int(low, high, avoid={one, -one})
+    three = _bounded_nonzero_int(low, high, avoid={one, -one, two, -two})
+
+    nums_exprs_by_bucket: dict[str, list[str]] = {
+        "true": [
+            _vec_expr([one, -one], "i32"),
+            _vec_expr([one, three, -one], "i32"),
+            _vec_expr([two, three, -two, one], "i32"),
+        ],
+        "false": [
+            _vec_expr([one, two], "i32"),
+            _vec_expr([one, two, three], "i32"),
+            _vec_expr([one, one, two], "i32"),
+        ],
+    }
+
+    candidates: list[list[str]] = []
+    for bucket in missing_buckets:
+        for nums_expr in nums_exprs_by_bucket.get(bucket, []):
+            arg_exprs = [nums_expr, zero_literal]
+            if tuple(arg_exprs) not in seen:
+                candidates.append(arg_exprs)
+    return candidates
+
+
+def _palindrome_recovery_cases(
+    signature: ParsedSignature,
+    missing_buckets: list[str],
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct direct cases for `HumanEval/48`, preferring nontrivial true palindromes."""
+    if len(signature.args) != 1:
+        raise OracleTestGenerationError("HumanEval/48 recovery expected exactly one argument")
+    if _normalize_type(signature.args[0].rust_type) != "&str":
+        raise OracleTestGenerationError("HumanEval/48 recovery expected signature `fn(&str) -> bool`")
+
+    needs_true = "true" in missing_buckets or not _has_nontrivial_true_string_case(existing_cases)
+    needs_false = "false" in missing_buckets
+
+    candidates: list[list[str]] = []
+    if needs_true:
+        for text in ["\"aba\"", "\"xywyx\"", "\"aaaaa\"", "\"abba\""]:
+            if (text,) not in seen:
+                candidates.append([text])
+    if needs_false:
+        for text in ["\"ab\"", "\"xywyz\"", "\"palindrome? no\""]:
+            if (text,) not in seen:
+                candidates.append([text])
+    return candidates
+
+
+def _checked_add_recovery_cases(
+    signature: ParsedSignature,
+    missing_buckets: list[str],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct direct overflow and non-overflow cases for `HumanEval/53`."""
+    if len(signature.args) != 2:
+        raise OracleTestGenerationError("HumanEval/53 recovery expected exactly two arguments")
+    if _normalize_type(signature.args[0].rust_type) != "i32" or _normalize_type(signature.args[1].rust_type) != "i32":
+        raise OracleTestGenerationError("HumanEval/53 recovery expected signature `fn(i32, i32) -> Option<i32>`")
+
+    candidates: list[list[str]] = []
+    if "None" in missing_buckets:
+        for pair in [
+            ["2147483647i32", "1i32"],
+            ["1i32", "2147483647i32"],
+            ["-2147483648i32", "-1i32"],
+            ["-1i32", "-2147483648i32"],
+        ]:
+            if tuple(pair) not in seen:
+                candidates.append(pair)
+
+    if "Some" in missing_buckets:
+        for pair in [
+            ["0i32", "0i32"],
+            ["1i32", "-1i32"],
+            ["7i32", "5i32"],
+        ]:
+            if tuple(pair) not in seen:
+                candidates.append(pair)
+
+    return candidates
+
+
+def _same_chars_recovery_cases(
+    signature: ParsedSignature,
+    missing_buckets: list[str],
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct direct nontrivial equal-set cases for `HumanEval/54`."""
+    if len(signature.args) != 2:
+        raise OracleTestGenerationError("HumanEval/54 recovery expected exactly two arguments")
+    if _normalize_type(signature.args[0].rust_type) != "&Vec<u8>" or _normalize_type(signature.args[1].rust_type) != "&Vec<u8>":
+        raise OracleTestGenerationError("HumanEval/54 recovery expected signature `fn(&Vec<u8>, &Vec<u8>) -> bool`")
+
+    needs_true = "true" in missing_buckets or not _has_substantial_vec_pair_case(existing_cases, "true")
+    needs_false = "false" in missing_buckets or not _has_substantial_vec_pair_case(existing_cases, "false")
+
+    candidates: list[list[str]] = []
+    if needs_true:
+        for pair in _generate_same_chars_true_pairs():
+            if tuple(pair) not in seen:
+                candidates.append(pair)
+    if needs_false:
+        for pair in _generate_same_chars_false_pairs():
+            if tuple(pair) not in seen:
+                candidates.append(pair)
+
+    return candidates
+
+
+def _generate_same_chars_true_pairs() -> list[list[str]]:
+    """Generate long same-set vector pairs from one random base vector and a similar companion."""
+    rng = random.Random(54)
+    pairs: list[list[str]] = []
+
+    for _ in range(8):
+        left_len = max(10, 6 + _python_geometric_length(rng))
+        right_len = max(10, 6 + _python_geometric_length(rng))
+        left_values = _random_u8_vector(rng, left_len)
+        alphabet = sorted(set(left_values))
+        if len(alphabet) < 2:
+            alphabet.append((alphabet[0] + 1) % 256)
+            left_values[-1] = alphabet[-1]
+            alphabet = sorted(set(left_values))
+        right_values = _expand_same_chars_side(rng, alphabet, right_len)
+        pairs.append([_vec_expr(left_values, "u8"), _vec_expr(right_values, "u8")])
+
+    return pairs
+
+
+def _generate_same_chars_false_pairs() -> list[list[str]]:
+    """Generate long vector pairs whose distinct-value sets differ."""
+    rng = random.Random(154)
+    pairs: list[list[str]] = []
+
+    for _ in range(8):
+        left_len = max(10, 6 + _python_geometric_length(rng))
+        right_len = max(10, 6 + _python_geometric_length(rng))
+        left_values = _random_u8_vector(rng, left_len)
+        left_alphabet = sorted(set(left_values))
+        if len(left_alphabet) < 2:
+            extra = (left_alphabet[0] + 1) % 256
+            left_values[-1] = extra
+            left_alphabet = sorted(set(left_values))
+
+        extra_right = _fresh_u8_not_in(rng, set(left_alphabet))
+        right_alphabet = list(left_alphabet)
+        right_alphabet.append(extra_right)
+        right_values = _expand_same_chars_side(rng, right_alphabet, right_len)
+
+        if rng.choice([True, False]) and len(left_alphabet) > 1:
+            dropped = rng.choice(left_alphabet)
+            trimmed_left_alphabet = [value for value in left_alphabet if value != dropped]
+            left_values = _expand_same_chars_side(rng, trimmed_left_alphabet, left_len)
+
+        pairs.append([_vec_expr(left_values, "u8"), _vec_expr(right_values, "u8")])
+
+    return pairs
+
+
+def _python_geometric_length(rng: random.Random) -> int:
+    """Mirror the sampler's geometric-style length generation in Python."""
+    length = 0
+    while rng.randrange(4) != 0:
+        length += 1
+    return length
+
+
+def _expand_same_chars_side(rng: random.Random, alphabet: list[int], target_len: int) -> list[int]:
+    """Build one side of a same-set vector pair while ensuring every alphabet element appears."""
+    values = list(alphabet)
+    while len(values) < target_len:
+        values.append(rng.choice(alphabet))
+    rng.shuffle(values)
+    return values
+
+
+def _random_u8_vector(rng: random.Random, target_len: int) -> list[int]:
+    """Build one random `Vec<u8>` using the same fully random values style as the normal sampler."""
+    return [rng.randrange(256) for _ in range(target_len)]
+
+
+def _fresh_u8_not_in(rng: random.Random, used: set[int]) -> int:
+    """Pick one fresh `u8` value outside an existing alphabet."""
+    if len(used) >= 256:
+        raise OracleTestGenerationError("no fresh u8 value available for false-case generation")
+    while True:
+        candidate = rng.randrange(256)
+        if candidate not in used:
+            return candidate
+
+
+def _has_substantial_vec_pair_case(cases: list[OracleCase], expected_expr: str) -> bool:
+    """Check whether we already have a long vector-pair case for the requested bool outcome."""
+    for case in cases:
+        if case.expected_expr.strip() != expected_expr or len(case.arg_exprs) != 2:
+            continue
+        left_len = _rust_vec_literal_len(case.arg_exprs[0])
+        right_len = _rust_vec_literal_len(case.arg_exprs[1])
+        if left_len >= 10 and right_len >= 10:
+            return True
+    return False
+
+
+def _rust_vec_literal_len(expr: str) -> int:
+    """Count top-level elements in a simple `vec![...]` literal."""
+    expr = expr.strip()
+    if not expr.startswith("vec![") or not expr.endswith("]"):
+        return 0
+    inner = expr[len("vec![") : -1].strip()
+    if not inner:
+        return 0
+    return len(_split_top_level(inner))
+
+
+def _has_nontrivial_true_string_case(cases: list[OracleCase]) -> bool:
+    """Check whether we already have a true-valued string case longer than one character."""
+    for case in cases:
+        if case.expected_expr.strip() != "true" or len(case.arg_exprs) != 1:
+            continue
+        if _rust_string_literal_char_len(case.arg_exprs[0]) > 1:
+            return True
+    return False
+
+
+def _rust_string_literal_char_len(expr: str) -> int:
+    """Count characters in a simple Rust string literal such as `\"aba\"` or `\"\\u{61}\"`."""
+    if len(expr) < 2 or not expr.startswith("\"") or not expr.endswith("\""):
+        return 0
+
+    inner = expr[1:-1]
+    count = 0
+    idx = 0
+    while idx < len(inner):
+        if inner[idx] != "\\":
+            count += 1
+            idx += 1
+            continue
+
+        if idx + 1 >= len(inner):
+            count += 1
+            break
+
+        if inner[idx + 1] == "u" and idx + 2 < len(inner) and inner[idx + 2] == "{":
+            end = inner.find("}", idx + 3)
+            if end == -1:
+                count += 1
+                idx += 2
+            else:
+                count += 1
+                idx = end + 1
+            continue
+
+        count += 1
+        idx += 2
+
+    return count
+
+
+def _bounded_nonzero_int(
+    min_value: int,
+    max_value: int,
+    avoid: set[int] | None = None,
+) -> int:
+    """Pick a small nonzero integer that fits within the requested inclusive bounds."""
+    avoid = avoid or set()
+    for candidate in [1, -1, 2, -2, 3, -3, 4, -4, 5, -5]:
+        if min_value <= candidate <= max_value and candidate not in avoid:
+            return candidate
+    raise OracleTestGenerationError(
+        f"could not find a small nonzero recovery value in bounds [{min_value}, {max_value}]"
+    )
+
+
+def _int_expr(value: int, min_value: int | None, max_value: int | None, rust_type: str) -> str:
+    """Render an integer literal while checking it stays inside any parsed scalar bounds."""
+    if min_value is not None and value < min_value:
+        raise OracleTestGenerationError(f"recovery literal {value} is below min bound {min_value}")
+    if max_value is not None and value > max_value:
+        raise OracleTestGenerationError(f"recovery literal {value} is above max bound {max_value}")
+    return _rust_numeric_literal(value, rust_type)
+
+
+def _vec_expr(values: list[int], rust_type: str) -> str:
+    """Render a concrete numeric `vec![...]` expression for recovery cases."""
+    rendered = ", ".join(_rust_numeric_literal(value, rust_type) for value in values)
+    return f"vec![{rendered}]"
 
 
 def render_oracle_unit_tests(cache: OracleTestCache) -> str:
