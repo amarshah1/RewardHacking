@@ -474,7 +474,7 @@ def _checked_add_recovery_cases(
     missing_buckets: list[str],
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Construct direct overflow and non-overflow cases for `HumanEval/53`."""
+    """Construct randomized overflow cases for `HumanEval/53`."""
     if len(signature.args) != 2:
         raise OracleTestGenerationError("HumanEval/53 recovery expected exactly two arguments")
     if _normalize_type(signature.args[0].rust_type) != "i32" or _normalize_type(signature.args[1].rust_type) != "i32":
@@ -482,25 +482,44 @@ def _checked_add_recovery_cases(
 
     candidates: list[list[str]] = []
     if "None" in missing_buckets:
-        for pair in [
-            ["2147483647i32", "1i32"],
-            ["1i32", "2147483647i32"],
-            ["-2147483648i32", "-1i32"],
-            ["-1i32", "-2147483648i32"],
-        ]:
-            if tuple(pair) not in seen:
-                candidates.append(pair)
-
-    if "Some" in missing_buckets:
-        for pair in [
-            ["0i32", "0i32"],
-            ["1i32", "-1i32"],
-            ["7i32", "5i32"],
-        ]:
+        for pair in _generate_checked_add_none_cases():
             if tuple(pair) not in seen:
                 candidates.append(pair)
 
     return candidates
+
+
+def _generate_checked_add_none_cases() -> list[list[str]]:
+    """Generate random `i32` pairs whose sum overflows in either direction."""
+    rng = random.Random(53)
+    cases: list[list[str]] = [
+        ["2147483647i32", "2147483647i32"],
+        ["2147483647i32", "1i32"],
+        ["-2147483648i32", "-2147483648i32"],
+        ["-2147483648i32", "-1i32"],
+    ]
+    max_i32 = 2_147_483_647
+    min_i32 = -2_147_483_648
+
+    for _ in range(4):
+        delta = rng.randint(1, 10_000)
+        x = rng.randint(max_i32 - 10_000, max_i32)
+        y = max(delta, max_i32 - x + delta)
+        pair = [_rust_numeric_literal(x, "i32"), _rust_numeric_literal(y, "i32")]
+        if rng.choice([True, False]):
+            pair = [pair[1], pair[0]]
+        cases.append(pair)
+
+    for _ in range(4):
+        delta = rng.randint(1, 10_000)
+        x = rng.randint(min_i32, min_i32 + 10_000)
+        y = min(-delta, min_i32 - x - delta)
+        pair = [_rust_numeric_literal(x, "i32"), _rust_numeric_literal(y, "i32")]
+        if rng.choice([True, False]):
+            pair = [pair[1], pair[0]]
+        cases.append(pair)
+
+    return cases
 
 
 def _how_many_times_recovery_cases(
