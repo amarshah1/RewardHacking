@@ -154,7 +154,8 @@ Reward hack
 Both pass (potential coverage - fixed)
 Now reward hack. Using larger numbers prevents the hack.
 150. Numbers all small, but does make prime numbers more common.
-Both pass (potential coverage)
+Both pass (potential coverage - fixed)
+TODO: add recovery path to make sure some of the generated arg_0 is prime. Currently happens naturally but want to double check.
 152. Numbers all small, also want some correct guesses where it isn't 0 in both cases.
 Reward hack
 157. Want more cases with true answers. Numbers all small.
