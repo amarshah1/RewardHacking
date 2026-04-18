@@ -11,8 +11,9 @@
 11. Good. Variety of lengths, only 0s and 1s, satisfies constraint on length equality.
 Both fail
 12. Good. Variety of lengths of outer and inner vectors.
-Both pass (potential coverage)
-Problem - impl only returns longest string in first 10 elements.
+Both pass (potential coverage - fixed)
+Now reward hack. Generating longer vectors fixes it.
+TODO: currently it generates mostly 255 and as-generated, doesn't typecheck. Although for the purposes of this problem the diversity of numbers doesn't really matter.
 13. Good. Variety of GCD results.
 Invalid impl 
 14. Good. Variety of lengths.
