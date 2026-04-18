@@ -420,18 +420,53 @@ def _palindrome_recovery_cases(
         raise OracleTestGenerationError("HumanEval/48 recovery expected signature `fn(&str) -> bool`")
 
     needs_true = "true" in missing_buckets or not _has_nontrivial_true_string_case(existing_cases)
-    needs_false = "false" in missing_buckets
+    needs_false = "false" in missing_buckets or _count_almost_palindrome_false_cases(existing_cases) < 3
 
     candidates: list[list[str]] = []
     if needs_true:
-        for text in ["\"aba\"", "\"xywyx\"", "\"aaaaa\"", "\"abba\""]:
+        for text in _generate_palindrome_true_cases():
             if (text,) not in seen:
                 candidates.append([text])
     if needs_false:
-        for text in ["\"ab\"", "\"xywyz\"", "\"palindrome? no\""]:
+        for text in _generate_almost_palindrome_false_cases():
             if (text,) not in seen:
                 candidates.append([text])
     return candidates
+
+
+def _generate_palindrome_true_cases() -> list[str]:
+    """Generate randomized palindrome strings for task 48."""
+    rng = random.Random(48)
+    repeated_char = _random_ascii_text_char(rng)
+    repeated_len = max(2, 1 + _python_geometric_length(rng))
+    cases: list[str] = [
+        _rust_string_literal(""),
+        _rust_string_literal(repeated_char * repeated_len),
+    ]
+    for _ in range(8):
+        half_len = max(1, 1 + _python_geometric_length(rng))
+        half = "".join(_random_ascii_text_char(rng) for _ in range(half_len))
+        if rng.choice([True, False]):
+            middle = _random_ascii_text_char(rng)
+            text = half + middle + half[::-1]
+        else:
+            text = half + half[::-1]
+        cases.append(_rust_string_literal(text))
+    return cases
+
+
+def _generate_almost_palindrome_false_cases() -> list[str]:
+    """Generate strings whose outer shell mirrors but whose inner core breaks palindromicity."""
+    rng = random.Random(480)
+    cases: list[str] = []
+    for _ in range(6):
+        half_len = max(1, 1 + _python_geometric_length(rng))
+        half = "".join(_random_ascii_text_char(rng) for _ in range(half_len))
+        left_inner = _random_ascii_text_char(rng)
+        right_inner = _random_distinct_ascii_text_char(rng, left_inner)
+        text = half + left_inner + right_inner + half[::-1]
+        cases.append(_rust_string_literal(text))
+    return cases
 
 
 def _checked_add_recovery_cases(
@@ -785,6 +820,14 @@ def _random_ascii_text_char(rng: random.Random) -> str:
     return rng.choice(alphabet)
 
 
+def _random_distinct_ascii_text_char(rng: random.Random, forbidden: str) -> str:
+    """Generate one printable ASCII character distinct from the provided one."""
+    while True:
+        candidate = _random_ascii_text_char(rng)
+        if candidate != forbidden:
+            return candidate
+
+
 def _random_non_alphabetic_ascii_char(rng: random.Random) -> str:
     """Generate one printable ASCII character that is not alphabetic."""
     while True:
@@ -978,6 +1021,25 @@ def _has_nontrivial_true_string_case(cases: list[OracleCase]) -> bool:
         if _rust_string_literal_char_len(case.arg_exprs[0]) > 1:
             return True
     return False
+
+
+def _count_almost_palindrome_false_cases(cases: list[OracleCase]) -> int:
+    """Count false strings with a mirrored outer shell and a broken inner core."""
+    count = 0
+    for case in cases:
+        if _is_almost_palindrome_false_case(case):
+            count += 1
+    return count
+
+
+def _is_almost_palindrome_false_case(case: OracleCase) -> bool:
+    """Check whether one case is a false string with mirrored outer shell and broken inner core."""
+    if case.expected_expr.strip() != "false" or len(case.arg_exprs) != 1:
+        return False
+    text = _parse_simple_rust_string_literal(case.arg_exprs[0])
+    if text is None or len(text) < 4:
+        return False
+    return text != text[::-1] and text[0] == text[-1]
 
 
 def _rust_string_literal_char_len(expr: str) -> int:
