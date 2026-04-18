@@ -32,7 +32,8 @@ Valid reward hack
 Both pass (potential coverage - fixed)
 Now reward hack. Generating larger numbers fixes it.
 25. Good. Variety of prime factorizations.
-Both pass (potential coverage)
+Both pass (potential coverage - correct impl)
+TODO: add recovery to include cases like 13 * 13, 13 * 11
 26. Want some of them to have duplicates.
 Both fail
 27. Has some alphabet characters but mostly non-alphabet.
