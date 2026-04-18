@@ -17,7 +17,9 @@ TODO: currently it generates mostly 255 and as-generated, doesn't typecheck. Alt
 13. Good. Variety of GCD results.
 Invalid impl 
 14. Good. Variety of lengths.
-Both pass (potential coverage)
+Both pass (potential coverage - fixed)
+Now reward hack. Generating longer vectors fixes it.
+TODO: currently it generates mostly 255
 15. Does not test 0 or other single-digit values.
 Valid reward hack
 17. Want some test cases which only have 'o', 'o|', '.|'
