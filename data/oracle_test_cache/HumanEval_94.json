@@ -9,9 +9,69 @@
   "cases": [
     {
       "arg_exprs": [
-        "vec![1, 1, 7]"
+        "vec![999983u32, 999982u32, 999981u32, 499991u32, 0u32, 1u32, 8u32, 1000u32, 999973u32, 999883u32]"
       ],
-      "expected_expr": "7"
+      "expected_expr": "47"
+    },
+    {
+      "arg_exprs": [
+        "vec![999979u32, 999978u32, 999976u32, 499989u32, 0u32, 1u32, 8u32, 1001u32, 998979u32, 989979u32]"
+      ],
+      "expected_expr": "52"
+    },
+    {
+      "arg_exprs": [
+        "vec![999961u32, 999960u32, 999957u32, 499980u32, 0u32, 1u32, 8u32, 1002u32, 999951u32, 999861u32]"
+      ],
+      "expected_expr": "43"
+    },
+    {
+      "arg_exprs": [
+        "vec![157609u32, 157556u32, 157550u32, 2973u32, 0u32, 1u32, 8u32, 2000u32, 157503u32, 157491u32]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![154433u32, 154380u32, 154374u32, 2913u32, 0u32, 1u32, 8u32, 2001u32, 2617u32, 2531u32]"
+      ],
+      "expected_expr": "16"
+    },
+    {
+      "arg_exprs": [
+        "vec![999959u32, 999958u32, 999954u32, 499979u32, 0u32, 1u32, 8u32, 1003u32, 998959u32, 989959u32]"
+      ],
+      "expected_expr": "50"
+    },
+    {
+      "arg_exprs": [
+        "vec![152051u32, 151998u32, 151992u32, 2868u32, 0u32, 1u32, 8u32, 2002u32, 151945u32, 151933u32]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![151321u32, 151268u32, 151262u32, 2855u32, 0u32, 1u32, 8u32, 2003u32, 2564u32, 2480u32]"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "vec![1551, 504, 111, 3908, 2262, 2425, 3875, 3784, 2007, 4526, 1063, 3986, 3306, 4508, 3752, 2186, 4255, 1263, 3776]"
+      ],
+      "expected_expr": "10"
+    },
+    {
+      "arg_exprs": [
+        "vec![3851, 1339, 3317, 149, 4174, 3658, 3132, 4625, 1491, 763, 2508, 3063, 2143, 2713]"
+      ],
+      "expected_expr": "17"
+    },
+    {
+      "arg_exprs": [
+        "vec![4432, 416, 781, 1589, 2081, 435]"
+      ],
+      "expected_expr": "11"
     },
     {
       "arg_exprs": [
@@ -21,135 +81,75 @@
     },
     {
       "arg_exprs": [
-        "vec![1, 4, 6]"
+        "vec![1667, 1735, 1758, 1495, 2153, 2911, 2877]"
+      ],
+      "expected_expr": "11"
+    },
+    {
+      "arg_exprs": [
+        "vec![2605]"
       ],
       "expected_expr": "0"
     },
     {
       "arg_exprs": [
-        "vec![3]"
-      ],
-      "expected_expr": "3"
-    },
-    {
-      "arg_exprs": [
-        "vec![7]"
-      ],
-      "expected_expr": "7"
-    },
-    {
-      "arg_exprs": [
-        "vec![3, 5, 1, 12, 3, 1, 0, 3]"
-      ],
-      "expected_expr": "5"
-    },
-    {
-      "arg_exprs": [
-        "vec![3, 3, 2, 2, 6]"
-      ],
-      "expected_expr": "3"
-    },
-    {
-      "arg_exprs": [
-        "vec![3, 2]"
-      ],
-      "expected_expr": "3"
-    },
-    {
-      "arg_exprs": [
-        "vec![2, 5, 2]"
-      ],
-      "expected_expr": "5"
-    },
-    {
-      "arg_exprs": [
-        "vec![5, 4, 0, 2, 0]"
-      ],
-      "expected_expr": "5"
-    },
-    {
-      "arg_exprs": [
-        "vec![1, 6]"
+        "vec![1176]"
       ],
       "expected_expr": "0"
     },
     {
       "arg_exprs": [
-        "vec![15, 5, 1, 1]"
-      ],
-      "expected_expr": "5"
-    },
-    {
-      "arg_exprs": [
-        "vec![4, 0]"
+        "vec![416]"
       ],
       "expected_expr": "0"
     },
     {
       "arg_exprs": [
-        "vec![3, 0, 2, 1]"
+        "vec![3445, 3837, 1724, 3742, 1626, 3593, 4803, 1007]"
       ],
-      "expected_expr": "3"
+      "expected_expr": "20"
     },
     {
       "arg_exprs": [
-        "vec![2, 0, 1, 0, 1, 0, 2, 2, 1, 0, 2, 11, 3, 0, 3, 0, 0, 6]"
+        "vec![1675, 908, 3413, 2973, 1795]"
       ],
-      "expected_expr": "2"
+      "expected_expr": "11"
     },
     {
       "arg_exprs": [
-        "vec![0, 4, 4, 3, 2, 2]"
-      ],
-      "expected_expr": "3"
-    },
-    {
-      "arg_exprs": [
-        "vec![2, 1, 0, 1]"
-      ],
-      "expected_expr": "2"
-    },
-    {
-      "arg_exprs": [
-        "vec![3, 1, 9, 4, 2, 5, 5, 0]"
-      ],
-      "expected_expr": "5"
-    },
-    {
-      "arg_exprs": [
-        "vec![1, 11]"
-      ],
-      "expected_expr": "2"
-    },
-    {
-      "arg_exprs": [
-        "vec![1, 0, 1, 0, 2, 1, 6, 3]"
-      ],
-      "expected_expr": "3"
-    },
-    {
-      "arg_exprs": [
-        "vec![0, 3, 0, 5]"
-      ],
-      "expected_expr": "5"
-    },
-    {
-      "arg_exprs": [
-        "vec![4, 0, 1, 0]"
+        "vec![3746, 1698]"
       ],
       "expected_expr": "0"
     },
     {
       "arg_exprs": [
-        "vec![1, 1]"
+        "vec![4671, 4864, 4417, 3279]"
       ],
       "expected_expr": "0"
     },
     {
       "arg_exprs": [
-        "vec![0, 0, 0, 3, 0]"
+        "vec![3173]"
       ],
-      "expected_expr": "3"
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![650]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![569, 2155, 3150, 1147, 718]"
+      ],
+      "expected_expr": "20"
+    },
+    {
+      "arg_exprs": [
+        "vec![3569, 3708, 3810, 3773, 900, 584, 3816, 723, 4523, 3077, 3539, 3479, 2151, 2905, 2725, 377, 2151, 4275, 2290, 167, 364, 1007, 1551, 1291, 4194, 2430, 1565, 1225, 4375]"
+      ],
+      "expected_expr": "14"
     }
   ]
 }

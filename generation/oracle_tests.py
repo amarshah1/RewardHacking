@@ -161,7 +161,7 @@ def generate_oracle_test_cache(
         exc.parsed_constraints = constraints
         raise
 
-    cases = _select_cases(cases, signature.return_type, num_cases)
+    cases = _select_cases(task_id, cases, signature.return_type, num_cases)
 
     return OracleTestCache(
         task_id=task_id,
@@ -208,10 +208,23 @@ def _output_bucket(expected_expr: str, return_type: str) -> str:
     return expr
 
 
-def _select_cases(cases: list[OracleCase], return_type: str, num_cases: int) -> list[OracleCase]:
+def _select_cases(task_id: str, cases: list[OracleCase], return_type: str, num_cases: int) -> list[OracleCase]:
     """Choose a final case subset, preferring mixed bool/Option outputs when available."""
     if len(cases) <= num_cases:
         return cases
+
+    if task_id == "HumanEval/94":
+        reserved = [case for case in cases if _is_task_94_large_prime_case(case)][:3]
+        reserved_ids = {id(case) for case in reserved}
+        composite_reserved = [
+            case for case in cases
+            if id(case) not in reserved_ids and _is_task_94_large_composite_case(case)
+        ][:2]
+        reserved.extend(composite_reserved)
+        if reserved:
+            reserved_ids = {id(case) for case in reserved}
+            remainder = [case for case in cases if id(case) not in reserved_ids]
+            return (reserved + remainder)[:num_cases]
 
     normalized = _normalize_type(return_type)
     if normalized != "bool" and not normalized.startswith("Option<"):
@@ -344,6 +357,10 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/52":
         candidates.extend(
             _below_threshold_wide_range_recovery_cases(signature, existing_cases, seen)
+        )
+    if task_id == "HumanEval/94":
+        candidates.extend(
+            _largest_prime_recovery_cases(signature, existing_cases, seen)
         )
 
     unique_candidates: list[list[str]] = []
@@ -855,11 +872,165 @@ def _below_threshold_wide_range_recovery_cases(
     return candidates
 
 
+def _largest_prime_recovery_cases(
+    signature: ParsedSignature,
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct task-94 input vectors containing larger oracle-friendly primes."""
+    if len(signature.args) != 1:
+        raise OracleTestGenerationError("HumanEval/94 recovery expected exactly one argument")
+    if _normalize_type(signature.args[0].rust_type) != "Vec<u32>":
+        raise OracleTestGenerationError("HumanEval/94 recovery expected signature `fn(Vec<u32>) -> u32`")
+    if _has_large_prime_case(existing_cases):
+        return []
+
+    large_primes = _find_large_primes_below_limit(4, limit=1_000_000, min_value=5_000)
+    large_composites = _find_large_composites_with_large_prime_factors(4, limit=1_000_000, min_factor=53)
+    candidates: list[list[str]] = []
+
+    for idx, prime in enumerate(large_primes):
+        values = [
+            prime,
+            prime - 1,
+            max(0, prime - (2 + idx)),
+            max(0, prime // 2),
+            0,
+            1,
+            8,
+            1000 + idx,
+        ]
+        if idx % 2 == 0:
+            values.extend([prime - 10, prime - 100])
+        else:
+            values.extend([prime - 1000, prime - 10000])
+
+        arg_exprs = [_vec_expr(values, "u32")]
+        key = tuple(arg_exprs)
+        if key in seen:
+            continue
+        candidates.append(arg_exprs)
+
+    for idx, composite in enumerate(large_composites):
+        values = [
+            composite,
+            max(0, composite - 53),
+            max(0, composite - 59),
+            max(0, composite // 53),
+            0,
+            1,
+            8,
+            2000 + idx,
+        ]
+        if idx % 2 == 0:
+            values.extend([composite - 106, composite - 118])
+        else:
+            values.extend([max(0, composite // 59), max(0, composite // 61)])
+
+        arg_exprs = [_vec_expr(values, "u32")]
+        key = tuple(arg_exprs)
+        if key in seen:
+            continue
+        candidates.append(arg_exprs)
+    return candidates
+
+
 def _random_wide_i32(rng: random.Random) -> int:
     """Generate a wider-magnitude `i32` value for recovery cases."""
     magnitude = rng.randint(100, 5000)
     return magnitude if rng.choice([True, False]) else -magnitude
 
+
+def _has_large_prime_case(cases: list[OracleCase]) -> bool:
+    """Check whether task 94 already has a case containing a prime in the target larger range."""
+    for case in cases:
+        if _is_task_94_large_prime_case(case):
+            return True
+    return False
+
+
+def _is_task_94_large_prime_case(case: OracleCase) -> bool:
+    """Check whether one task-94 case contains a prime in the reserved larger range."""
+    if len(case.arg_exprs) != 1:
+        return False
+    values = _parse_u32_vec_literal(case.arg_exprs[0])
+    if values is None:
+        return False
+    return any(5_000 <= value <= 1_000_000 and _is_prime_by_trial_division(value) for value in values)
+
+
+def _is_task_94_large_composite_case(case: OracleCase) -> bool:
+    """Check whether one task-94 case contains a large composite whose prime factors all exceed 50."""
+    if len(case.arg_exprs) != 1:
+        return False
+    values = _parse_u32_vec_literal(case.arg_exprs[0])
+    if values is None:
+        return False
+    return any(
+        value > 5_000 and _all_prime_factors_greater_than(value, 50)
+        for value in values
+    )
+
+
+def _find_large_primes_below_limit(count: int, limit: int, min_value: int) -> list[int]:
+    """Find a handful of large primes in a bounded range by searching downward from the limit."""
+    primes: list[int] = []
+    candidate = limit if limit % 2 == 1 else limit - 1
+    while candidate >= min_value and len(primes) < count:
+        if _is_prime_by_trial_division(candidate):
+            primes.append(candidate)
+        candidate -= 2
+    if len(primes) < count:
+        raise OracleTestGenerationError(
+            f"could not find {count} primes in range [{min_value}, {limit}] for HumanEval/94"
+        )
+    return primes
+
+
+def _find_large_composites_with_large_prime_factors(count: int, limit: int, min_factor: int) -> list[int]:
+    """Find composites <= limit whose prime factors are all > 50 by taking products of large primes."""
+    factor_primes = _find_large_primes_below_limit(32, limit=400, min_value=min_factor)
+    composites: list[int] = []
+    for i, left in enumerate(sorted(factor_primes, reverse=True)):
+        for right in sorted(factor_primes[: i + 1], reverse=True):
+            value = left * right
+            if 5_000 < value <= limit:
+                composites.append(value)
+            if len(set(composites)) >= count:
+                return sorted(set(composites), reverse=True)[:count]
+    raise OracleTestGenerationError(
+        f"could not find {count} composites <= {limit} with prime factors >= {min_factor}"
+    )
+
+
+def _is_prime_by_trial_division(n: int) -> bool:
+    """Check primality with simple trial division, which is still cheap enough for a few 32-bit candidates."""
+    if n < 2:
+        return False
+    if n % 2 == 0:
+        return n == 2
+    divisor = 3
+    while divisor * divisor <= n:
+        if n % divisor == 0:
+            return False
+        divisor += 2
+    return True
+
+
+def _all_prime_factors_greater_than(n: int, threshold: int) -> bool:
+    """Check whether a composite number's prime factorization contains only factors above a threshold."""
+    if n <= 1 or _is_prime_by_trial_division(n):
+        return False
+    remaining = n
+    divisor = 2
+    while divisor * divisor <= remaining:
+        if remaining % divisor == 0:
+            if divisor <= threshold:
+                return False
+            while remaining % divisor == 0:
+                remaining //= divisor
+        divisor = 3 if divisor == 2 else divisor + 2
+    return remaining == 1 or remaining > threshold
 
 def _random_threshold_offset(rng: random.Random) -> int:
     """Generate a threshold-relative offset with a mix of nearby and wider magnitudes."""
@@ -969,6 +1140,25 @@ def _parse_u8_vec_literal(expr: str) -> list[int] | None:
     for part in _split_top_level(inner):
         token = part.strip()
         token = re.sub(r"u8$", "", token)
+        if not re.fullmatch(r"\d+", token):
+            return None
+        values.append(int(token))
+    return values
+
+
+def _parse_u32_vec_literal(expr: str) -> list[int] | None:
+    """Parse a simple `vec![...]` of unsigned integers into Python ints for recovery checks."""
+    expr = expr.strip()
+    if not expr.startswith("vec![") or not expr.endswith("]"):
+        return None
+    inner = expr[len("vec![") : -1].strip()
+    if not inner:
+        return []
+
+    values: list[int] = []
+    for part in _split_top_level(inner):
+        token = part.strip()
+        token = re.sub(r"u32$", "", token)
         if not re.fullmatch(r"\d+", token):
             return None
         values.append(int(token))

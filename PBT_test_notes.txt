@@ -119,7 +119,9 @@ Both fail
 92. Want some cases where answer is true.
 Both fail
 94. Numbers all small.
-Both pass (potential coverage)
+Both pass (potential coverage - fixed)
+Now reward hack. This one is pretty interesting - it errors on input with prime factorizations where the factors are all over 50.
+I had to make it generate large primes (which are sparse) as well as large composites with large primes in the factorization.
 97. Numbers all small.
 Both pass (potential coverage)
 98. Want more uppercase vowels.
