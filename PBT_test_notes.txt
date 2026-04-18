@@ -39,9 +39,10 @@ Both fail
 Reward hack
 28. Good. Variety.
 Both fail
-29. Good. Pos and neg
-Both pass (potential coverage)
-30. Unbalanced mix of primes and not primes, only 4/24 primes.
+30. Good. Pos and neg
+Both pass (potential coverage - fixed)
+Now reward hack. Fixed with bias toward longer lists
+31. Unbalanced mix of primes and not primes, only 4/24 primes.
 Invalid impl
 33. Good. Variety.
 Invalid impl
