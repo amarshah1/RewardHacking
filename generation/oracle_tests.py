@@ -306,7 +306,7 @@ def _targeted_recovery_arg_exprs(
 
     if task_id == "HumanEval/43":
         candidates.extend(
-            _pairs_sum_to_zero_recovery_cases(signature, constraints, missing_buckets, seen)
+            _pairs_sum_to_zero_recovery_cases(signature, constraints, missing_buckets, existing_cases, seen)
         )
     if task_id == "HumanEval/48":
         candidates.extend(
@@ -351,9 +351,10 @@ def _pairs_sum_to_zero_recovery_cases(
     signature: ParsedSignature,
     constraints: ParsedConstraints,
     missing_buckets: list[str],
+    existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Construct direct cases for `HumanEval/43` that intentionally hit true/false outputs."""
+    """Construct randomized cases for `HumanEval/43` that target true/false outputs."""
     if len(signature.args) != 2:
         raise OracleTestGenerationError("HumanEval/43 recovery expected exactly two arguments")
 
@@ -368,30 +369,42 @@ def _pairs_sum_to_zero_recovery_cases(
     low = nums_constraints.element_min_value if nums_constraints.element_min_value is not None else -16
     high = nums_constraints.element_max_value if nums_constraints.element_max_value is not None else 16
     zero_literal = _int_expr(0, target_constraints.min_value, target_constraints.max_value, "i32")
-    one = _bounded_nonzero_int(low, high)
-    two = _bounded_nonzero_int(low, high, avoid={one, -one})
-    three = _bounded_nonzero_int(low, high, avoid={one, -one, two, -two})
-
-    nums_exprs_by_bucket: dict[str, list[str]] = {
-        "true": [
-            _vec_expr([one, -one], "i32"),
-            _vec_expr([one, three, -one], "i32"),
-            _vec_expr([two, three, -two, one], "i32"),
-        ],
-        "false": [
-            _vec_expr([one, two], "i32"),
-            _vec_expr([one, two, three], "i32"),
-            _vec_expr([one, one, two], "i32"),
-        ],
-    }
+    rng = random.Random(43)
+    needs_true = "true" in missing_buckets or _count_expected_cases(existing_cases, "true") < 8
 
     candidates: list[list[str]] = []
-    for bucket in missing_buckets:
-        for nums_expr in nums_exprs_by_bucket.get(bucket, []):
+    for bucket in (["true"] if needs_true else []):
+        for nums_expr in _generate_pairs_sum_to_zero_nums_exprs(bucket, low, high, rng):
             arg_exprs = [nums_expr, zero_literal]
             if tuple(arg_exprs) not in seen:
                 candidates.append(arg_exprs)
     return candidates
+
+
+def _generate_pairs_sum_to_zero_nums_exprs(
+    bucket: str,
+    low: int,
+    high: int,
+    rng: random.Random,
+) -> list[str]:
+    """Generate randomized vector expressions for task 43, optionally forcing a zero-sum pair."""
+    exprs: list[str] = []
+    if bucket == "true":
+        for _ in range(12):
+            base_len = max(3, 3 + _python_geometric_length(rng))
+            base_values = [_random_i32_in_bounds(low, high, rng, nonzero=True) for _ in range(base_len)]
+            if len(base_values) == 1:
+                n_pairs = 1
+            else:
+                n_pairs = rng.randint(1, len(base_values) - 1)
+            chosen_indices = rng.sample(range(len(base_values)), k=n_pairs)
+            values = list(base_values)
+            for idx in chosen_indices:
+                values.append(-base_values[idx])
+            if rng.choice([True, False]):
+                rng.shuffle(values)
+            exprs.append(_vec_expr(values, "i32"))
+    return exprs
 
 
 def _palindrome_recovery_cases(
@@ -563,6 +576,11 @@ def _has_positive_option_case(cases: list[OracleCase]) -> bool:
         if match and int(match.group(1)) > 0:
             return True
     return False
+
+
+def _count_expected_cases(cases: list[OracleCase], expected_expr: str) -> int:
+    """Count cached cases whose expected expression matches exactly."""
+    return sum(1 for case in cases if case.expected_expr.strip() == expected_expr)
 
 
 def _has_large_true_triangle_case(cases: list[OracleCase]) -> bool:
@@ -1009,6 +1027,22 @@ def _bounded_nonzero_int(
     raise OracleTestGenerationError(
         f"could not find a small nonzero recovery value in bounds [{min_value}, {max_value}]"
     )
+
+
+def _random_i32_in_bounds(
+    min_value: int,
+    max_value: int,
+    rng: random.Random,
+    nonzero: bool = False,
+) -> int:
+    """Generate one random integer inside inclusive bounds, optionally excluding zero."""
+    if nonzero and min_value == 0 and max_value == 0:
+        raise OracleTestGenerationError("cannot sample a nonzero integer from the singleton range [0, 0]")
+
+    while True:
+        candidate = rng.randint(min_value, max_value)
+        if not nonzero or candidate != 0:
+            return candidate
 
 
 def _int_expr(value: int, min_value: int | None, max_value: int | None, rust_type: str) -> str:
@@ -1460,32 +1494,24 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstra
         and constraints.min_value is not None
         and constraints.max_value is not None
     ):
-        min_literal = _rust_numeric_literal(constraints.min_value, rust_type)
-        max_literal = _rust_numeric_literal(constraints.max_value, rust_type)
+        min_i128 = f"{constraints.min_value}i128"
+        max_i128 = f"{constraints.max_value}i128"
         return (
             "{ "
             "use proptest::strategy::Strategy; "
             "use proptest::strategy::ValueTree; "
-            f"let min_value = {min_literal}; "
-            f"let max_value = {max_literal}; "
-            "let span = max_value - min_value; "
+            f"let min_value = {min_i128}; "
+            f"let max_value = {max_i128}; "
+            "let span = (max_value - min_value) as u128; "
             "if span == 0 { "
-            "min_value "
+            f"<{rust_type}>::try_from(min_value).unwrap() "
             "} else { "
-            "let mut delta = 0usize; "
-            "while proptest::arbitrary::any::<u8>().new_tree("
+            "let raw = proptest::arbitrary::any::<u64>().new_tree("
             f"{runner_var}"
-            ").unwrap().current() % 4 != 0 { "
-            "delta += 1; "
-            "} "
-            "loop { "
-            f"if let Ok(delta_cast) = <{rust_type}>::try_from(delta) {{ "
-            "if delta_cast <= span { "
-            "break min_value + delta_cast; "
-            "} "
-            "} "
-            "delta = delta.saturating_sub(1); "
-            "} "
+            ").unwrap().current() as u128; "
+            "let offset = raw % (span + 1); "
+            "let candidate = min_value + offset as i128; "
+            f"<{rust_type}>::try_from(candidate).unwrap() "
             "} "
             "}"
         )
