@@ -1,0 +1,107 @@
+{
+  "task_id": "HumanEval/75",
+  "target_fn": "is_multiply_prime",
+  "target_signature": "fn is_multiply_prime(x: u32) -> bool",
+  "arg_types": [
+    "u32"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "5"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "9"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "2"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "6"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "8"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "10"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "7"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "14"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "17"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "20"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "13"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "11"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "21"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "18"
+      ],
+      "expected_expr": "true"
+    }
+  ]
+}
