@@ -1,0 +1,180 @@
+{
+  "task_id": "HumanEval/76",
+  "target_fn": "is_simple_power",
+  "target_signature": "fn is_simple_power(x: u32, n: u32) -> bool",
+  "arg_types": [
+    "u32",
+    "u32"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "1213",
+        "1741"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4517",
+        "2695"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4005",
+        "3211"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3493",
+        "1410"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4203",
+        "335"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3748",
+        "2350"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4012",
+        "4699"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "477",
+        "3866"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3120",
+        "343"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "447",
+        "2726"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "1552",
+        "506"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "112",
+        "3910"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "2263",
+        "2427"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3876",
+        "3786"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "2008",
+        "4528"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "1064",
+        "3988"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3307",
+        "4510"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3753",
+        "2188"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4256",
+        "1265"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3777",
+        "3670"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4033",
+        "4188"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3719",
+        "156"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "624",
+        "3831"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3953",
+        "1621"
+      ],
+      "expected_expr": "false"
+    }
+  ]
+}

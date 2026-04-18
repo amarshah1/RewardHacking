@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/31",
+  "target_fn": "is_prime_impl",
+  "target_signature": "fn is_prime_impl(n: u8) -> bool",
+  "arg_types": [
+    "u8"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "149"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "255"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "199"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "111"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "167"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "154"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "233"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "176"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "137"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "166"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "179"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "120"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "229"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "242"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "193"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "106"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "173"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "243"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "198"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "108"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "248"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "132"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "220"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "172"
+      ],
+      "expected_expr": "false"
+    }
+  ]
+}

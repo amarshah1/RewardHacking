@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/60",
+  "target_fn": "sum_to_n",
+  "target_signature": "fn sum_to_n(n: u32) -> Option<u32>",
+  "arg_types": [
+    "u32"
+  ],
+  "return_type": "Option<u32>",
+  "cases": [
+    {
+      "arg_exprs": [
+        "1212"
+      ],
+      "expected_expr": "Some(735078)"
+    },
+    {
+      "arg_exprs": [
+        "1739"
+      ],
+      "expected_expr": "Some(1512930)"
+    },
+    {
+      "arg_exprs": [
+        "4516"
+      ],
+      "expected_expr": "Some(10199386)"
+    },
+    {
+      "arg_exprs": [
+        "2693"
+      ],
+      "expected_expr": "Some(3627471)"
+    },
+    {
+      "arg_exprs": [
+        "4004"
+      ],
+      "expected_expr": "Some(8018010)"
+    },
+    {
+      "arg_exprs": [
+        "3209"
+      ],
+      "expected_expr": "Some(5150445)"
+    },
+    {
+      "arg_exprs": [
+        "3492"
+      ],
+      "expected_expr": "Some(6098778)"
+    },
+    {
+      "arg_exprs": [
+        "1408"
+      ],
+      "expected_expr": "Some(991936)"
+    },
+    {
+      "arg_exprs": [
+        "4202"
+      ],
+      "expected_expr": "Some(8830503)"
+    },
+    {
+      "arg_exprs": [
+        "333"
+      ],
+      "expected_expr": "Some(55611)"
+    },
+    {
+      "arg_exprs": [
+        "3747"
+      ],
+      "expected_expr": "Some(7021878)"
+    },
+    {
+      "arg_exprs": [
+        "2348"
+      ],
+      "expected_expr": "Some(2757726)"
+    },
+    {
+      "arg_exprs": [
+        "4011"
+      ],
+      "expected_expr": "Some(8046066)"
+    },
+    {
+      "arg_exprs": [
+        "4697"
+      ],
+      "expected_expr": "Some(11033253)"
+    },
+    {
+      "arg_exprs": [
+        "476"
+      ],
+      "expected_expr": "Some(113526)"
+    },
+    {
+      "arg_exprs": [
+        "3864"
+      ],
+      "expected_expr": "Some(7467180)"
+    },
+    {
+      "arg_exprs": [
+        "3119"
+      ],
+      "expected_expr": "Some(4865640)"
+    },
+    {
+      "arg_exprs": [
+        "341"
+      ],
+      "expected_expr": "Some(58311)"
+    },
+    {
+      "arg_exprs": [
+        "446"
+      ],
+      "expected_expr": "Some(99681)"
+    },
+    {
+      "arg_exprs": [
+        "2724"
+      ],
+      "expected_expr": "Some(3711450)"
+    },
+    {
+      "arg_exprs": [
+        "1551"
+      ],
+      "expected_expr": "Some(1203576)"
+    },
+    {
+      "arg_exprs": [
+        "504"
+      ],
+      "expected_expr": "Some(127260)"
+    },
+    {
+      "arg_exprs": [
+        "111"
+      ],
+      "expected_expr": "Some(6216)"
+    },
+    {
+      "arg_exprs": [
+        "3908"
+      ],
+      "expected_expr": "Some(7638186)"
+    }
+  ]
+}

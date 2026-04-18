@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/138",
+  "target_fn": "is_equal_to_sum_even",
+  "target_signature": "fn is_equal_to_sum_even(n: u32) -> bool",
+  "arg_types": [
+    "u32"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "1212"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "1739"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4516"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "2693"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4004"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "3209"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3492"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "333"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "1408"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "3747"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4202"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "4011"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "2348"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "4697"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "476"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "3119"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3864"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "341"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "446"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "1551"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "2724"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "111"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "504"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "2425"
+      ],
+      "expected_expr": "false"
+    }
+  ]
+}

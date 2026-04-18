@@ -1,0 +1,180 @@
+{
+  "task_id": "HumanEval/97",
+  "target_fn": "multiply",
+  "target_signature": "fn multiply(a: i32, b: i32) -> i32",
+  "arg_types": [
+    "i32",
+    "i32"
+  ],
+  "return_type": "i32",
+  "cases": [
+    {
+      "arg_exprs": [
+        "1212",
+        "4516"
+      ],
+      "expected_expr": "12"
+    },
+    {
+      "arg_exprs": [
+        "-4004",
+        "-3492"
+      ],
+      "expected_expr": "8"
+    },
+    {
+      "arg_exprs": [
+        "-4202",
+        "3747"
+      ],
+      "expected_expr": "14"
+    },
+    {
+      "arg_exprs": [
+        "4011",
+        "476"
+      ],
+      "expected_expr": "6"
+    },
+    {
+      "arg_exprs": [
+        "-3119",
+        "446"
+      ],
+      "expected_expr": "54"
+    },
+    {
+      "arg_exprs": [
+        "1551",
+        "111"
+      ],
+      "expected_expr": "1"
+    },
+    {
+      "arg_exprs": [
+        "2262",
+        "3875"
+      ],
+      "expected_expr": "10"
+    },
+    {
+      "arg_exprs": [
+        "-2007",
+        "-1063"
+      ],
+      "expected_expr": "21"
+    },
+    {
+      "arg_exprs": [
+        "-3306",
+        "3752"
+      ],
+      "expected_expr": "12"
+    },
+    {
+      "arg_exprs": [
+        "-4255",
+        "-3776"
+      ],
+      "expected_expr": "30"
+    },
+    {
+      "arg_exprs": [
+        "4032",
+        "3718"
+      ],
+      "expected_expr": "16"
+    },
+    {
+      "arg_exprs": [
+        "-623",
+        "3952"
+      ],
+      "expected_expr": "6"
+    },
+    {
+      "arg_exprs": [
+        "4899",
+        "-4881"
+      ],
+      "expected_expr": "9"
+    },
+    {
+      "arg_exprs": [
+        "-4629",
+        "-3851"
+      ],
+      "expected_expr": "9"
+    },
+    {
+      "arg_exprs": [
+        "-3317",
+        "-4174"
+      ],
+      "expected_expr": "28"
+    },
+    {
+      "arg_exprs": [
+        "-3132",
+        "1491"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "2508",
+        "-2143"
+      ],
+      "expected_expr": "24"
+    },
+    {
+      "arg_exprs": [
+        "2001",
+        "-1380"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "2044",
+        "-4551"
+      ],
+      "expected_expr": "4"
+    },
+    {
+      "arg_exprs": [
+        "-416",
+        "1589"
+      ],
+      "expected_expr": "54"
+    },
+    {
+      "arg_exprs": [
+        "435",
+        "-3881"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "-4900",
+        "176"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "-4043",
+        "-1667"
+      ],
+      "expected_expr": "21"
+    },
+    {
+      "arg_exprs": [
+        "-1758",
+        "2153"
+      ],
+      "expected_expr": "24"
+    }
+  ]
+}

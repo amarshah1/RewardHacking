@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/4",
+  "target_fn": "mean_absolute_deviation",
+  "target_signature": "pub fn mean_absolute_deviation(numbers: &[i32]) -> u32",
+  "arg_types": [
+    "&[i32]"
+  ],
+  "return_type": "u32",
+  "cases": [
+    {
+      "arg_exprs": [
+        "vec![1551, 111, 2262, 3875, -2007, -1063, -3306, 3752, -4255, -3776, 4032, 3718, -623, 3952, 4899, -4881, -4629, -3851, -3317, -4174]"
+      ],
+      "expected_expr": "3163"
+    },
+    {
+      "arg_exprs": [
+        "vec![-3063, -2713, 3574, 3640, 1331]"
+      ],
+      "expected_expr": "2753"
+    },
+    {
+      "arg_exprs": [
+        "vec![-3881, -4900, 176, -4043, -1667, -1758, 2153]"
+      ],
+      "expected_expr": "1959"
+    },
+    {
+      "arg_exprs": [
+        "vec![2605, 2376, -199]"
+      ],
+      "expected_expr": "1195"
+    },
+    {
+      "arg_exprs": [
+        "vec![-3445, -1724, 1626, 4803, 409, 2900, -3605, -1675, 3413, -1795]"
+      ],
+      "expected_expr": "2539"
+    },
+    {
+      "arg_exprs": [
+        "vec![3746, 4610]"
+      ],
+      "expected_expr": "432"
+    },
+    {
+      "arg_exprs": [
+        "vec![-4671, -4417, -1662]"
+      ],
+      "expected_expr": "1280"
+    },
+    {
+      "arg_exprs": [
+        "vec![650, -2147, 242]"
+      ],
+      "expected_expr": "1152"
+    },
+    {
+      "arg_exprs": [
+        "vec![-569]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![-3569, 3810, -900, -3816, -4523, -3539, 2151, 2725, -2151, -2290, -364, -1551, 4194, 1565, 4375, 3631, -4875, 4438, 2563, 2864, 871, -1169, 1853, -4427, 2905, 2016, 1858, -4006, 1725, -3544, -2420, 2379, -1034]"
+      ],
+      "expected_expr": "2728"
+    },
+    {
+      "arg_exprs": [
+        "vec![4482, -3155, 4700, -4235, 3376]"
+      ],
+      "expected_expr": "3783"
+    },
+    {
+      "arg_exprs": [
+        "vec![-3060, -1747, 1966, 617, 4778, -3432, -616, -3916, 3122, -469, -2817]"
+      ],
+      "expected_expr": "2281"
+    },
+    {
+      "arg_exprs": [
+        "vec![537, -604, 3472, -4742]"
+      ],
+      "expected_expr": "2338"
+    },
+    {
+      "arg_exprs": [
+        "vec![2668, -2392]"
+      ],
+      "expected_expr": "2530"
+    },
+    {
+      "arg_exprs": [
+        "vec![-1391, 3771, -4375, 1342]"
+      ],
+      "expected_expr": "2719"
+    },
+    {
+      "arg_exprs": [
+        "vec![3766, 2853, -4602, -4828, -4074, 3171, -2434, 4461]"
+      ],
+      "expected_expr": "3773"
+    },
+    {
+      "arg_exprs": [
+        "vec![-3042]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![1865]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![-454, 274, -420]"
+      ],
+      "expected_expr": "316"
+    },
+    {
+      "arg_exprs": [
+        "vec![-2801]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![1072, 546, 918, -1403, 4363, -1533, -2616]"
+      ],
+      "expected_expr": "1751"
+    },
+    {
+      "arg_exprs": [
+        "vec![-1542]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![-4852]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![1052, -4793]"
+      ],
+      "expected_expr": "2922"
+    }
+  ]
+}

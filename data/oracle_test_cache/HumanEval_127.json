@@ -1,0 +1,180 @@
+{
+  "task_id": "HumanEval/127",
+  "target_fn": "intersection",
+  "target_signature": "fn intersection(a: (i32, i32), b: (i32, i32)) -> &'static str",
+  "arg_types": [
+    "(i32, i32)",
+    "(i32, i32)"
+  ],
+  "return_type": "&'static str",
+  "cases": [
+    {
+      "arg_exprs": [
+        "(1212, 4516)",
+        "(-4004, -3492)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-4202, 3747)",
+        "(476, 4011)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-3119, 446)",
+        "(111, 1551)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(2262, 3875)",
+        "(-2007, -1063)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-3306, 3752)",
+        "(-4255, -3776)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(3718, 4032)",
+        "(-623, 3952)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-4881, 4899)",
+        "(-4629, -3851)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-4174, -3317)",
+        "(-3132, 1491)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-2143, 2508)",
+        "(-1380, 2001)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-4551, 2044)",
+        "(-416, 1589)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-3881, 435)",
+        "(-4900, 176)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-4043, -1667)",
+        "(-1758, 2153)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(2877, 3543)",
+        "(-921, 1176)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(2793, 4382)",
+        "(-2794, 1580)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-3322, 3048)",
+        "(-3837, -3742)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-3593, -1007)",
+        "(-4636, 3022)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-908, 2587)",
+        "(-2973, 717)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-1698, -584)",
+        "(-1558, 166)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-4671, -4417)",
+        "(-1662, 3173)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(3419, 4786)",
+        "(-3846, 317)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-3150, -569)",
+        "(-2576, 718)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(2567, 4077)",
+        "(-3431, 3904)"
+      ],
+      "expected_expr": "\"NO\""
+    },
+    {
+      "arg_exprs": [
+        "(-2866, 2128)",
+        "(-1884, 4273)"
+      ],
+      "expected_expr": "\"YES\""
+    },
+    {
+      "arg_exprs": [
+        "(1782, 3614)",
+        "(-1844, 3949)"
+      ],
+      "expected_expr": "\"NO\""
+    }
+  ]
+}

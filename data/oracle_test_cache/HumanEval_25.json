@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/25",
+  "target_fn": "factorize",
+  "target_signature": "pub fn factorize(n: u8) -> Vec<u8>",
+  "arg_types": [
+    "u8"
+  ],
+  "return_type": "Vec<u8>",
+  "cases": [
+    {
+      "arg_exprs": [
+        "4"
+      ],
+      "expected_expr": "vec![2, 2]"
+    },
+    {
+      "arg_exprs": [
+        "239"
+      ],
+      "expected_expr": "vec![239]"
+    },
+    {
+      "arg_exprs": [
+        "219"
+      ],
+      "expected_expr": "vec![3, 73]"
+    },
+    {
+      "arg_exprs": [
+        "196"
+      ],
+      "expected_expr": "vec![2, 2, 7, 7]"
+    },
+    {
+      "arg_exprs": [
+        "213"
+      ],
+      "expected_expr": "vec![3, 71]"
+    },
+    {
+      "arg_exprs": [
+        "142"
+      ],
+      "expected_expr": "vec![2, 71]"
+    },
+    {
+      "arg_exprs": [
+        "67"
+      ],
+      "expected_expr": "vec![67]"
+    },
+    {
+      "arg_exprs": [
+        "222"
+      ],
+      "expected_expr": "vec![2, 3, 37]"
+    },
+    {
+      "arg_exprs": [
+        "82"
+      ],
+      "expected_expr": "vec![2, 41]"
+    },
+    {
+      "arg_exprs": [
+        "155"
+      ],
+      "expected_expr": "vec![5, 31]"
+    },
+    {
+      "arg_exprs": [
+        "220"
+      ],
+      "expected_expr": "vec![2, 2, 5, 11]"
+    },
+    {
+      "arg_exprs": [
+        "39"
+      ],
+      "expected_expr": "vec![3, 13]"
+    },
+    {
+      "arg_exprs": [
+        "75"
+      ],
+      "expected_expr": "vec![3, 5, 5]"
+    },
+    {
+      "arg_exprs": [
+        "246"
+      ],
+      "expected_expr": "vec![2, 3, 41]"
+    },
+    {
+      "arg_exprs": [
+        "240"
+      ],
+      "expected_expr": "vec![2, 2, 2, 2, 3, 5]"
+    },
+    {
+      "arg_exprs": [
+        "154"
+      ],
+      "expected_expr": "vec![2, 7, 11]"
+    },
+    {
+      "arg_exprs": [
+        "244"
+      ],
+      "expected_expr": "vec![2, 2, 61]"
+    },
+    {
+      "arg_exprs": [
+        "226"
+      ],
+      "expected_expr": "vec![2, 113]"
+    },
+    {
+      "arg_exprs": [
+        "184"
+      ],
+      "expected_expr": "vec![2, 2, 2, 23]"
+    },
+    {
+      "arg_exprs": [
+        "97"
+      ],
+      "expected_expr": "vec![97]"
+    },
+    {
+      "arg_exprs": [
+        "106"
+      ],
+      "expected_expr": "vec![2, 53]"
+    },
+    {
+      "arg_exprs": [
+        "146"
+      ],
+      "expected_expr": "vec![2, 73]"
+    },
+    {
+      "arg_exprs": [
+        "138"
+      ],
+      "expected_expr": "vec![2, 3, 23]"
+    },
+    {
+      "arg_exprs": [
+        "84"
+      ],
+      "expected_expr": "vec![2, 2, 3, 7]"
+    }
+  ]
+}

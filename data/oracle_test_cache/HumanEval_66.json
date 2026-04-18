@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/66",
+  "target_fn": "digit_sum",
+  "target_signature": "fn digit_sum(text: &[char]) -> u128",
+  "arg_types": [
+    "&[char]"
+  ],
+  "return_type": "u128",
+  "cases": [
+    {
+      "arg_exprs": [
+        "vec!['G', 'W', 'O', 'Y', 'E', 'W', 'U', ',', '_', 'Q']"
+      ],
+      "expected_expr": "648"
+    },
+    {
+      "arg_exprs": [
+        "vec!['A', '.', 'T', '1', 'O', 'C', 'I', 'z', ':', 'M']"
+      ],
+      "expected_expr": "445"
+    },
+    {
+      "arg_exprs": [
+        "vec!['B', '\\\\', 'U', 'Q', 'K', 's', 'X', 'F', 'z', 'T']"
+      ],
+      "expected_expr": "549"
+    },
+    {
+      "arg_exprs": [
+        "vec!['K', 'J', 'N', '.', '\"', 'R', '#', '5', 'W', 'M']"
+      ],
+      "expected_expr": "473"
+    },
+    {
+      "arg_exprs": [
+        "vec!['~', '\\'', '_', 'N', '+', '6', 'I', ']', 'O', ';']"
+      ],
+      "expected_expr": "230"
+    },
+    {
+      "arg_exprs": [
+        "vec!['L', 'Y', 'S', '5', 'v', ';', 'D', '2', 'h', '?']"
+      ],
+      "expected_expr": "316"
+    },
+    {
+      "arg_exprs": [
+        "vec!['H', 'K', 'G', 'V', 'F', 'C', '\"', 'z', '*', 'S', '|', '^', 'Y']"
+      ],
+      "expected_expr": "613"
+    },
+    {
+      "arg_exprs": [
+        "vec!['W', '/', 'F', 'z', 'E', 'Q', '<', 'V', 'g', '4', 'M', 'I', 'R', 'W']"
+      ],
+      "expected_expr": "712"
+    },
+    {
+      "arg_exprs": [
+        "vec!['Q', 'T', 'T', 'Y', 'G', 'K', 'P', 'Y', 'W', 'r']"
+      ],
+      "expected_expr": "740"
+    },
+    {
+      "arg_exprs": [
+        "vec!['G', '!', 'i', 'A', 'I', 'E', 'V', 's', 'C', 'd']"
+      ],
+      "expected_expr": "431"
+    },
+    {
+      "arg_exprs": [
+        "vec!['?', '\\u{6310b}', '\\u{db3ef}', '\u00e0', '\\'', 't', '\\u{86351}', '-', '<', 'b', '<', '\\u{1b}', '\\r', '\u00a5', '{', '\\u{98ba3}', '\\\\', '7', 'z']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec!['\u0468', '\\n', '\\u{f455d}']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![]"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec!['\ubd50', 'E', '\ud834\udc7d', ':', '\\u{202e}', '\\r', '/']"
+      ],
+      "expected_expr": "69"
+    },
+    {
+      "arg_exprs": [
+        "vec!['?', '\\n', ':', '%', '\\u{9227e}', '\ud83d\udd74', '\\u{7f}']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec!['\\u{d32b2}', '\\'']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec![')', '{', '\u00aa', '\\u{4c6d0}', '\\u{b}', 'g', '\\u{9e}', '/', '\u9deb', '3', '?', '\\'', '\\u{e65e3}', '*', '\\u{feff}', '$', '\\u{56e89}', '\\r', '%', 'm', '?', 'E', '\\n', '\\r', 'r', 'l', ']', '.', '\u0468', '\\u{e3d66}', '\\t', 'I', '\\u{52f69}', 'j']"
+      ],
+      "expected_expr": "142"
+    },
+    {
+      "arg_exprs": [
+        "vec!['\u00fe']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec!['{', '\u023a', '\\u{f0bbb}', '\ud87e\udd33']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec!['h', 'E', '\ud806\ude44']"
+      ],
+      "expected_expr": "69"
+    },
+    {
+      "arg_exprs": [
+        "vec!['.', '/', '\ufffd']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec!['*']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec!['\\u{d571e}', '/']"
+      ],
+      "expected_expr": "0"
+    },
+    {
+      "arg_exprs": [
+        "vec!['A', '\u00a5', ':']"
+      ],
+      "expected_expr": "65"
+    }
+  ]
+}

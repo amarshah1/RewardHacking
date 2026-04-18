@@ -1,0 +1,205 @@
+{
+  "task_id": "HumanEval/157",
+  "target_fn": "right_angle_triangle",
+  "target_signature": "fn right_angle_triangle(a: u32, b: u32, c: u32) -> bool",
+  "arg_types": [
+    "u32",
+    "u32",
+    "u32"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "640u32",
+        "656u32",
+        "144u32"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "1212",
+        "1739",
+        "4516"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "577u32",
+        "48u32",
+        "575u32"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "2693",
+        "4004",
+        "3209"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "1044u32",
+        "720u32",
+        "756u32"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "3492",
+        "1408",
+        "4202"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "648u32",
+        "1377u32",
+        "1215u32"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "333",
+        "3747",
+        "2348"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "152u32",
+        "377u32",
+        "345u32"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "4011",
+        "4697",
+        "476"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "480u32",
+        "1832u32",
+        "1768u32"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "3864",
+        "3119",
+        "341"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "765u32",
+        "756u32",
+        "117u32"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "446",
+        "2724",
+        "1551"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "324u32",
+        "765u32",
+        "693u32"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "504",
+        "111",
+        "3908"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "2262",
+        "2425",
+        "3875"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3784",
+        "2007",
+        "4526"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "1063",
+        "3986",
+        "3306"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4508",
+        "3752",
+        "2186"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4255",
+        "1263",
+        "3776"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3668",
+        "4032",
+        "4186"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3718",
+        "154",
+        "623"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3829",
+        "3952",
+        "1619"
+      ],
+      "expected_expr": "false"
+    }
+  ]
+}

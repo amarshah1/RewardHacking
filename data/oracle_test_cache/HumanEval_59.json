@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/59",
+  "target_fn": "largest_prime_factor",
+  "target_signature": "fn largest_prime_factor(n: u32) -> u32",
+  "arg_types": [
+    "u32"
+  ],
+  "return_type": "u32",
+  "cases": [
+    {
+      "arg_exprs": [
+        "1214"
+      ],
+      "expected_expr": "607"
+    },
+    {
+      "arg_exprs": [
+        "1741"
+      ],
+      "expected_expr": "1741"
+    },
+    {
+      "arg_exprs": [
+        "4518"
+      ],
+      "expected_expr": "251"
+    },
+    {
+      "arg_exprs": [
+        "2695"
+      ],
+      "expected_expr": "11"
+    },
+    {
+      "arg_exprs": [
+        "4006"
+      ],
+      "expected_expr": "2003"
+    },
+    {
+      "arg_exprs": [
+        "3211"
+      ],
+      "expected_expr": "19"
+    },
+    {
+      "arg_exprs": [
+        "3494"
+      ],
+      "expected_expr": "1747"
+    },
+    {
+      "arg_exprs": [
+        "1410"
+      ],
+      "expected_expr": "47"
+    },
+    {
+      "arg_exprs": [
+        "4204"
+      ],
+      "expected_expr": "1051"
+    },
+    {
+      "arg_exprs": [
+        "335"
+      ],
+      "expected_expr": "67"
+    },
+    {
+      "arg_exprs": [
+        "3749"
+      ],
+      "expected_expr": "163"
+    },
+    {
+      "arg_exprs": [
+        "2350"
+      ],
+      "expected_expr": "47"
+    },
+    {
+      "arg_exprs": [
+        "4013"
+      ],
+      "expected_expr": "4013"
+    },
+    {
+      "arg_exprs": [
+        "4699"
+      ],
+      "expected_expr": "127"
+    },
+    {
+      "arg_exprs": [
+        "478"
+      ],
+      "expected_expr": "239"
+    },
+    {
+      "arg_exprs": [
+        "3866"
+      ],
+      "expected_expr": "1933"
+    },
+    {
+      "arg_exprs": [
+        "3121"
+      ],
+      "expected_expr": "3121"
+    },
+    {
+      "arg_exprs": [
+        "343"
+      ],
+      "expected_expr": "7"
+    },
+    {
+      "arg_exprs": [
+        "448"
+      ],
+      "expected_expr": "7"
+    },
+    {
+      "arg_exprs": [
+        "2726"
+      ],
+      "expected_expr": "47"
+    },
+    {
+      "arg_exprs": [
+        "1553"
+      ],
+      "expected_expr": "1553"
+    },
+    {
+      "arg_exprs": [
+        "506"
+      ],
+      "expected_expr": "23"
+    },
+    {
+      "arg_exprs": [
+        "113"
+      ],
+      "expected_expr": "113"
+    },
+    {
+      "arg_exprs": [
+        "3910"
+      ],
+      "expected_expr": "23"
+    }
+  ]
+}

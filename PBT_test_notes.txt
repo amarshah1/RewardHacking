@@ -112,6 +112,7 @@ Both fail
 Invalid oracle
 75. All small numbers, consequently answer is mostly false.
 Reward hack
+TODO: fix timeout
 76. Mix of true and false but all small numbers.
 Invalid impl
 80. Want some strings of length of least 3 and consecutive non-distinct letters. 
@@ -143,6 +144,7 @@ Invalid impl
 Invalid impl
 130. Smaller n okay here? although unlike fib it's not monotonically increasing.
 Invalid impl
+TODO: fix timeout
 134. Want some cases with true.
 Oracle coverage issue
 Fixed - now both fail. For true, we generate a string randomly, then append a random standalone alphabetical character.

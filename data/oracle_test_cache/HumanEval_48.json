@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/48",
+  "target_fn": "is_palindrome",
+  "target_signature": "fn is_palindrome(text: &str) -> bool",
+  "arg_types": [
+    "&str"
+  ],
+  "return_type": "bool",
+  "cases": [
+    {
+      "arg_exprs": [
+        "\"''''''''\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"zEowH-qT-HwoEz\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"j2iq,uq'qu,qi2j\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"PfIP\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"EIHbbHIE\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"rfVr\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"UmKL,ooCQCoo,LKmU\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"Ju2J\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"bV2112Vb\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"yDTy\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"ZZ\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"VgT/?,1nk1,?/TgV\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"6:LfmddaQVl5?4m595m4?5lVQaddmfL:6\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"\u19bb`\ufffd=[\ud834\udf69'\u2dc0\ud833\udf89\u023a\u0ed7-<-<b\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"zFTYTFz\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"\u00b2\u00a5{\ud83b\ude59\\\\7z%'\u0468\u2d50??'8\ud804\udf8b\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"IccI\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"\u0837.:jb\u03a0.\ud807\udd04:%\ud81b\udf6d\ud83d\udd74d?\\u{16ff1}\ud805\ude59K\ud835\udcbe\\u{a4d}\u0b0a.\u1f86\ud807\udf55\ud804\udf8b){\u00aa\ud800\udfa9\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"{=:\ud83d\udd74,:\u00a5s\u0e93\ud839\uddff$\ud83b\ude4d2&\u1664%F}\u0468].\u0468\ud806\udd31\\u{11c9a}\u0e8e\ud85d\udcc5\ud83c\udcae\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"\ud83d\udd74\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"\\\\{^=\ud83a\udd21B:C\u0bb7%\u2ff5`-/\ufffd\ud805\udc9b\ud82c\udd65\\u{11d3d}/\ud835\udf8eA\u00a5:<\ua7d3\ud83b\ude8b\ud83d\udcb8\\u{59e}\ud83d\udd74\\\"\\u{820}9\""
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "\"q\""
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "\"?\u00a5\\\"\\u{b55}$*8}\\u{a806}.+\ud81b\ude5c`\\u{afb}2k\\u{c46}*Xx\\u{fe20}.\ud800\udc2b1\""
+      ],
+      "expected_expr": "false"
+    }
+  ]
+}

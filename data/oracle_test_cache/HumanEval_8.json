@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/8",
+  "target_fn": "sum_product",
+  "target_signature": "fn sum_product(numbers: Vec<u32>) -> (u64, Option<u32>)",
+  "arg_types": [
+    "Vec<u32>"
+  ],
+  "return_type": "(u64, Option<u32>)",
+  "cases": [
+    {
+      "arg_exprs": [
+        "vec![1551, 504, 111, 3908, 2262, 2425, 3875, 3784, 2007, 4526, 1063, 3986, 3306, 4508, 3752, 2186, 4255, 1263, 3776]"
+      ],
+      "expected_expr": "(53048, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![3851, 1339, 3317, 149, 4174, 3658, 3132, 4625, 1491, 763, 2508, 3063, 2143, 2713]"
+      ],
+      "expected_expr": "(36926, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![4432, 416, 781, 1589, 2081, 435]"
+      ],
+      "expected_expr": "(9734, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![]"
+      ],
+      "expected_expr": "(0, Some(1))"
+    },
+    {
+      "arg_exprs": [
+        "vec![1667, 1735, 1758, 1495, 2153, 2911, 2877]"
+      ],
+      "expected_expr": "(14596, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![2605]"
+      ],
+      "expected_expr": "(2605, Some(2605))"
+    },
+    {
+      "arg_exprs": [
+        "vec![1176]"
+      ],
+      "expected_expr": "(1176, Some(1176))"
+    },
+    {
+      "arg_exprs": [
+        "vec![416]"
+      ],
+      "expected_expr": "(416, Some(416))"
+    },
+    {
+      "arg_exprs": [
+        "vec![3445, 3837, 1724, 3742, 1626, 3593, 4803, 1007]"
+      ],
+      "expected_expr": "(23777, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![1675, 908, 3413, 2973, 1795]"
+      ],
+      "expected_expr": "(10764, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![3746, 1698]"
+      ],
+      "expected_expr": "(5444, Some(6360708))"
+    },
+    {
+      "arg_exprs": [
+        "vec![4671, 4864, 4417, 3279]"
+      ],
+      "expected_expr": "(17231, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![3173]"
+      ],
+      "expected_expr": "(3173, Some(3173))"
+    },
+    {
+      "arg_exprs": [
+        "vec![650]"
+      ],
+      "expected_expr": "(650, Some(650))"
+    },
+    {
+      "arg_exprs": [
+        "vec![569, 2155, 3150, 1147, 718]"
+      ],
+      "expected_expr": "(7739, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![3569, 3708, 3810, 3773, 900, 584, 3816, 723, 4523, 3077, 3539, 3479, 2151, 2905, 2725, 377, 2151, 4275, 2290, 167, 364, 1007, 1551, 1291, 4194, 2430, 1565, 1225, 4375]"
+      ],
+      "expected_expr": "(70544, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![2234]"
+      ],
+      "expected_expr": "(2234, Some(2234))"
+    },
+    {
+      "arg_exprs": [
+        "vec![2563, 2658, 2864]"
+      ],
+      "expected_expr": "(8085, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![3705]"
+      ],
+      "expected_expr": "(3705, Some(3705))"
+    },
+    {
+      "arg_exprs": [
+        "vec![4427, 516, 2905]"
+      ],
+      "expected_expr": "(7848, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![1858, 3193]"
+      ],
+      "expected_expr": "(5051, Some(5932594))"
+    },
+    {
+      "arg_exprs": [
+        "vec![611]"
+      ],
+      "expected_expr": "(611, Some(611))"
+    },
+    {
+      "arg_exprs": [
+        "vec![3566, 2830, 4836, 3008, 3754]"
+      ],
+      "expected_expr": "(17994, None)"
+    },
+    {
+      "arg_exprs": [
+        "vec![1499, 4235, 2448, 3376]"
+      ],
+      "expected_expr": "(11558, None)"
+    }
+  ]
+}
