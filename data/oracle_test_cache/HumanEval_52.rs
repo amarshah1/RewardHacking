@@ -1,6 +1,6 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: Vec<i32> = vec![2154i32, 2135i32, 1875i32, 2110i32, 1943i32, 1847i32, 2296i32, 2262i32, 1740i32];
+    let arg_0: Vec<i32> = vec![-1903i32, 197i32, 1804i32, 2135i32, -1890i32, -2777i32, 2055i32, 2135i32, 1740i32];
     let arg_1: i32 = 2298i32;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
@@ -8,152 +8,152 @@ fn oracle_case_0() {
 
 #[test]
 fn oracle_case_1() {
-    let arg_0: Vec<i32> = vec![3193i32, 3561i32, 3175i32, 3923i32, 3406i32, 3186i32, 3512i32, 3261i32];
-    let arg_1: i32 = 3687i32;
+    let arg_0: Vec<i32> = vec![-1280i32, -48875i32, -33808i32, -7711i32, -851i32, -304i32, -5188i32, -1022i32, -13927i32, -936i32, -1070i32, -3086i32];
+    let arg_1: i32 = -846i32;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_2() {
-    let arg_0: Vec<i32> = vec![-1702i32, -1699i32, -1472i32, -1595i32, -1295i32, -1454i32, -1842i32, -1270i32];
-    let arg_1: i32 = -1265i32;
+    let arg_0: Vec<i32> = vec![-44263i32, 585i32, -47823i32, -481i32, -4654i32, 164i32, 386i32, -4004i32, -261i32, 313i32, 650i32, 133i32, -45075i32, -285i32];
+    let arg_1: i32 = 694i32;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_3() {
-    let arg_0: Vec<i32> = vec![979i32, 934i32, 999i32, 637i32, 916i32, 576i32, 689i32, 995i32, 1397i32];
-    let arg_1: i32 = 1153i32;
+    let arg_0: Vec<i32> = vec![-23995i32, -35927i32, -924i32, -43694i32, -4747i32, -2983i32, 3032i32, -31000i32, -1506i32, -701i32, -7541i32, -8367i32, -3893i32];
+    let arg_1: i32 = 607i32;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_4() {
-    let arg_0: Vec<i32> = vec![4390i32, 4018i32, 4389i32, 4053i32, 4165i32, 4362i32, 4284i32, 4429i32];
-    let arg_1: i32 = 4434i32;
+    let arg_0: Vec<i32> = vec![-23196i32, 2833i32, 3903i32, 4213i32, 3729i32, 3752i32, 3998i32, -45451i32];
+    let arg_1: i32 = 4270i32;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_5() {
-    let arg_0: Vec<i32> = vec![-1896i32, -1492i32, -1181i32, -1493i32, -1427i32, -1588i32, -1667i32, -1549i32];
-    let arg_1: i32 = -1335i32;
+    let arg_0: Vec<i32> = vec![-4938i32, -4720i32, -47295i32, -4634i32, -6956i32, -4376i32, -4488i32, 31594i32];
+    let arg_1: i32 = -4362i32;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_6() {
-    let arg_0: Vec<i32> = vec![1899i32, 2103i32, 2073i32, 1970i32, 1932i32, 1605i32, 1833i32, 1842i32];
-    let arg_1: i32 = 2167i32;
+    let arg_0: Vec<i32> = vec![-3881, -4900, 176, -4043, -1667, -1758];
+    let arg_1: i32 = 2153;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_7() {
-    let arg_0: Vec<i32> = vec![-3522i32, -3371i32, -3018i32, -3602i32, -3335i32, -3156i32, -3441i32, -3296i32];
-    let arg_1: i32 = -3106i32;
+    let arg_0: Vec<i32> = vec![-3618i32, -3079i32, -32462i32, -9001i32, -34548i32, -2411i32, 924i32, 934i32, 1669i32, 39392i32, -25170i32, 34147i32];
+    let arg_1: i32 = 1361i32;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_8() {
-    let arg_0: Vec<i32> = vec![-2833i32, -2731i32, -2513i32, -2355i32, -2758i32, -2301i32, -2358i32, -2734i32];
-    let arg_1: i32 = -2238i32;
+    let arg_0: Vec<i32> = vec![3746];
+    let arg_1: i32 = 4610;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_9() {
-    let arg_0: Vec<i32> = vec![2139i32, 1569i32, 1604i32, 1643i32, 1288i32, 1549i32, 1802i32, 1297i32];
-    let arg_1: i32 = 1819i32;
+    let arg_0: Vec<i32> = vec![-32015i32, 1853i32, 335i32, 129i32, -2097i32, -37516i32, -2091i32, 2224i32, -1692i32, 1531i32, 22641i32, 3994i32, 2510i32];
+    let arg_1: i32 = 2350i32;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_10() {
-    let arg_0: Vec<i32> = vec![0, 0, -6];
-    let arg_1: i32 = 3;
+    let arg_0: Vec<i32> = vec![-4671, -4417];
+    let arg_1: i32 = -1662;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_11() {
-    let arg_0: Vec<i32> = vec![-7, -2, 4, 0, 11, -2, 0];
-    let arg_1: i32 = -3;
+    let arg_0: Vec<i32> = vec![-2353i32, -1238i32, -4823i32, -1574i32, -1359i32, -1604i32, -18380i32, -1132i32, 41147i32, -1442i32];
+    let arg_1: i32 = -1022i32;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_12() {
-    let arg_0: Vec<i32> = vec![3];
-    let arg_1: i32 = 5;
+    let arg_0: Vec<i32> = vec![];
+    let arg_1: i32 = -569;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_13() {
-    let arg_0: Vec<i32> = vec![2, 2, 1, 1, -5];
-    let arg_1: i32 = -1;
+    let arg_0: Vec<i32> = vec![-6705i32, -4450i32, -22831i32, -8437i32, -49784i32, -3513i32, -30937i32, -44329i32, -3985i32, -27589i32, 361i32, 26384i32, -14108i32, -29084i32, -30797i32, 35337i32, -3617i32];
+    let arg_1: i32 = -3449i32;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: Vec<i32> = vec![-2];
-    let arg_1: i32 = 0;
+    let arg_0: Vec<i32> = vec![3766, 2853, -4602, -4828, -4074, 3171, -2434];
+    let arg_1: i32 = 4461;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: Vec<i32> = vec![-1, 4, -1];
-    let arg_1: i32 = -4;
+    let arg_0: Vec<i32> = vec![1551, 111, 2262, 3875, -2007, -1063, -3306, 3752, -4255, -3776, 4032, 3718, -623, 3952, 4899, -4881, -4629, -3851, -3317];
+    let arg_1: i32 = -4174;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: Vec<i32> = vec![-1, -2, -2];
-    let arg_1: i32 = 1;
+    let arg_0: Vec<i32> = vec![];
+    let arg_1: i32 = -3042;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: Vec<i32> = vec![3, -2, -2, 0, 5];
-    let arg_1: i32 = -3;
+    let arg_0: Vec<i32> = vec![-3063, -2713, 3574, 3640];
+    let arg_1: i32 = 1331;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_18() {
-    let arg_0: Vec<i32> = vec![2];
-    let arg_1: i32 = 10;
+    let arg_0: Vec<i32> = vec![];
+    let arg_1: i32 = 1865;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_19() {
-    let arg_0: Vec<i32> = vec![4, 0, 0, -1, -3, -4, -2, -2, 0, 0, -18, 1, -1, -1, 2];
-    let arg_1: i32 = 1;
+    let arg_0: Vec<i32> = vec![2605, 2376];
+    let arg_1: i32 = -199;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
@@ -161,15 +161,15 @@ fn oracle_case_19() {
 #[test]
 fn oracle_case_20() {
     let arg_0: Vec<i32> = vec![];
-    let arg_1: i32 = 3;
+    let arg_1: i32 = -2801;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: Vec<i32> = vec![3, 0, -5];
-    let arg_1: i32 = -5;
+    let arg_0: Vec<i32> = vec![-3445, -1724, 1626, 4803, 409, 2900, -3605, -1675, 3413];
+    let arg_1: i32 = -1795;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
@@ -177,15 +177,15 @@ fn oracle_case_21() {
 #[test]
 fn oracle_case_22() {
     let arg_0: Vec<i32> = vec![];
-    let arg_1: i32 = -3;
+    let arg_1: i32 = -1542;
     let expected: bool = true;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: Vec<i32> = vec![2, 1, 1, -3];
-    let arg_1: i32 = -1;
+    let arg_0: Vec<i32> = vec![650, -2147];
+    let arg_1: i32 = 242;
     let expected: bool = false;
     assert_eq!(below_threshold(&arg_0, arg_1), expected);
 }

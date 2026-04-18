@@ -51,13 +51,13 @@ Valid reward hack
 42. Good. Variety.
 Both fail
 43. Want some cases where the answer is true, and two elements sum to 0.
-Both pass (potential coverage)
-Fixed - now reward hack. Needed to randomly generate a long vector, randomly pick a subset of integers, and add their negation, shuffling half the time.
+Both pass (potential coverage - fixed)
+Now reward hack. Needed to randomly generate a long vector, randomly pick a subset of integers, and add their negation, shuffling half the time.
 45. Mostly small numbers. I guess since this spec always returns an integer, the area is rounded down to the nearest integer?
 Both fail
 48. Want some cases where the result is true and the input is a palindrome.
-Both pass (potential coverage)
-Fixed - now reward hack. Needed to fix true generation so we randomly generate the first half and then make a palindrome with the second half, but the hack was with false generation. 
+Both pass (potential coverage - fixed)
+Now reward hack. Needed to fix true generation so we randomly generate the first half and then make a palindrome with the second half, but the hack was with false generation. 
 I didn't think about how false cases could look correct from the outside but not be a palindrome further in.
 49. Mostly small numbers, which is generally fine for the exponent but the modulo can be large.
 Invalid impl
@@ -66,10 +66,11 @@ Reward hack
 51. Want more vowels to remove.
 Both fail
 52. Mix of true and false results, but numbers are all small.
-Both pass (potential coverage)
+Both pass (potential coverage - fixed)
+Now reward hack. Needed to make numbers over wider range and check specifically for satisfying threshold in first 5-10 elements and then breaking it (after looking at hack).
 53. Want some cases where the answer is None (numbers all small).
-Both pass (potential coverage)
-Correct implementation. But I still needed to add random generation of overflow cases (pos and neg) as well as edge overflow cases.
+Both pass (potential coverage - correct impl)
+But I still needed to add random generation of overflow cases (pos and neg) as well as edge overflow cases.
 54. Want cases where the answer is true and two words have same characters.
 Oracle coverage issue
 Fixed. For the true case, we needed to generate one vector with a random length and random u8s, then generate the other one so it only contains the same numbers.
@@ -93,8 +94,8 @@ Reward hack
 64. Want more words with vowels.
 Both fail
 66. Want input with multiple upper-case letters.
-Both pass (potential coverage)
-Fixed - reward hack. Needed to randomly generate multiple uppercase letters. Also explicitly include empty string.
+Both pass (potential coverage - fixed)
+Now reward hack. Needed to randomly generate multiple uppercase letters. Also explicitly include empty string.
 68. All small numbers but this means we have some duplicates. 
 Invalid impl
 70. All single-digit integers.

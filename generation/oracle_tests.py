@@ -69,6 +69,7 @@ class ArgConstraints:
 @dataclass
 class ParsedConstraints:
     """The subset of target `requires` clauses we can enforce during sampling."""
+    task_id: str
     arg_constraints: dict[str, ArgConstraints]
     shared_length_groups: dict[str, list[str]]
 
@@ -115,7 +116,7 @@ def generate_oracle_test_cache(
     signature_map = _build_signature_map(verus_fn_names, impl_signatures)
     signature = _parse_rust_signature(signature_map[target_name], target_name)
     try:
-        constraints = _parse_requires_constraints(verus_code, signature)
+        constraints = _parse_requires_constraints(task_id, verus_code, signature)
     except OracleTestGenerationError:
         constraints = _special_case_constraints(task_id, signature)
         if constraints is None:
@@ -339,6 +340,10 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/66":
         candidates.extend(
             _digit_sum_uppercase_recovery_cases(signature, existing_cases, seen)
+        )
+    if task_id == "HumanEval/52":
+        candidates.extend(
+            _below_threshold_wide_range_recovery_cases(signature, existing_cases, seen)
         )
 
     unique_candidates: list[list[str]] = []
@@ -775,6 +780,97 @@ def _digit_sum_uppercase_recovery_cases(
     return candidates
 
 
+def _below_threshold_wide_range_recovery_cases(
+    signature: ParsedSignature,
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct task-52 cases including a delayed threshold crossing after an initial safe prefix."""
+    if len(signature.args) != 2:
+        raise OracleTestGenerationError("HumanEval/52 recovery expected exactly two arguments")
+    if _normalize_type(signature.args[0].rust_type) != "&[i32]" or _normalize_type(signature.args[1].rust_type) != "i32":
+        raise OracleTestGenerationError("HumanEval/52 recovery expected signature `fn(&[i32], i32) -> bool`")
+    if _has_delayed_threshold_failure_case(existing_cases):
+        return []
+
+    rng = random.Random(52)
+    candidates: list[list[str]] = []
+    i32_min = -(2**31)
+    i32_max = 2**31 - 1
+
+    for expect_true in [True, False] * 3:
+        threshold = _random_wide_i32(rng)
+        length = max(8, 6 + _python_geometric_length(rng))
+        values: list[int] = []
+
+        if expect_true:
+            for _ in range(length):
+                delta = _random_threshold_offset(rng)
+                candidate = threshold - delta
+                candidate = max(i32_min, min(i32_max, candidate))
+                values.append(candidate)
+        else:
+            bad_index = rng.randrange(length)
+            for idx in range(length):
+                if idx == bad_index:
+                    delta = _random_threshold_offset(rng) - 1
+                    candidate = threshold + delta
+                else:
+                    delta = _random_threshold_offset(rng)
+                    candidate = threshold - delta
+                candidate = max(i32_min, min(i32_max, candidate))
+                values.append(candidate)
+
+        if rng.choice([True, False]):
+            rng.shuffle(values)
+
+        arg_exprs = [_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    for _ in range(4):
+        threshold = _random_wide_i32(rng)
+        prefix_len = rng.randint(5, 10)
+        suffix_len = max(1, 1 + _python_geometric_length(rng))
+        values = []
+        for _ in range(prefix_len):
+            delta = _random_threshold_offset(rng)
+            candidate = threshold - delta
+            values.append(max(i32_min, min(i32_max, candidate)))
+        crossing_delta = _random_threshold_offset(rng) - 1
+        values.append(max(i32_min, min(i32_max, threshold + crossing_delta)))
+        for _ in range(suffix_len):
+            if rng.choice([True, False]):
+                delta = _random_threshold_offset(rng)
+                candidate = threshold - delta
+            else:
+                delta = _random_threshold_offset(rng) - 1
+                candidate = threshold + delta
+            values.append(max(i32_min, min(i32_max, candidate)))
+
+        arg_exprs = [_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    return candidates
+
+
+def _random_wide_i32(rng: random.Random) -> int:
+    """Generate a wider-magnitude `i32` value for recovery cases."""
+    magnitude = rng.randint(100, 5000)
+    return magnitude if rng.choice([True, False]) else -magnitude
+
+
+def _random_threshold_offset(rng: random.Random) -> int:
+    """Generate a threshold-relative offset with a mix of nearby and wider magnitudes."""
+    bucket = rng.randrange(3)
+    if bucket == 0:
+        return rng.randint(1, 600)
+    if bucket == 1:
+        return rng.randint(601, 5_000)
+    return rng.randint(5_001, 50_000)
+
+
 def _generate_last_char_letter_true_cases() -> list[str]:
     """Generate strings that satisfy `HumanEval/134` by ending in a standalone ASCII letter."""
     rng = random.Random(134)
@@ -841,6 +937,25 @@ def _count_multi_uppercase_char_vec_cases(cases: list[OracleCase]) -> int:
     return count
 
 
+def _has_delayed_threshold_failure_case(cases: list[OracleCase]) -> bool:
+    """Check whether task 52 already has a false case with 5-10 safe prefix elements before failure."""
+    for case in cases:
+        if case.expected_expr.strip() != "false" or len(case.arg_exprs) != 2:
+            continue
+        values = _parse_i32_vec_literal(case.arg_exprs[0])
+        threshold = _parse_i32_literal(case.arg_exprs[1])
+        if values is None or threshold is None:
+            continue
+        if len(values) < 6:
+            continue
+        for fail_idx, value in enumerate(values):
+            if value >= threshold:
+                if 5 <= fail_idx <= 10 and all(prefix_value < threshold for prefix_value in values[:fail_idx]):
+                    return True
+                break
+    return False
+
+
 def _parse_u8_vec_literal(expr: str) -> list[int] | None:
     """Parse a simple `vec![...]` of integers into Python ints for recovery checks."""
     expr = expr.strip()
@@ -857,6 +972,33 @@ def _parse_u8_vec_literal(expr: str) -> list[int] | None:
         if not re.fullmatch(r"\d+", token):
             return None
         values.append(int(token))
+    return values
+
+
+def _parse_i32_literal(expr: str) -> int | None:
+    """Parse a simple signed integer literal with an optional `i32` suffix."""
+    token = expr.strip()
+    token = re.sub(r"i32$", "", token)
+    if not re.fullmatch(r"-?\d+", token):
+        return None
+    return int(token)
+
+
+def _parse_i32_vec_literal(expr: str) -> list[int] | None:
+    """Parse a simple `vec![...]` of signed integers into Python ints for recovery checks."""
+    expr = expr.strip()
+    if not expr.startswith("vec![") or not expr.endswith("]"):
+        return None
+    inner = expr[len("vec![") : -1].strip()
+    if not inner:
+        return []
+
+    values: list[int] = []
+    for part in _split_top_level(inner):
+        value = _parse_i32_literal(part.strip())
+        if value is None:
+            return None
+        values.append(value)
     return values
 
 
@@ -1486,8 +1628,9 @@ def _sample_cases(
 ) -> list[list[str]]:
     """Use a temporary Rust `proptest` generator to sample distinct argument expressions."""
     sampler_source = _build_proptest_sampler_source(
-        signature,
-        constraints,
+        task_id=constraints.task_id,
+        signature=signature,
+        constraints=constraints,
         num_cases=num_cases,
         max_trials=max_trials,
         seed=seed,
@@ -1510,13 +1653,103 @@ def _sampler_decl_type(rust_type: str) -> str:
     return rust_type
 
 
-def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstraints | None = None) -> str:
+_SMALL_BIASED_INTEGER_TASKS = {
+    # "HumanEval/24",
+    "HumanEval/49", #Want small for exponent but not modulo
+    "HumanEval/55",
+    "HumanEval/63",
+    "HumanEval/100",
+    "HumanEval/139",
+}
+
+
+def _wide_integer_expr(
+    rust_type: str,
+    runner_var: str,
+    min_value: int | None = None,
+    max_value: int | None = None,
+) -> str:
+    """Sample a practical but wider-magnitude integer, with optional one-sided bounds."""
+    min_i128 = f"{min_value}i128" if min_value is not None else None
+    max_i128 = f"{max_value}i128" if max_value is not None else None
+
+    if min_value is None and max_value is None:
+        signed_prefix = ""
+        signed_candidate = "let candidate = magnitude; "
+        if rust_type in {"i8", "i16", "i32", "i64", "i128", "isize"}:
+            signed_prefix = (
+                "let negative = proptest::arbitrary::any::<bool>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current(); "
+            )
+            signed_candidate = "let candidate = if negative { -magnitude } else { magnitude }; "
+        return (
+            "{ "
+            "use proptest::strategy::Strategy; "
+            "use proptest::strategy::ValueTree; "
+            "let mut magnitude = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
+            f"{runner_var}"
+            ").unwrap().current() as i128 % 4901); "
+            f"{signed_prefix}"
+            "loop { "
+            f"{signed_candidate}"
+            f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
+            "magnitude = magnitude.saturating_sub(1); "
+            "} "
+            "}"
+        )
+
+    if min_value is not None and max_value is None:
+        return (
+            "{ "
+            "use proptest::strategy::Strategy; "
+            "use proptest::strategy::ValueTree; "
+            f"let min_value = {min_i128}; "
+            "let mut offset = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
+            f"{runner_var}"
+            ").unwrap().current() as i128 % 4901); "
+            "loop { "
+            "let candidate = min_value + offset; "
+            f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
+            "offset = offset.saturating_sub(1); "
+            "} "
+            "}"
+        )
+
+    if min_value is None and max_value is not None:
+        return (
+            "{ "
+            "use proptest::strategy::Strategy; "
+            "use proptest::strategy::ValueTree; "
+            f"let max_value = {max_i128}; "
+            "let mut offset = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
+            f"{runner_var}"
+            ").unwrap().current() as i128 % 4901); "
+            "loop { "
+            "let candidate = max_value - offset; "
+            f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
+            "offset = offset.saturating_sub(1); "
+            "} "
+            "}"
+        )
+
+    raise OracleTestGenerationError("_wide_integer_expr only supports unconstrained or one-sided bounds")
+
+
+def _proptest_leaf_expr(
+    rust_type: str,
+    runner_var: str,
+    constraints: ArgConstraints | None = None,
+    task_id: str | None = None,
+) -> str:
     """Sample one scalar Rust value using `proptest`, optionally restricting it to a valid subset."""
     rust_type = _normalize_type(rust_type)
     if rust_type == "&str":
         rust_type = "String"
     constraints = constraints or ArgConstraints()
     integer_types = {"i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128", "usize"}
+
+    use_small_bias = task_id in _SMALL_BIASED_INTEGER_TASKS
 
     if rust_type == "char" and constraints.allowed_chars:
         choices = ", ".join(_rust_char_literal(ch) for ch in constraints.allowed_chars)
@@ -1543,6 +1776,8 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstra
         and constraints.min_value is None
         and constraints.max_value is None
     ):
+        if not use_small_bias:
+            return _wide_integer_expr(rust_type, runner_var)
         if rust_type in {"u8", "u16", "u32", "u64", "u128", "usize"}:
             return (
                 "{ "
@@ -1592,6 +1827,8 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstra
         and constraints.min_value is not None
         and constraints.max_value is None
     ):
+        if not use_small_bias:
+            return _wide_integer_expr(rust_type, runner_var, min_value=constraints.min_value)
         min_literal = _rust_numeric_literal(constraints.min_value, rust_type)
         return (
             "{ "
@@ -1619,6 +1856,8 @@ def _proptest_leaf_expr(rust_type: str, runner_var: str, constraints: ArgConstra
         and constraints.min_value is None
         and constraints.max_value is not None
     ):
+        if not use_small_bias:
+            return _wide_integer_expr(rust_type, runner_var, max_value=constraints.max_value)
         max_literal = _rust_numeric_literal(constraints.max_value, rust_type)
         if rust_type in {"u8", "u16", "u32", "u64", "u128", "usize"}:
             return (
@@ -1726,6 +1965,7 @@ def _sampling_expr(
     rust_type: str,
     runner_var: str,
     arg_constraints: ArgConstraints,
+    task_id: str | None = None,
     length_expr: str | None = None,
 ) -> str:
     """Generate Rust code that samples one value of the requested argument type under known constraints."""
@@ -1733,12 +1973,12 @@ def _sampling_expr(
     bare_type = _strip_ref(rust_type)
 
     if rust_type == "&str":
-        return _proptest_leaf_expr("String", runner_var, arg_constraints)
+        return _proptest_leaf_expr("String", runner_var, arg_constraints, task_id=task_id)
 
     if bare_type.startswith("Option<") and bare_type.endswith(">"):
         inner = bare_type[len("Option<") : -1].strip()
-        inner_expr = _sampling_expr(inner, runner_var, ArgConstraints())
-        bool_expr = _proptest_leaf_expr("bool", runner_var)
+        inner_expr = _sampling_expr(inner, runner_var, ArgConstraints(), task_id=task_id)
+        bool_expr = _proptest_leaf_expr("bool", runner_var, task_id=task_id)
         return f"{{ if {bool_expr} {{ Some({inner_expr}) }} else {{ None }} }}"
 
     if bare_type.startswith("Vec<") and bare_type.endswith(">"):
@@ -1756,9 +1996,10 @@ def _sampling_expr(
                 inner_type=inner,
                 runner_var=runner_var,
                 arg_constraints=arg_constraints,
+                task_id=task_id,
                 length_expr=length_expr or _length_sampling_expr(runner_var, arg_constraints),
             )
-        inner_expr = _sampling_expr(inner, runner_var, inner_constraints)
+        inner_expr = _sampling_expr(inner, runner_var, inner_constraints, task_id=task_id)
         length_expr = length_expr or _length_sampling_expr(runner_var, arg_constraints)
         push_expr = "values.push(candidate);"
         if arg_constraints.distinct_elements:
@@ -1790,9 +2031,10 @@ def _sampling_expr(
                 inner_type=inner,
                 runner_var=runner_var,
                 arg_constraints=arg_constraints,
+                task_id=task_id,
                 length_expr=length_expr or _length_sampling_expr(runner_var, arg_constraints),
             )
-        inner_expr = _sampling_expr(inner, runner_var, inner_constraints)
+        inner_expr = _sampling_expr(inner, runner_var, inner_constraints, task_id=task_id)
         length_expr = length_expr or _length_sampling_expr(runner_var, arg_constraints)
         push_expr = "values.push(candidate);"
         if arg_constraints.distinct_elements:
@@ -1811,7 +2053,7 @@ def _sampling_expr(
 
     if bare_type.startswith("[") and ";" in bare_type and bare_type.endswith("]"):
         inner, length_str = bare_type[1:-1].split(";", 1)
-        inner_expr = _sampling_expr(inner.strip(), runner_var, ArgConstraints())
+        inner_expr = _sampling_expr(inner.strip(), runner_var, ArgConstraints(), task_id=task_id)
         length = int(length_str.strip())
         return (
             "{ "
@@ -1822,8 +2064,8 @@ def _sampling_expr(
     if bare_type.startswith("(") and bare_type.endswith(")"):
         inner_parts = _split_top_level(bare_type[1:-1])
         if arg_constraints.sort_tuple_non_decreasing and len(inner_parts) == 2:
-            left_expr = _sampling_expr(inner_parts[0], runner_var, ArgConstraints())
-            right_expr = _sampling_expr(inner_parts[1], runner_var, ArgConstraints())
+            left_expr = _sampling_expr(inner_parts[0], runner_var, ArgConstraints(), task_id=task_id)
+            right_expr = _sampling_expr(inner_parts[1], runner_var, ArgConstraints(), task_id=task_id)
             return (
                 "{ "
                 f"let left = {left_expr}; "
@@ -1831,12 +2073,12 @@ def _sampling_expr(
                 "if left <= right { (left, right) } else { (right, left) } "
                 "}"
             )
-        pieces = [_sampling_expr(part, runner_var, ArgConstraints()) for part in inner_parts]
+        pieces = [_sampling_expr(part, runner_var, ArgConstraints(), task_id=task_id) for part in inner_parts]
         if len(pieces) == 1:
             return f"({pieces[0]},)"
         return f"({', '.join(pieces)})"
 
-    return _proptest_leaf_expr(bare_type, runner_var, arg_constraints)
+    return _proptest_leaf_expr(bare_type, runner_var, arg_constraints, task_id=task_id)
 
 
 def _balanced_paren_groups_expr(runner_var: str, length_expr: str) -> str:
@@ -1895,6 +2137,7 @@ def _numeric_vec_sampling_expr(
     inner_type: str,
     runner_var: str,
     arg_constraints: ArgConstraints,
+    task_id: str | None,
     length_expr: str,
 ) -> str:
     """Sample a numeric vector while preserving a bound on every prefix sum."""
@@ -1910,7 +2153,7 @@ def _numeric_vec_sampling_expr(
         min_value=arg_constraints.element_min_value,
         max_value=arg_constraints.element_max_value,
     )
-    candidate_expr = _proptest_leaf_expr(normalized_inner, runner_var, base_constraints)
+    candidate_expr = _proptest_leaf_expr(normalized_inner, runner_var, base_constraints, task_id=task_id)
     max_sum = arg_constraints.prefix_sum_max
     push_expr = "values.push(candidate); let inserted = true;"
     if arg_constraints.distinct_elements:
@@ -1935,6 +2178,7 @@ def _numeric_vec_sampling_expr(
 
 
 def _build_proptest_sampler_source(
+    task_id: str,
     signature: ParsedSignature,
     constraints: ParsedConstraints,
     num_cases: int,
@@ -1985,7 +2229,13 @@ def _build_proptest_sampler_source(
         if direct_expr is not None:
             lines.append(f"        let expr_{idx}: String = {direct_expr};")
         else:
-            sample_expr = _sampling_expr(sample_type, "&mut runner", arg_constraints, length_expr=length_expr)
+            sample_expr = _sampling_expr(
+                sample_type,
+                "&mut runner",
+                arg_constraints,
+                task_id=task_id,
+                length_expr=length_expr,
+            )
             serializer = _serializer_expr(f"value_{idx}", sample_type)
             if _has_unresolved_const_generic_array(sample_type):
                 lines.append(f"        let value_{idx} = {sample_expr};")
@@ -2131,7 +2381,7 @@ def _direct_expr_sampling_code(
     )
 
 
-def _parse_requires_constraints(verus_code: str, signature: ParsedSignature) -> ParsedConstraints:
+def _parse_requires_constraints(task_id: str, verus_code: str, signature: ParsedSignature) -> ParsedConstraints:
     """Parse the supported subset of target `requires` clauses into sampler constraints."""
     arg_constraints = {arg.name: ArgConstraints() for arg in signature.args}
     shared_length_groups: dict[str, list[str]] = {}
@@ -2150,6 +2400,7 @@ def _parse_requires_constraints(verus_code: str, signature: ParsedSignature) -> 
         )
 
     return ParsedConstraints(
+        task_id=task_id,
         arg_constraints=arg_constraints,
         shared_length_groups=shared_length_groups,
     )
@@ -2162,6 +2413,7 @@ def _special_case_constraints(task_id: str, signature: ParsedSignature) -> Parse
             raise OracleTestGenerationError("HumanEval/1 special case expected exactly one argument")
         arg_name = signature.args[0].name
         return ParsedConstraints(
+            task_id=task_id,
             arg_constraints={arg_name: ArgConstraints(balanced_paren_groups=True)},
             shared_length_groups={},
         )
@@ -2172,6 +2424,7 @@ def _special_case_constraints(task_id: str, signature: ParsedSignature) -> Parse
         grid_name = signature.args[0].name
         k_name = signature.args[1].name
         return ParsedConstraints(
+            task_id=task_id,
             arg_constraints={
                 grid_name: ArgConstraints(square_unique_u8_grid=True, min_const_size=2, max_const_size=15),
                 k_name: ArgConstraints(),
@@ -2532,7 +2785,7 @@ def _length_sampling_expr(runner_var: str, constraints: ArgConstraints) -> str:
         "let mut len = 0usize; "
         "while proptest::arbitrary::any::<u8>().new_tree("
         f"{runner_var}"
-        ").unwrap().current() % 4 != 0 { "
+        ").unwrap().current() % 5 != 0 { "
         "len += 1; "
         "} "
         "len "
