@@ -94,6 +94,7 @@ Reward hack
 Both fail
 66. Want input with multiple upper-case letters.
 Both pass (potential coverage)
+Fixed - reward hack. Needed to randomly generate multiple uppercase letters. Also explicitly include empty string.
 68. All small numbers but this means we have some duplicates. 
 Invalid impl
 70. All single-digit integers.

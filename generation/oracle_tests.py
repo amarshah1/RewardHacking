@@ -336,6 +336,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _solve_alpha_bytes_recovery_cases(signature, existing_cases, seen)
         )
+    if task_id == "HumanEval/66":
+        candidates.extend(
+            _digit_sum_uppercase_recovery_cases(signature, existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -736,6 +740,41 @@ def _solve_alpha_bytes_recovery_cases(
     return candidates
 
 
+def _digit_sum_uppercase_recovery_cases(
+    signature: ParsedSignature,
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Construct mixed `Vec<char>` cases for `HumanEval/66` with multiple uppercase letters."""
+    if len(signature.args) != 1:
+        raise OracleTestGenerationError("HumanEval/66 recovery expected exactly one argument")
+    if _normalize_type(signature.args[0].rust_type) != "&[char]":
+        raise OracleTestGenerationError("HumanEval/66 recovery expected signature `fn(&[char]) -> u128`")
+    if _count_multi_uppercase_char_vec_cases(existing_cases) >= 6:
+        return []
+
+    rng = random.Random(66)
+    candidates: list[list[str]] = []
+    uppercase_values = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    empty_case = [_char_vec_expr("")]
+    if tuple(empty_case) not in seen:
+        candidates.append(empty_case)
+
+    for _ in range(10):
+        length = max(10, 8 + _python_geometric_length(rng))
+        values = [_random_printable_ascii_char(rng) for _ in range(length)]
+        n_upper = rng.randint(2, min(length, 2 + _python_geometric_length(rng)))
+        uppercase_indices = rng.sample(range(length), k=n_upper)
+        for idx in uppercase_indices:
+            values[idx] = rng.choice(uppercase_values)
+        arg_exprs = [_char_vec_expr("".join(values))]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    return candidates
+
+
 def _generate_last_char_letter_true_cases() -> list[str]:
     """Generate strings that satisfy `HumanEval/134` by ending in a standalone ASCII letter."""
     rng = random.Random(134)
@@ -788,6 +827,20 @@ def _has_ascii_alpha_u8_vec_case(cases: list[OracleCase]) -> bool:
     return False
 
 
+def _count_multi_uppercase_char_vec_cases(cases: list[OracleCase]) -> int:
+    """Count cached task-66-style cases whose sole `Vec<char>` arg contains multiple uppercase letters."""
+    count = 0
+    for case in cases:
+        if len(case.arg_exprs) != 1:
+            continue
+        text = _parse_char_vec_literal(case.arg_exprs[0])
+        if text is None:
+            continue
+        if sum(1 for ch in text if "A" <= ch <= "Z") >= 2:
+            count += 1
+    return count
+
+
 def _parse_u8_vec_literal(expr: str) -> list[int] | None:
     """Parse a simple `vec![...]` of integers into Python ints for recovery checks."""
     expr = expr.strip()
@@ -805,6 +858,51 @@ def _parse_u8_vec_literal(expr: str) -> list[int] | None:
             return None
         values.append(int(token))
     return values
+
+
+def _parse_char_vec_literal(expr: str) -> str | None:
+    """Parse a simple `vec![...]` char literal into plain Python text for recovery checks."""
+    expr = expr.strip()
+    if not expr.startswith("vec![") or not expr.endswith("]"):
+        return None
+    inner = expr[len("vec![") : -1].strip()
+    if not inner:
+        return ""
+
+    chars: list[str] = []
+    for part in _split_top_level(inner):
+        ch = _parse_rust_char_literal(part.strip())
+        if ch is None:
+            return None
+        chars.append(ch)
+    return "".join(chars)
+
+
+def _parse_rust_char_literal(token: str) -> str | None:
+    """Parse one Rust char literal emitted by our cache renderer."""
+    if len(token) < 3 or not token.startswith("'") or not token.endswith("'"):
+        return None
+    inner = token[1:-1]
+    if not inner:
+        return None
+    if not inner.startswith("\\"):
+        return inner if len(inner) == 1 else None
+
+    escapes = {
+        r"\\": "\\",
+        r"\'": "'",
+        r"\n": "\n",
+        r"\r": "\r",
+        r"\t": "\t",
+        r"\0": "\0",
+    }
+    if inner in escapes:
+        return escapes[inner]
+
+    match = re.fullmatch(r"\\u\{([0-9A-Fa-f]+)\}", inner)
+    if match:
+        return chr(int(match.group(1), 16))
+    return None
 
 
 def _has_last_char_letter_false_mix(cases: list[OracleCase]) -> bool:
