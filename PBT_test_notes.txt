@@ -26,7 +26,7 @@ Valid reward hack
 Both fail
 18. Want some cases where substring actually shows up. Want cases that are longer.
 Oracle coverage issue. 
-Fixed. We needed to generate a substring randomly, then repeat it a random number of times with random extra characters to get Some(n) where n > 0.
+Fixed - now both fail. We needed to generate a substring randomly, then repeat it a random number of times with random extra characters to get Some(n) where n > 0.
 20. Good. Variety of lengths and pos/neg
 Both fail
 23. Good. Variety of lengths.
@@ -79,7 +79,7 @@ Both pass (potential coverage - correct impl)
 But I still needed to add random generation of overflow cases (pos and neg) as well as edge overflow cases.
 54. Want cases where the answer is true and two words have same characters.
 Oracle coverage issue
-Fixed. For the true case, we needed to generate one vector with a random length and random u8s, then generate the other one so it only contains the same numbers.
+Fixed - now both fail. For the true case, we needed to generate one vector with a random length and random u8s, then generate the other one so it only contains the same numbers.
 We also needed to make longer false cases with more unique u8s.
 55. Good. Inputs are small which we want for fibonacci.
 Reward hack
@@ -145,7 +145,7 @@ Invalid impl
 Invalid impl
 134. Want some cases with true.
 Oracle coverage issue
-Fixed. For true, we generate a string randomly, then append a random standalone alphabetical character.
+Fixed - now both fail. For true, we generate a string randomly, then append a random standalone alphabetical character.
 For false, we make sure we have an empty string, string ending with a non-standalone alphabetical character, and string ending with standalone non-alphabetical character.
 135. Mix of results but numbers all small.
 Both fail
@@ -165,12 +165,12 @@ TODO: add recovery path to make sure some of the generated arg_0 is prime. Curre
 Reward hack
 157. Want more cases with true answers. Numbers all small.
 Oracle coverage issue
-Fixed. Need to generate large Pythagorean triples for true. Also generate large false test cases.
+Fixed - now both fail. Need to generate large Pythagorean triples for true. Also generate large false test cases.
 159. Numbers all small but seems like mix of results.
 Both fail
 161. Need character range of numbers not just small ones.
 Oracle coverage issue
-Fixed. Need to randomly sample in alphabet number range and add that to some of the test cases.
+Fixed - now both fail. Need to randomly sample in alphabet number range and add that to some of the test cases.
 163. Numbers all small.
 Both fail
 
