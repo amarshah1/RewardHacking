@@ -1850,6 +1850,7 @@ _SMALL_BIASED_INTEGER_TASKS = {
     "HumanEval/63",
     "HumanEval/100",
     "HumanEval/139",
+    "HumanEval/163",
 }
 
 
