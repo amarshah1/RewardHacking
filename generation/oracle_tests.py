@@ -370,6 +370,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _any_int_recovery_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/80":
+        candidates.extend(
+            _is_happy_long_consecutive_cases(existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -929,6 +933,43 @@ def _count_upper_recovery_cases(
         add(make_both(n_large))
         for _ in range(2 if need_both else 0):
             add(make_both())
+
+    return candidates
+
+
+def _is_happy_long_consecutive_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-80 includes 5 false cases with length >= 15 and a consecutive identical pair."""
+    long_consecutive_count = 0
+    for case in existing_cases:
+        if len(case.arg_exprs) == 1:
+            text = _parse_char_vec_literal(case.arg_exprs[0])
+            if text is not None and len(text) >= 15:
+                for i in range(len(text) - 1):
+                    if text[i] == text[i + 1]:
+                        long_consecutive_count += 1
+                        break
+
+    needed = max(0, 5 - long_consecutive_count)
+    if needed == 0:
+        return []
+
+    rng = random.Random(80)
+    candidates: list[list[str]] = []
+
+    while len(candidates) < needed + 2:
+        length = 15 + _python_geometric_length(rng)
+        chars = [_random_printable_ascii_char(rng) for _ in range(length)]
+        letter = _random_printable_ascii_char(rng)
+        pos = rng.randint(0, length - 2)
+        chars[pos] = letter
+        chars[pos + 1] = letter
+        text = "".join(chars)
+        arg_exprs = [_char_vec_expr(text)]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
 
     return candidates
 

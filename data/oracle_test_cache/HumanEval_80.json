@@ -15,7 +15,7 @@
     },
     {
       "arg_exprs": [
-        "vec![]"
+        "vec!['f', 'Q', '<', 'o', '&', 'Q', '>', '5', ':', ':', '!', '2', 'Y', 'o', '0', '4', '=', 'O', 'M', 'k', '6', 'p']"
       ],
       "expected_expr": "false"
     },
@@ -27,7 +27,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['\\u{d32b2}', '\\'']"
+        "vec!['H', ',', 't', '-', '-', '3', 'c', 'E', 'F', 'O', 'o', 'j', '#', 'H', '_', '~']"
       ],
       "expected_expr": "false"
     },
@@ -39,7 +39,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['\u00fe']"
+        "vec!['Y', '9', 'C', 'H', ']', '!', '!', 'x', 'v', '!', '`', '%', 'Q', ';', '/', 't', '-']"
       ],
       "expected_expr": "false"
     },
@@ -51,7 +51,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['*']"
+        "vec!['m', 'B', 'M', ']', 'y', ' ', ';', ';', 'K', 'Z', '0', ']', 'U', '0', '4']"
       ],
       "expected_expr": "false"
     },
@@ -63,7 +63,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['\\u{d571e}', '/']"
+        "vec![')', '3', 'R', 'A', '`', 'K', 'F', 'd', 'W', 'W', '[', '8', 'j', '5', 'h', 'f', 'K']"
       ],
       "expected_expr": "false"
     },
@@ -75,7 +75,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['+']"
+        "vec!['h', '#', 'E', 'N', 'Q', 'T', '!', '?', '{', 'I', 'I', ':', 'g', 'C', 'A']"
       ],
       "expected_expr": "false"
     },
@@ -87,7 +87,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['\\'']"
+        "vec![]"
       ],
       "expected_expr": "false"
     },
@@ -99,7 +99,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['\\u{88}', '$']"
+        "vec!['\\u{d32b2}', '\\'']"
       ],
       "expected_expr": "false"
     },
@@ -111,7 +111,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['\\0', 'E']"
+        "vec!['\u00fe']"
       ],
       "expected_expr": "false"
     },
@@ -123,7 +123,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['&']"
+        "vec!['*']"
       ],
       "expected_expr": "false"
     },
@@ -135,7 +135,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['\\u{aa99d}']"
+        "vec!['\\u{d571e}', '/']"
       ],
       "expected_expr": "false"
     },
@@ -147,7 +147,7 @@
     },
     {
       "arg_exprs": [
-        "vec!['\\n', '\ucc32']"
+        "vec!['+']"
       ],
       "expected_expr": "false"
     }

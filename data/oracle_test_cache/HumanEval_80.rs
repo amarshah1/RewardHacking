@@ -7,7 +7,7 @@ fn oracle_case_0() {
 
 #[test]
 fn oracle_case_1() {
-    let arg_0: Vec<char> = vec![];
+    let arg_0: Vec<char> = vec!['f', 'Q', '<', 'o', '&', 'Q', '>', '5', ':', ':', '!', '2', 'Y', 'o', '0', '4', '=', 'O', 'M', 'k', '6', 'p'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -21,7 +21,7 @@ fn oracle_case_2() {
 
 #[test]
 fn oracle_case_3() {
-    let arg_0: Vec<char> = vec!['\u{d32b2}', '\''];
+    let arg_0: Vec<char> = vec!['H', ',', 't', '-', '-', '3', 'c', 'E', 'F', 'O', 'o', 'j', '#', 'H', '_', '~'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -35,7 +35,7 @@ fn oracle_case_4() {
 
 #[test]
 fn oracle_case_5() {
-    let arg_0: Vec<char> = vec!['þ'];
+    let arg_0: Vec<char> = vec!['Y', '9', 'C', 'H', ']', '!', '!', 'x', 'v', '!', '`', '%', 'Q', ';', '/', 't', '-'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -49,7 +49,7 @@ fn oracle_case_6() {
 
 #[test]
 fn oracle_case_7() {
-    let arg_0: Vec<char> = vec!['*'];
+    let arg_0: Vec<char> = vec!['m', 'B', 'M', ']', 'y', ' ', ';', ';', 'K', 'Z', '0', ']', 'U', '0', '4'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -63,7 +63,7 @@ fn oracle_case_8() {
 
 #[test]
 fn oracle_case_9() {
-    let arg_0: Vec<char> = vec!['\u{d571e}', '/'];
+    let arg_0: Vec<char> = vec![')', '3', 'R', 'A', '`', 'K', 'F', 'd', 'W', 'W', '[', '8', 'j', '5', 'h', 'f', 'K'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -77,7 +77,7 @@ fn oracle_case_10() {
 
 #[test]
 fn oracle_case_11() {
-    let arg_0: Vec<char> = vec!['+'];
+    let arg_0: Vec<char> = vec!['h', '#', 'E', 'N', 'Q', 'T', '!', '?', '{', 'I', 'I', ':', 'g', 'C', 'A'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -91,7 +91,7 @@ fn oracle_case_12() {
 
 #[test]
 fn oracle_case_13() {
-    let arg_0: Vec<char> = vec!['\''];
+    let arg_0: Vec<char> = vec![];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -105,7 +105,7 @@ fn oracle_case_14() {
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: Vec<char> = vec!['\u{88}', '$'];
+    let arg_0: Vec<char> = vec!['\u{d32b2}', '\''];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -119,7 +119,7 @@ fn oracle_case_16() {
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: Vec<char> = vec!['\0', 'E'];
+    let arg_0: Vec<char> = vec!['þ'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -133,7 +133,7 @@ fn oracle_case_18() {
 
 #[test]
 fn oracle_case_19() {
-    let arg_0: Vec<char> = vec!['&'];
+    let arg_0: Vec<char> = vec!['*'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -147,7 +147,7 @@ fn oracle_case_20() {
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: Vec<char> = vec!['\u{aa99d}'];
+    let arg_0: Vec<char> = vec!['\u{d571e}', '/'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
@@ -161,7 +161,7 @@ fn oracle_case_22() {
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: Vec<char> = vec!['\n', '찲'];
+    let arg_0: Vec<char> = vec!['+'];
     let expected: bool = false;
     assert_eq!(is_happy(&arg_0), expected);
 }
