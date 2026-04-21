@@ -1607,7 +1607,8 @@ def render_oracle_unit_tests(cache: OracleTestCache) -> str:
             binding_lines, call_expr = _render_cached_binding(f"arg_{arg_idx}", arg_expr, arg_type)
             lines.extend(f"    {line}" for line in binding_lines)
             call_args.append(call_expr)
-        lines.append(f"    let expected: {cache.return_type} = {case.expected_expr};")
+        for expected_line in _render_expected_binding("expected", case.expected_expr, cache.return_type):
+            lines.append(f"    {expected_line}")
         lines.append(f"    assert_eq!({cache.target_fn}({', '.join(call_args)}), expected);")
         lines.append("}")
         test_blocks.append("\n".join(lines))
@@ -3086,6 +3087,37 @@ def _binding_decl_type(rust_type: str) -> str:
         inner = bare_type[1:-1].strip()
         return f"Vec<{inner}>"
     return rust_type
+
+
+def _render_expected_binding(name: str, expr: str, rust_type: str) -> list[str]:
+    """Create Rust local bindings for a cached oracle output, handling reference types."""
+    normalized = _normalize_type(rust_type)
+
+    # Option<&T>: create a temp owned binding so the inner reference stays valid.
+    # Without this, `let expected: Option<&Vec<u8>> = Some(vec![...])` is a type error.
+    if normalized.startswith("Option<") and normalized.endswith(">"):
+        inner = normalized[len("Option<"):-1].strip()
+        if inner.startswith("&") and inner != "&str":
+            inner_owned = _binding_decl_type(inner)
+            stripped = expr.strip()
+            if stripped == "None":
+                return [f"let {name}: {normalized} = None;"]
+            inner_expr = stripped[len("Some("):-1]
+            temp = f"{name}_inner"
+            return [
+                f"let {temp}: {inner_owned} = {inner_expr};",
+                f"let {name}: {normalized} = Some(&{temp});",
+            ]
+
+    # Simple &T: bind owned, then borrow (mirrors _render_cached_binding)
+    if normalized.startswith("&") and normalized != "&str":
+        owned_type = _binding_decl_type(normalized)
+        return [
+            f"let {name}_owned: {owned_type} = {expr};",
+            f"let {name}: {normalized} = &{name}_owned;",
+        ]
+
+    return [f"let {name}: {normalized} = {expr};"]
 
 
 def _render_cached_binding(name: str, expr: str, rust_type: str) -> tuple[list[str], str]:
