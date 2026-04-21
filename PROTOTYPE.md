@@ -71,6 +71,7 @@ Oracle PBTs  Oracle PBTs Oracle PBTs
 ### Branch B: Verus Formal Specifications
 
 - Proposer LLM generates Verus spec (requires/ensures + spec fn helpers)
+- **Gold imports** (e.g., `use vstd::slice::*;`) are extracted from the gold Verus file and passed to the spec generator so it knows which libraries are available. The implementation generator is told to only use functions from the imports present in the spec. This follows the AlphaVerus/PSV pattern where imports are part of the spec context.
 - Solver LLM generates ONLY the function body (PSV-style completion)
 - Body is spliced into the spec — no spec modification possible
 - Verified by running Verus

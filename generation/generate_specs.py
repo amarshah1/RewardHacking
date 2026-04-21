@@ -13,7 +13,7 @@ Requirements:
 - Include `requires` clauses for pre-conditions
 - Include `ensures` clauses for post-conditions that fully specify the function behavior
 - Use `spec fn` for any helper specification functions needed
-- Include necessary imports (use vstd::prelude::*)
+- Include the imports listed in the user prompt at the top of your code
 - Include `fn main() {{}}` at the end, OUTSIDE the verus! block
 - The function body should be left empty or contain a placeholder `todo!()` — only write the spec
 {_VERUS_RULES}
@@ -26,7 +26,10 @@ USER_TEMPLATE = """Task description:
 
 Function name: {entry_point}
 
-Generate a Verus function signature with formal requires/ensures specifications for this task. Output only the Verus code."""
+Available imports (include these at the top of your code):
+{imports}
+
+Generate a Verus function signature with formal requires/ensures specifications for this task. Include the imports listed above. Output only the Verus code."""
 
 
 REPAIR_SPEC_TEMPLATE = """Task description:
@@ -94,6 +97,7 @@ def generate_verus_spec(
     temperature: float = 0.4,
     verus_binary: str = "verus",
     repair_rounds: int = 1,
+    gold_imports: list[str] | None = None,
 ) -> str:
     """Generate Verus specification from a natural language description.
 
@@ -104,12 +108,14 @@ def generate_verus_spec(
         temperature: Lower temperature for more precise spec generation
         verus_binary: Path to verus binary
         repair_rounds: Max repair attempts for syntax errors
+        gold_imports: Import lines from the gold Verus file (e.g. ["use vstd::prelude::*;"])
 
     Returns:
         String containing Verus code with specification
     """
+    imports_str = "\n".join(gold_imports) if gold_imports else "use vstd::prelude::*;"
     few_shot = build_few_shot_messages("spec", USER_TEMPLATE)
-    prompt = USER_TEMPLATE.format(nl_prompt=nl_prompt, entry_point=entry_point)
+    prompt = USER_TEMPLATE.format(nl_prompt=nl_prompt, entry_point=entry_point, imports=imports_str)
     completions = generate(
         prompt=prompt,
         system_prompt=SYSTEM_PROMPT,

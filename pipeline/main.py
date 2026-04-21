@@ -361,6 +361,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                     model=generator_model,
                     verus_binary=verus_binary,
                     repair_rounds=repair_rounds,
+                    gold_imports=task.gold_imports,
                 )
                 print(f"  Generated spec ({len(generated_spec)} chars)")
                 _print_block("Generated Verus Spec", generated_spec, verbose)

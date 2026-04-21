@@ -19,6 +19,7 @@ class HumanEvalVerusTask:
     has_verus_impl: bool  # Whether the Verus section has a real implementation
     impl_sig: list[str] # Signatures of the real implementation functions, if they exist
     verus_fn_names: list[str]  # Names of the exec fns in Verus code (may differ from entry_point)
+    gold_imports: list[str]  # Import lines from the gold Verus code (e.g. "use vstd::prelude::*;")
 
 def _extract_section(content: str, section_name: str) -> str:
     """Extract content between ### SECTION_NAME markers inside block comments."""
@@ -136,6 +137,16 @@ def _extract_verus_impl(verus_code: str) -> tuple[list[str], list[str]]:
     return names, all_signatures
 
 
+def _extract_gold_imports(verus_code: str) -> list[str]:
+    """Extract `use ...;` import lines from gold Verus code."""
+    imports = []
+    for line in verus_code.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("use ") and stripped.endswith(";"):
+            imports.append(stripped)
+    return imports
+
+
 def _has_real_verus_impl(verus_code: str) -> bool:
     """Check if the Verus code has a real implementation (not just a TODO)."""
     # Strip boilerplate
@@ -191,6 +202,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
         has_verus_impl=_has_real_verus_impl(verus_code),
         impl_sig=impl_sig,
         verus_fn_names=verus_fn_names,
+        gold_imports=_extract_gold_imports(verus_code),
     )
 
 

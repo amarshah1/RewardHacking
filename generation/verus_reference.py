@@ -10,7 +10,7 @@ VERUS_CHEAT_SHEET = """
 - **NO floating point**: Verus does not support f64/f32. Reformulate float problems using integers (i64, i32, u64, etc.).
 - **NO HashMap/BTreeMap**: Use Vec or arrays instead.
 - **NO string type**: Use &[char] (input) or Vec<char> (output) for character sequences.
-- **NO [] indexing in exec mode for slices**: Use `*slice_index_get(slice, idx)` from `vstd::slice::*`. (Vec and array indexing like `arr[i]` works in exec mode.)
+- **NO [] indexing in exec mode for slices**: If `vstd::slice::*` is imported, use `*slice_index_get(slice, idx)`. Otherwise, convert the slice to a Vec first. (Vec and array indexing like `arr[i]` works in exec mode.)
 - **`int` and `nat` types are ghost-only**: Cannot use `as int` or `as nat` in exec code. Use concrete types (i64, usize, etc.) in exec mode. Only use `as int` inside spec/proof contexts (requires, ensures, invariant, proof blocks).
 - **`vstd::math::abs` is spec-only**: Cannot call `abs()` in exec code. Instead, use manual comparison: `if a > b { a - b } else { b - a }`.
 - **`spec fn` functions CANNOT be called from exec code**: You can only call `spec fn` inside `requires`, `ensures`, `invariant`, `assert`, and `proof` blocks. In exec (runtime) code, you must re-implement the logic inline. For example, if you have `spec fn xor_char(a: char, b: char) -> char { if a == b { '0' } else { '1' } }`, you CANNOT write `result.push(xor_char(a, b))` — instead write `result.push(if a == b { '0' } else { '1' })`.
@@ -28,13 +28,12 @@ VERUS_CHEAT_SHEET = """
 | Call spec fn | NOT allowed — inline the logic | Allowed |
 | Types | i32, i64, usize, u32, etc. | int, nat (plus concrete types) |
 
-### Common Imports
-```rust
-use vstd::prelude::*;           // always required
-use vstd::slice::*;             // for slice_index_get (when using &[T] params)
-use vstd::math::abs;            // for absolute value (spec-only!)
-use vstd::seq_lib::*;           // for .filter(), .contains(), .to_multiset()
-```
+### Available Libraries
+Only use functions from libraries that are imported at the top of the spec you are given. Common libraries include:
+- `vstd::prelude::*` — core Verus types (Vec, Seq, etc.)
+- `vstd::slice::*` — provides `slice_index_get(s, i)` for indexing `&[T]` slices in exec code
+- `vstd::math::abs` — absolute value (spec-only!)
+- `vstd::seq_lib::*` — `.filter()`, `.contains()`, `.to_multiset()`
 
 ### Key Rules
 - Named return: `-> (result: Type)` so you can refer to `result` in ensures

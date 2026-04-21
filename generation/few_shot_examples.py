@@ -2292,7 +2292,12 @@ def build_few_shot_messages(
         template_kwargs = {"nl_prompt": ex["nl_prompt"], "entry_point": ex["entry_point"]}
 
         # Some templates need additional fields — based on effective task_type
-        if eff_task_type == "verus_impl":
+        if eff_task_type == "spec":
+            # Extract imports from the gold Verus code for the spec template
+            gold_imports = [l.strip() for l in ex.get("verus_full", "").split("\n")
+                          if l.strip().startswith("use ") and l.strip().endswith(";")]
+            template_kwargs["imports"] = "\n".join(gold_imports) if gold_imports else "use vstd::prelude::*;"
+        elif eff_task_type == "verus_impl":
             template_kwargs["spec"] = ex["verus_spec"]
         elif eff_task_type == "verus_underspec":
             template_kwargs["spec"] = ex["verus_underspec"]

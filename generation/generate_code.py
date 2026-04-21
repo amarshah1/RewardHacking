@@ -63,6 +63,7 @@ Requirements:
 - Include proof annotations (loop invariants, assertions, proof blocks) as needed for Verus to verify
 - Do NOT call `spec fn` functions from exec code — inline the logic instead
 - Do NOT use `assume(...)` — prove everything from the spec
+- Only use functions from libraries that are imported at the top of the spec. For example, only use `slice_index_get` if `use vstd::slice::*;` is in the imports
 {_VERUS_RULES}
 {_RUST_RULES}
 - First briefly explain your reasoning, then output the function body in a ```rust``` block
@@ -329,11 +330,30 @@ def generate_a2_code_batch(
 
 
 def _splice_body_into_spec(spec: str, body: str) -> str:
-    """Replace `todo!()` in the spec with the generated body."""
-    if "todo!()" in spec:
+    """Replace `todo!()` in the spec with the generated body, preserving indentation."""
+    if "todo!()" not in spec:
+        return body
+
+    # Find the indentation of the todo!() line
+    for line in spec.split("\n"):
+        if "todo!()" in line:
+            indent = len(line) - len(line.lstrip())
+            break
+    else:
         return spec.replace("todo!()", body, 1)
-    # Fallback: if no todo!(), just return body as-is (shouldn't happen)
-    return body
+
+    # Indent each line of the body to match
+    indented_lines = []
+    for i, line in enumerate(body.split("\n")):
+        if i == 0:
+            indented_lines.append(" " * indent + line)
+        elif line.strip():
+            indented_lines.append(" " * indent + line)
+        else:
+            indented_lines.append("")
+    indented_body = "\n".join(indented_lines)
+
+    return spec.replace("todo!()", indented_body, 1)
 
 
 def generate_code_for_verus(
