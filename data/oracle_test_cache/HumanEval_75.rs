@@ -109,3 +109,45 @@ fn oracle_case_15() {
     let expected: bool = true;
     assert_eq!(is_multiply_prime(arg_0), expected);
 }
+
+#[test]
+fn oracle_case_16() {
+    let arg_0: u32 = 15;
+    let expected: bool = false;
+    assert_eq!(is_multiply_prime(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_17() {
+    let arg_0: u32 = 12;
+    let expected: bool = true;
+    assert_eq!(is_multiply_prime(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_18() {
+    let arg_0: u32 = 16;
+    let expected: bool = false;
+    assert_eq!(is_multiply_prime(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_19() {
+    let arg_0: u32 = 19;
+    let expected: bool = false;
+    assert_eq!(is_multiply_prime(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_20() {
+    let arg_0: u32 = 22;
+    let expected: bool = false;
+    assert_eq!(is_multiply_prime(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_21() {
+    let arg_0: u32 = 23;
+    let expected: bool = false;
+    assert_eq!(is_multiply_prime(arg_0), expected);
+}

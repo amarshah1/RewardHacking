@@ -102,6 +102,42 @@
         "18"
       ],
       "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "15"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "12"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "16"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "19"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "22"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "23"
+      ],
+      "expected_expr": "false"
     }
   ]
 }
