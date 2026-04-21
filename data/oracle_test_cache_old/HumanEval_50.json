@@ -1,0 +1,155 @@
+{
+  "task_id": "HumanEval/50",
+  "target_fn": "decode_shift",
+  "target_signature": "fn decode_shift(s: &Vec<u8>) -> Vec<u8>",
+  "arg_types": [
+    "&Vec<u8>"
+  ],
+  "return_type": "Vec<u8>",
+  "cases": [
+    {
+      "arg_exprs": [
+        "vec![66, 66, 72]"
+      ],
+      "expected_expr": "vec![87, 87, 67]"
+    },
+    {
+      "arg_exprs": [
+        "vec![]"
+      ],
+      "expected_expr": "vec![]"
+    },
+    {
+      "arg_exprs": [
+        "vec![66, 69, 71]"
+      ],
+      "expected_expr": "vec![87, 90, 66]"
+    },
+    {
+      "arg_exprs": [
+        "vec![68]"
+      ],
+      "expected_expr": "vec![89]"
+    },
+    {
+      "arg_exprs": [
+        "vec![72]"
+      ],
+      "expected_expr": "vec![67]"
+    },
+    {
+      "arg_exprs": [
+        "vec![68, 70, 66, 77, 68, 66, 65, 68]"
+      ],
+      "expected_expr": "vec![89, 65, 87, 72, 89, 87, 86, 89]"
+    },
+    {
+      "arg_exprs": [
+        "vec![68, 68, 67, 67, 71]"
+      ],
+      "expected_expr": "vec![89, 89, 88, 88, 66]"
+    },
+    {
+      "arg_exprs": [
+        "vec![68, 67]"
+      ],
+      "expected_expr": "vec![89, 88]"
+    },
+    {
+      "arg_exprs": [
+        "vec![67, 70, 67]"
+      ],
+      "expected_expr": "vec![88, 65, 88]"
+    },
+    {
+      "arg_exprs": [
+        "vec![70, 69, 65, 67, 65]"
+      ],
+      "expected_expr": "vec![65, 90, 86, 88, 86]"
+    },
+    {
+      "arg_exprs": [
+        "vec![66, 71]"
+      ],
+      "expected_expr": "vec![87, 66]"
+    },
+    {
+      "arg_exprs": [
+        "vec![80, 70, 66, 66]"
+      ],
+      "expected_expr": "vec![75, 65, 87, 87]"
+    },
+    {
+      "arg_exprs": [
+        "vec![69, 65]"
+      ],
+      "expected_expr": "vec![90, 86]"
+    },
+    {
+      "arg_exprs": [
+        "vec![68, 65, 67, 66]"
+      ],
+      "expected_expr": "vec![89, 86, 88, 87]"
+    },
+    {
+      "arg_exprs": [
+        "vec![67, 65, 66, 65, 66, 65, 67, 67, 66, 65, 67, 76, 68, 65, 68, 65, 65, 71]"
+      ],
+      "expected_expr": "vec![88, 86, 87, 86, 87, 86, 88, 88, 87, 86, 88, 71, 89, 86, 89, 86, 86, 66]"
+    },
+    {
+      "arg_exprs": [
+        "vec![65, 69, 69, 68, 67, 67]"
+      ],
+      "expected_expr": "vec![86, 90, 90, 89, 88, 88]"
+    },
+    {
+      "arg_exprs": [
+        "vec![67, 66, 65, 66]"
+      ],
+      "expected_expr": "vec![88, 87, 86, 87]"
+    },
+    {
+      "arg_exprs": [
+        "vec![68, 66, 74, 69, 67, 70, 70, 65]"
+      ],
+      "expected_expr": "vec![89, 87, 69, 90, 88, 65, 65, 86]"
+    },
+    {
+      "arg_exprs": [
+        "vec![66, 76]"
+      ],
+      "expected_expr": "vec![87, 71]"
+    },
+    {
+      "arg_exprs": [
+        "vec![66, 65, 66, 65, 67, 66, 71, 68]"
+      ],
+      "expected_expr": "vec![87, 86, 87, 86, 88, 87, 66, 89]"
+    },
+    {
+      "arg_exprs": [
+        "vec![65, 68, 65, 70]"
+      ],
+      "expected_expr": "vec![86, 89, 86, 65]"
+    },
+    {
+      "arg_exprs": [
+        "vec![69, 65, 66, 65]"
+      ],
+      "expected_expr": "vec![90, 86, 87, 86]"
+    },
+    {
+      "arg_exprs": [
+        "vec![66, 66]"
+      ],
+      "expected_expr": "vec![87, 87]"
+    },
+    {
+      "arg_exprs": [
+        "vec![65, 65, 65, 68, 65]"
+      ],
+      "expected_expr": "vec![86, 86, 86, 89, 86]"
+    }
+  ]
+}

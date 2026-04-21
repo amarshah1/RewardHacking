@@ -1,167 +1,167 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: Vec<u32> = vec![1876440458, 3429555900, 1283312818];
-    let expected: (u64, Option<u32>) = (6589309176, None);
+    let arg_0: Vec<u32> = vec![1551, 504, 111, 3908, 2262, 2425, 3875, 3784, 2007, 4526, 1063, 3986, 3306, 4508, 3752, 2186, 4255, 1263, 3776];
+    let expected: (u64, Option<u32>) = (53048, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_1() {
+    let arg_0: Vec<u32> = vec![3851, 1339, 3317, 149, 4174, 3658, 3132, 4625, 1491, 763, 2508, 3063, 2143, 2713];
+    let expected: (u64, Option<u32>) = (36926, None);
+    assert_eq!(sum_product(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_2() {
+    let arg_0: Vec<u32> = vec![4432, 416, 781, 1589, 2081, 435];
+    let expected: (u64, Option<u32>) = (9734, None);
+    assert_eq!(sum_product(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_3() {
     let arg_0: Vec<u32> = vec![];
     let expected: (u64, Option<u32>) = (0, Some(1));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
-fn oracle_case_2() {
-    let arg_0: Vec<u32> = vec![826456088, 3517376173, 1633444115, 659440559, 4126388728, 1549512161, 318568684];
-    let expected: (u64, Option<u32>) = (12631186508, None);
-    assert_eq!(sum_product(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_3() {
-    let arg_0: Vec<u32> = vec![1593221275, 3461963230, 2135566861, 3445265713];
-    let expected: (u64, Option<u32>) = (10636017079, None);
-    assert_eq!(sum_product(arg_0), expected);
-}
-
-#[test]
 fn oracle_case_4() {
-    let arg_0: Vec<u32> = vec![997363241, 914301792];
-    let expected: (u64, Option<u32>) = (1911665033, None);
+    let arg_0: Vec<u32> = vec![1667, 1735, 1758, 1495, 2153, 2911, 2877];
+    let expected: (u64, Option<u32>) = (14596, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_5() {
-    let arg_0: Vec<u32> = vec![604724362, 2369572244, 2119177051];
-    let expected: (u64, Option<u32>) = (5093473657, None);
+    let arg_0: Vec<u32> = vec![2605];
+    let expected: (u64, Option<u32>) = (2605, Some(2605));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_6() {
-    let arg_0: Vec<u32> = vec![2697257651, 2839381135, 3019683679, 2169910513, 2193052011, 3187274317];
-    let expected: (u64, Option<u32>) = (16106559306, None);
+    let arg_0: Vec<u32> = vec![1176];
+    let expected: (u64, Option<u32>) = (1176, Some(1176));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_7() {
-    let arg_0: Vec<u32> = vec![4294495050, 3366441247];
-    let expected: (u64, Option<u32>) = (7660936297, None);
+    let arg_0: Vec<u32> = vec![416];
+    let expected: (u64, Option<u32>) = (416, Some(416));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_8() {
-    let arg_0: Vec<u32> = vec![413260799];
-    let expected: (u64, Option<u32>) = (413260799, Some(413260799));
+    let arg_0: Vec<u32> = vec![3445, 3837, 1724, 3742, 1626, 3593, 4803, 1007];
+    let expected: (u64, Option<u32>) = (23777, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_9() {
-    let arg_0: Vec<u32> = vec![1241175959, 2651393492, 777203170, 1073772461];
-    let expected: (u64, Option<u32>) = (5743545082, None);
+    let arg_0: Vec<u32> = vec![1675, 908, 3413, 2973, 1795];
+    let expected: (u64, Option<u32>) = (10764, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_10() {
-    let arg_0: Vec<u32> = vec![2778526893, 1319414937, 1522558773, 2516348704, 3858134066, 1564081920, 2987589444, 1551828602, 2763094097, 934288170];
-    let expected: (u64, Option<u32>) = (21795865606, None);
+    let arg_0: Vec<u32> = vec![3746, 1698];
+    let expected: (u64, Option<u32>) = (5444, Some(6360708));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_11() {
-    let arg_0: Vec<u32> = vec![186832587, 65388501, 3738857587, 877940176, 1689288035];
-    let expected: (u64, Option<u32>) = (6558306886, None);
+    let arg_0: Vec<u32> = vec![4671, 4864, 4417, 3279];
+    let expected: (u64, Option<u32>) = (17231, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_12() {
-    let arg_0: Vec<u32> = vec![458404373, 799618522];
-    let expected: (u64, Option<u32>) = (1258022895, None);
+    let arg_0: Vec<u32> = vec![3173];
+    let expected: (u64, Option<u32>) = (3173, Some(3173));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_13() {
-    let arg_0: Vec<u32> = vec![4015948151, 2608676807];
-    let expected: (u64, Option<u32>) = (6624624958, None);
+    let arg_0: Vec<u32> = vec![650];
+    let expected: (u64, Option<u32>) = (650, Some(650));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: Vec<u32> = vec![3001018097, 49405441, 1528295596, 35644495];
-    let expected: (u64, Option<u32>) = (4614363629, None);
+    let arg_0: Vec<u32> = vec![569, 2155, 3150, 1147, 718];
+    let expected: (u64, Option<u32>) = (7739, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: Vec<u32> = vec![3579536097, 2390871139];
-    let expected: (u64, Option<u32>) = (5970407236, None);
+    let arg_0: Vec<u32> = vec![3569, 3708, 3810, 3773, 900, 584, 3816, 723, 4523, 3077, 3539, 3479, 2151, 2905, 2725, 377, 2151, 4275, 2290, 167, 364, 1007, 1551, 1291, 4194, 2430, 1565, 1225, 4375];
+    let expected: (u64, Option<u32>) = (70544, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: Vec<u32> = vec![3241669626, 1210259811];
-    let expected: (u64, Option<u32>) = (4451929437, None);
+    let arg_0: Vec<u32> = vec![2234];
+    let expected: (u64, Option<u32>) = (2234, Some(2234));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: Vec<u32> = vec![1139241714];
-    let expected: (u64, Option<u32>) = (1139241714, Some(1139241714));
+    let arg_0: Vec<u32> = vec![2563, 2658, 2864];
+    let expected: (u64, Option<u32>) = (8085, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_18() {
-    let arg_0: Vec<u32> = vec![2307848087];
-    let expected: (u64, Option<u32>) = (2307848087, Some(2307848087));
+    let arg_0: Vec<u32> = vec![3705];
+    let expected: (u64, Option<u32>) = (3705, Some(3705));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_19() {
-    let arg_0: Vec<u32> = vec![3138273161, 3623291597];
-    let expected: (u64, Option<u32>) = (6761564758, None);
+    let arg_0: Vec<u32> = vec![4427, 516, 2905];
+    let expected: (u64, Option<u32>) = (7848, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_20() {
-    let arg_0: Vec<u32> = vec![3460063303, 938469013, 131475024, 2860630343, 4067428359];
-    let expected: (u64, Option<u32>) = (11458066042, None);
+    let arg_0: Vec<u32> = vec![1858, 3193];
+    let expected: (u64, Option<u32>) = (5051, Some(5932594));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: Vec<u32> = vec![1951970809, 3379441637, 3719196482];
-    let expected: (u64, Option<u32>) = (9050608928, None);
+    let arg_0: Vec<u32> = vec![611];
+    let expected: (u64, Option<u32>) = (611, Some(611));
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_22() {
-    let arg_0: Vec<u32> = vec![408972949, 836918998];
-    let expected: (u64, Option<u32>) = (1245891947, None);
+    let arg_0: Vec<u32> = vec![3566, 2830, 4836, 3008, 3754];
+    let expected: (u64, Option<u32>) = (17994, None);
     assert_eq!(sum_product(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: Vec<u32> = vec![2907968172, 1108839919];
-    let expected: (u64, Option<u32>) = (4016808091, None);
+    let arg_0: Vec<u32> = vec![1499, 4235, 2448, 3376];
+    let expected: (u64, Option<u32>) = (11558, None);
     assert_eq!(sum_product(arg_0), expected);
 }

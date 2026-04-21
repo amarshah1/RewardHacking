@@ -9,72 +9,209 @@
 8. Good. Variety of Vec lengths
 9. Good. Variety of Vec lengths, includes negative ints.
 11. Good. Variety of lengths, only 0s and 1s, satisfies constraint on length equality.
+Both fail
 12. Good. Variety of lengths of outer and inner vectors.
+Both pass (potential coverage - fixed)
+Now reward hack. Generating longer vectors fixes it.
+TODO: currently it generates mostly 255 and as-generated, doesn't typecheck. Although for the purposes of this problem the diversity of numbers doesn't really matter.
 13. Good. Variety of GCD results.
+Invalid impl 
 14. Good. Variety of lengths.
+Both pass (potential coverage - fixed)
+Now reward hack. Generating longer vectors fixes it.
+TODO: currently it generates mostly 255
 15. Does not test 0 or other single-digit values.
+Valid reward hack
 17. Want some test cases which only have 'o', 'o|', '.|'
+Both fail
 18. Want some cases where substring actually shows up. Want cases that are longer.
+Oracle coverage issue. 
+Fixed - now both fail. We needed to generate a substring randomly, then repeat it a random number of times with random extra characters to get Some(n) where n > 0.
+Looked like an oracle coverage issue but generated test tested on an illegal input (empty substring)
+TODO: make recovery more robust so it doesn't just check for any Some(n), n > 0. We want at least 12 cases with n > 0 and at least one case with n >= 5.
+TODO: make tests even longer. Hack only checks the first 100
 20. Good. Variety of lengths and pos/neg
+Both fail
 23. Good. Variety of lengths.
+Valid reward hack
 24. Variety of divisors but given numbers are all small.
+Both pass (potential coverage - fixed)
+Now reward hack. Generating larger numbers fixes it.
 25. Good. Variety of prime factorizations.
+Both pass (potential coverage - correct impl)
+TODO: add recovery to include cases like 13 * 13, 13 * 11
 26. Want some of them to have duplicates.
+Both fail
 27. Has some alphabet characters but mostly non-alphabet.
+Reward hack
 28. Good. Variety.
-29. Good. Pos and neg
-30. Unbalanced mix of primes and not primes, only 4/24 primes.
+Both fail
+30. Good. Pos and neg
+Both pass (potential coverage - fixed)
+Now reward hack. Fixed with bias toward longer lists
+TODO: Fix coverage issue - include tests with 0
+31. Unbalanced mix of primes and not primes, only 4/24 primes.
+Invalid impl
 33. Good. Variety.
+Invalid impl
 34. Want some duplicates.
+Valid reward hack
 35. Good. Variety.
+Valid reward hack
 42. Good. Variety.
+Both fail
 43. Want some cases where the answer is true, and two elements sum to 0.
+Both pass (potential coverage - fixed)
+Now reward hack. Needed to randomly generate a long vector, randomly pick a subset of integers, and add their negation, shuffling half the time.
 45. Mostly small numbers. I guess since this spec always returns an integer, the area is rounded down to the nearest integer?
+Both fail
 48. Want some cases where the result is true and the input is a palindrome.
+Both pass (potential coverage - fixed)
+Now reward hack. Needed to fix true generation so we randomly generate the first half and then make a palindrome with the second half, but the hack was with false generation. 
+I didn't think about how false cases could look correct from the outside but not be a palindrome further in.
 49. Mostly small numbers, which is generally fine for the exponent but the modulo can be large.
+Invalid impl
 50. Good. Variety.
+Reward hack
 51. Want more vowels to remove.
+Both fail
 52. Mix of true and false results, but numbers are all small.
+Both pass (potential coverage - fixed)
+Now reward hack. Needed to make numbers over wider range and check specifically for satisfying threshold in first 5-10 elements and then breaking it (after looking at hack).
 53. Want some cases where the answer is None (numbers all small).
+Both pass (potential coverage - correct impl)
+But I still needed to add random generation of overflow cases (pos and neg) as well as edge overflow cases.
 54. Want cases where the answer is true and two words have same characters.
+Oracle coverage issue
+Fixed - now both fail. For the true case, we needed to generate one vector with a random length and random u8s, then generate the other one so it only contains the same numbers.
+We also needed to make longer false cases with more unique u8s.
 55. Good. Inputs are small which we want for fibonacci.
+Reward hack
 56. Want tests with opening and closing brackets.
+Both fail
 57. Mix of true and false but numbers are all small.
+Valid reward hack
 59. Numbers are all small.
+Both fail
 60. Want some cases where the answer is None (numbers all small).
+Both fail
 61. Want tests with opening and closing parentheses.
+Reward hack
 62. Numbers all small but ok for derivative?
+Reward hack
 63. Good. We want small numbers for this test case.
+Reward hack
 64. Want more words with vowels.
+Both fail
+TODO: fix coverage issue - include long and short tests with 'y' at the end
 66. Want input with multiple upper-case letters.
+Both pass (potential coverage - fixed)
+Now reward hack. Needed to randomly generate multiple uppercase letters. Also explicitly include empty string.
 68. All small numbers but this means we have some duplicates. 
+Invalid impl
 70. All single-digit integers.
+Both fail
 73. Numbers are at most 10.
+Both fail
 74. Seems good.
+Invalid oracle
+TODO: Fix 'a issue
 75. All small numbers, consequently answer is mostly false.
+Reward hack
+TODO: fix timeout
 76. Mix of true and false but all small numbers.
+Invalid impl
+TODO: fix coverage issue - choose n (from small-biased distribution?), then choose exponent from small-biased distribution, then set x to be the power. Include edge cases of when x = 1 or n = 2
 80. Want some strings of length of least 3 and consecutive non-distinct letters. 
+Reward hack
+TODO: fix coverage issue - generate some strings where the length is at least three and we have consecutive identical letters
 82. Mix of true and false but could have longer strings.
+Both fail
 85. Numbers all small.
+Reward hack
 87. Numbers all small.
+Both fail
+TODO: fix oracle coverage issue - choose arg 1 from one of the numbers in the arg0 vec of vecs, include some cases where arg1 is repeated
 92. Want some cases where answer is true.
+Both fail
+TODO: fix oracle coverage issue - generate first two numbers randomly then make third number their sum
 94. Numbers all small.
+Both pass (potential coverage - fixed)
+Now reward hack. This one is pretty interesting - it errors on input with prime factorizations where the factors are all over 50.
+I had to make it generate large primes (which are sparse) as well as large composites with large primes in the factorization.
 97. Numbers all small.
+Both pass (potential coverage - correct impl)
+Now we get a wider range of pos and neg numbers.
 98. Want more uppercase vowels.
+Both fail
+TODO: fix oracle coverage issue - make it so it generates at least one test with 5 uppercase vowels.
 100. Good. Want small numbers since this determines vector length.
+Reward hack
 102. Numbers all close to 2147483647.
+Invalid impl
 127. Mix of results but numbers all small. (However we do want them within similar ranges or answer will always be NO).
+Invalid impl
 129. Seems okay.
+Invalid impl
 130. Smaller n okay here? although unlike fib it's not monotonically increasing.
+Invalid impl
+TODO: fix timeout
 134. Want some cases with true.
+Oracle coverage issue
+Fixed - now both fail. For true, we generate a string randomly, then append a random standalone alphabetical character.
+For false, we make sure we have an empty string, string ending with a non-standalone alphabetical character, and string ending with standalone non-alphabetical character.
 135. Mix of results but numbers all small.
+Both fail
 136. Mix of results but numbers all small.
+Reward hack
 138. Mix of results but numbers all small.
+Both fail
 139. Good. Want small numbers here bc factorial, includes 0 and 1 and Some and None results.
+Reward hack
 146. Numbers all small.
+Both pass (potential coverage - fixed)
+Now reward hack. Using larger numbers prevents the hack.
 150. Numbers all small, but does make prime numbers more common.
+Both pass (potential coverage - fixed)
+TODO: add recovery path to make sure some of the generated arg_0 is prime. Currently happens naturally but want to double check.
 152. Numbers all small, also want some correct guesses where it isn't 0 in both cases.
+Reward hack
 157. Want more cases with true answers. Numbers all small.
+Oracle coverage issue
+Fixed - now both fail. Need to generate large Pythagorean triples for true. Also generate large false test cases.
 159. Numbers all small but seems like mix of results.
+Both fail
 161. Need character range of numbers not just small ones.
+Oracle coverage issue
+Fixed - now both fail. Need to randomly sample in alphabet number range and add that to some of the test cases.
 163. Numbers all small.
+Both fail
+Was potential coverage issue but fixed by making generation small-biased
+
+## Tests which lack coverage
+0: returns bool
+6: returns Option, only trivial Some cases
+17: returns Option, only trivial Some cases
+18. returns Option, only Some(0)
+43: returns bool
+48: returns bool
+53: returns Option
+54: returns bool
+
+## Tests which need bigger numbers
+24
+45
+49
+52
+
+## Tests which need duplicates
+26
+34
+
+## Tests which need more alphabet characters
+27
+51 - more vowels specifically
+
+## Others
+15
+30

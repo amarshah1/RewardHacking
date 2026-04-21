@@ -1,0 +1,107 @@
+{
+  "task_id": "HumanEval/60",
+  "target_fn": "sum_to_n",
+  "target_signature": "fn sum_to_n(n: u32) -> Option<u32>",
+  "arg_types": [
+    "u32"
+  ],
+  "return_type": "Option<u32>",
+  "cases": [
+    {
+      "arg_exprs": [
+        "3"
+      ],
+      "expected_expr": "Some(6)"
+    },
+    {
+      "arg_exprs": [
+        "1"
+      ],
+      "expected_expr": "Some(1)"
+    },
+    {
+      "arg_exprs": [
+        "7"
+      ],
+      "expected_expr": "Some(28)"
+    },
+    {
+      "arg_exprs": [
+        "0"
+      ],
+      "expected_expr": "Some(0)"
+    },
+    {
+      "arg_exprs": [
+        "4"
+      ],
+      "expected_expr": "Some(10)"
+    },
+    {
+      "arg_exprs": [
+        "6"
+      ],
+      "expected_expr": "Some(21)"
+    },
+    {
+      "arg_exprs": [
+        "8"
+      ],
+      "expected_expr": "Some(36)"
+    },
+    {
+      "arg_exprs": [
+        "5"
+      ],
+      "expected_expr": "Some(15)"
+    },
+    {
+      "arg_exprs": [
+        "12"
+      ],
+      "expected_expr": "Some(78)"
+    },
+    {
+      "arg_exprs": [
+        "2"
+      ],
+      "expected_expr": "Some(3)"
+    },
+    {
+      "arg_exprs": [
+        "15"
+      ],
+      "expected_expr": "Some(120)"
+    },
+    {
+      "arg_exprs": [
+        "18"
+      ],
+      "expected_expr": "Some(171)"
+    },
+    {
+      "arg_exprs": [
+        "11"
+      ],
+      "expected_expr": "Some(66)"
+    },
+    {
+      "arg_exprs": [
+        "9"
+      ],
+      "expected_expr": "Some(45)"
+    },
+    {
+      "arg_exprs": [
+        "19"
+      ],
+      "expected_expr": "Some(190)"
+    },
+    {
+      "arg_exprs": [
+        "16"
+      ],
+      "expected_expr": "Some(136)"
+    }
+  ]
+}

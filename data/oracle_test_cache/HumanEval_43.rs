@@ -1,191 +1,191 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: Vec<i32> = vec![-865411396, -406052053, -365592027, 765720497, 205609800];
-    let arg_1: i32 = 826456088;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![154980374i32, -455553371i32, 912819079i32, -912819079i32, -154980374i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_1() {
-    let arg_0: Vec<i32> = vec![318568684, 609780125, 1006636644, -833004066, -849701583];
-    let arg_1: i32 = -600968638;
+    let arg_0: Vec<i32> = vec![905163256, -755173140, 755501170, -463961699, 519479451, 1061825037, 472773186, 797615980, -159440032, -258154253, -620582780, -851653228, 950069191, 308445674, 1158119, 272210096, -381844337, -1051314959, -33951155, 405771757, 1073269578];
+    let arg_1: i32 = 1491;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_2() {
-    let arg_0: Vec<i32> = vec![997363241, 914301792, 815587571];
-    let arg_1: i32 = -488406834;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![525595244i32, 790566641i32, -783354082i32, 618197859i32, 783354082i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_3() {
-    let arg_0: Vec<i32> = vec![604724362, -492571571];
-    let arg_1: i32 = -765296150;
+    let arg_0: Vec<i32> = vec![59529255, -809609527];
+    let arg_1: i32 = 3574;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_4() {
-    let arg_0: Vec<i32> = vec![-667970067, -472246, -928526049, 742108900, 413260799];
-    let arg_1: i32 = 1133271079;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![-863633138i32, -810843963i32, -272217699i32, -809992697i32, -361953552i32, 198254772i32, 108574106i32, -742836365i32, -631185357i32, -811580274i32, 811580274i32, 742836365i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_5() {
-    let arg_0: Vec<i32> = vec![777203170, -234665381, 445970973, -193573059, 1009357050];
-    let arg_1: i32 = -1649301523;
+    let arg_0: Vec<i32> = vec![839076443, 880168765, 626368741, -64384774, 289511210];
+    let arg_1: i32 = 3925;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_6() {
-    let arg_0: Vec<i32> = vec![-436833230, 934288170, 76920648];
-    let arg_1: i32 = -659743234;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![298680957i32, -858575790i32, 77855044i32, 507030015i32, -274843589i32, -771586090i32, -587113987i32, -507030015i32, 771586090i32, -77855044i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_7() {
-    let arg_0: Vec<i32> = vec![186832587, 65388501, -556109709, 877940176, 124802910, -962199356];
-    let arg_1: i32 = 458404373;
+    let arg_0: Vec<i32> = vec![490340096, 478086778, -139453654, 413998590];
+    let arg_1: i32 = 3543;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_8() {
-    let arg_0: Vec<i32> = vec![375126187, -397372652, -279019145];
-    let arg_1: i32 = -1686290489;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![-958047583i32, 708344398i32, 958047583i32, -714475957i32, 714475957i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_9() {
-    let arg_0: Vec<i32> = vec![49405441, 35644495, -224629398, 566958412, -715431199, -1046354016];
-    let arg_1: i32 = -1053297670;
+    let arg_0: Vec<i32> = vec![-886909237, 517632115, 615546211];
+    let arg_1: i32 = -2794;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_10() {
-    let arg_0: Vec<i32> = vec![-977790284, -867072646, -122462863, -671675699];
-    let arg_1: i32 = -397615464;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![-444239827i32, -1062920794i32, -619523059i32, -539792229i32, 444239827i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_11() {
-    let arg_0: Vec<i32> = vec![-834903993, 938469013, 131475024, -227538937, -238181102, -550331073, 393804672];
-    let arg_1: i32 = 1951970809;
+    let arg_0: Vec<i32> = vec![676369172, -612548665, 167378647, 1073644861, -220207375, 454553772];
+    let arg_1: i32 = -3605;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_12() {
-    let arg_0: Vec<i32> = vec![408972949, 836918998, 306928023, -98208701, -980628928, 425956675];
-    let arg_1: i32 = -1153523680;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![-1065630154i32, -38594623i32, 885770418i32, 38594623i32, 1065630154i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_13() {
-    let arg_0: Vec<i32> = vec![457671467, 662747418];
-    let arg_1: i32 = 810732844;
+    let arg_0: Vec<i32> = vec![-830354333, -165019776, 292844977];
+    let arg_1: i32 = 3746;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: Vec<i32> = vec![-846560793, 256471917, -795074243];
-    let arg_1: i32 = -1757933954;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![71187092i32, 854280180i32, 275717697i32, -267213142i32, 267213142i32, -214383805i32, -309965750i32, 120537331i32, -120537331i32, 409739745i32, -267348217i32, -409739745i32, -71187092i32, 214383805i32, -143783126i32, -854280180i32, -275717697i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: Vec<i32> = vec![164833642, -1051018543];
-    let arg_1: i32 = -169945850;
+    let arg_0: Vec<i32> = vec![-913377385, 951278961, -82952311, 676126360, 654425755, -238926234];
+    let arg_1: i32 = -3846;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: Vec<i32> = vec![-10280157, 72406780, 548968118, 155851643, -959745559, -915096257, 892465965, -537523508, 924111879, 194147809, 879657203, -657380316, 696691887];
-    let arg_1: i32 = -532703510;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![268909610i32, -271266299i32, 336645977i32, 271266299i32, 541749110i32, -336645977i32, -1010445859i32, -268909610i32, -573831507i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: Vec<i32> = vec![-432022132, 404291741];
-    let arg_1: i32 = 1793050350;
+    let arg_0: Vec<i32> = vec![-360595129, 835560722, -578995239];
+    let arg_1: i32 = -2576;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_18() {
-    let arg_0: Vec<i32> = vec![-389817995, -967229496];
-    let arg_1: i32 = 1772244643;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![995327431i32, -462923171i32, 462923171i32, 385049862i32, -995327431i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_19() {
-    let arg_0: Vec<i32> = vec![179589643, -73356977, -829335200, 174112933, -159150536, -429294104, 537499420, -748180679, 282740919, -697340592, -147015715, 720791080, 529242925, 880616025, 396577717, -57946607, -942595371, -591317710, -610636921];
-    let arg_1: i32 = 1645127836;
+    let arg_0: Vec<i32> = vec![285143881, -684192130, -908908182, 22723281, 371396935, 973298179, 682972311, 1050195598, 381414847, -274588749, 843446761, 300583854, 1063461667, -896042857, -524773706, -823856249, 127496800, 158645567, -591510770, 536218316, -879594015, 200781946, -252665855, 541038314, 641719692, 719308526, 683923829, -717343348];
+    let arg_1: i32 = 1725;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_20() {
-    let arg_0: Vec<i32> = vec![167691100, 874266233, 742355686, 766994336, -597278743];
-    let arg_1: i32 = 1831154550;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![-155914661i32, -412055994i32, -967143061i32, -609162891i32, -694894125i32, -80020158i32, -266352850i32, -225732143i32, -814706226i32, 26774380i32, 225732143i32, -26774380i32, 266352850i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: Vec<i32> = vec![-353690323, 751224885, 701226785, -601942171, -523684703, 905865006];
-    let arg_1: i32 = 551186540;
+    let arg_0: Vec<i32> = vec![-35218649, 289086006];
+    let arg_1: i32 = 4207;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_22() {
-    let arg_0: Vec<i32> = vec![278569302, -256196789, 591992865, 131490976, -414919163, 466122572];
-    let arg_1: i32 = 897925773;
-    let expected: bool = false;
+    let arg_0: Vec<i32> = vec![394340480i32, -895174965i32, 895174965i32, -394340480i32, 828206332i32];
+    let arg_1: i32 = 0i32;
+    let expected: bool = true;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: Vec<i32> = vec![-924601358, -1050821387];
-    let arg_1: i32 = 84148166;
+    let arg_0: Vec<i32> = vec![-770765430, 963090563];
+    let arg_1: i32 = -3754;
     let expected: bool = false;
     assert_eq!(pairs_sum_to_zero(&arg_0, arg_1), expected);
 }

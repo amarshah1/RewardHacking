@@ -1,167 +1,167 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: Vec<i32> = vec![1876440458, -865411396, 1283312818, -1843074344];
-    let expected: u32 = 1467059754;
+    let arg_0: Vec<i32> = vec![1551, 111, 2262, 3875, -2007, -1063, -3306, 3752, -4255, -3776, 4032, 3718, -623, 3952, 4899, -4881, -4629, -3851, -3317, -4174];
+    let expected: u32 = 3163;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_1() {
-    let arg_0: Vec<i32> = vec![826456088, -777591123, 1633444115, 659440559, -168578568, 1549512161, 318568684, 1551185194];
-    let expected: u32 = 691094750;
+    let arg_0: Vec<i32> = vec![-3063, -2713, 3574, 3640, 1331];
+    let expected: u32 = 2753;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_2() {
-    let arg_0: Vec<i32> = vec![1593221275, -833004066, 2135566861, -849701583];
-    let expected: u32 = 1352873446;
+    let arg_0: Vec<i32> = vec![-3881, -4900, 176, -4043, -1667, -1758, 2153];
+    let expected: u32 = 1959;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_3() {
-    let arg_0: Vec<i32> = vec![997363241, 914301792, -1212224953];
-    let expected: u32 = 963581097;
+    let arg_0: Vec<i32> = vec![2605, 2376, -199];
+    let expected: u32 = 1195;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_4() {
-    let arg_0: Vec<i32> = vec![604724362, -1925395052, 2119177051];
-    let expected: u32 = 1461042559;
+    let arg_0: Vec<i32> = vec![-3445, -1724, 1626, 4803, 409, 2900, -3605, -1675, 3413, -1795];
+    let expected: u32 = 2539;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_5() {
-    let arg_0: Vec<i32> = vec![-1597709645, -1455586161, -1275283617, -2125056783, -2101915285, -1107692979, -1261169834];
-    let expected: u32 = 326511391;
+    let arg_0: Vec<i32> = vec![3746, 4610];
+    let expected: u32 = 432;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_6() {
-    let arg_0: Vec<i32> = vec![-472246, -928526049];
-    let expected: u32 = 464026901;
+    let arg_0: Vec<i32> = vec![-4671, -4417, -1662];
+    let expected: u32 = 1280;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_7() {
-    let arg_0: Vec<i32> = vec![413260799, 1133271079];
-    let expected: u32 = 360005140;
+    let arg_0: Vec<i32> = vec![650, -2147, 242];
+    let expected: u32 = 1152;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_8() {
-    let arg_0: Vec<i32> = vec![1241175959, -1643573804, 777203170, 1073772461];
-    let expected: u32 = 1002859125;
-    assert_eq!(mean_absolute_deviation(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_9() {
-    let arg_0: Vec<i32> = vec![-1516440403, 1319414937, 1522558773, -1778618592, -436833230, 1564081920, -1307377852, 1551828602, -1531873199, 934288170, 76920648];
-    let expected: u32 = 1227641734;
-    assert_eq!(mean_absolute_deviation(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_10() {
-    let arg_0: Vec<i32> = vec![186832587, 65388501, -556109709, 877940176, 1689288035, 124802910];
-    let expected: u32 = 590393570;
-    assert_eq!(mean_absolute_deviation(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_11() {
-    let arg_0: Vec<i32> = vec![458404373, 799618522];
-    let expected: u32 = 170607074;
-    assert_eq!(mean_absolute_deviation(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_12() {
-    let arg_0: Vec<i32> = vec![375126187];
+    let arg_0: Vec<i32> = vec![-569];
     let expected: u32 = 0;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
+fn oracle_case_9() {
+    let arg_0: Vec<i32> = vec![-3569, 3810, -900, -3816, -4523, -3539, 2151, 2725, -2151, -2290, -364, -1551, 4194, 1565, 4375, 3631, -4875, 4438, 2563, 2864, 871, -1169, 1853, -4427, 2905, 2016, 1858, -4006, 1725, -3544, -2420, 2379, -1034];
+    let expected: u32 = 2728;
+    assert_eq!(mean_absolute_deviation(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_10() {
+    let arg_0: Vec<i32> = vec![4482, -3155, 4700, -4235, 3376];
+    let expected: u32 = 3783;
+    assert_eq!(mean_absolute_deviation(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_11() {
+    let arg_0: Vec<i32> = vec![-3060, -1747, 1966, 617, 4778, -3432, -616, -3916, 3122, -469, -2817];
+    let expected: u32 = 2281;
+    assert_eq!(mean_absolute_deviation(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_12() {
+    let arg_0: Vec<i32> = vec![537, -604, 3472, -4742];
+    let expected: u32 = 2338;
+    assert_eq!(mean_absolute_deviation(&arg_0), expected);
+}
+
+#[test]
 fn oracle_case_13() {
-    let arg_0: Vec<i32> = vec![-279019145, -1686290489];
-    let expected: u32 = 703635672;
+    let arg_0: Vec<i32> = vec![2668, -2392];
+    let expected: u32 = 2530;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: Vec<i32> = vec![-1293949199, 49405441, 1528295596, 35644495, -224629398];
-    let expected: u32 = 622594148;
+    let arg_0: Vec<i32> = vec![-1391, 3771, -4375, 1342];
+    let expected: u32 = 2719;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: Vec<i32> = vec![-715431199, -1904096157];
-    let expected: u32 = 594332479;
+    let arg_0: Vec<i32> = vec![3766, 2853, -4602, -4828, -4074, 3171, -2434, 4461];
+    let expected: u32 = 3773;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: Vec<i32> = vec![-1238761600];
+    let arg_0: Vec<i32> = vec![-3042];
     let expected: u32 = 0;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: Vec<i32> = vec![-1053297670, 1210259811, -1125617321];
-    let expected: u32 = 1022096580;
-    assert_eq!(mean_absolute_deviation(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_18() {
-    let arg_0: Vec<i32> = vec![1139241714];
+    let arg_0: Vec<i32> = vec![1865];
     let expected: u32 = 0;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
+fn oracle_case_18() {
+    let arg_0: Vec<i32> = vec![-454, 274, -420];
+    let expected: u32 = 316;
+    assert_eq!(mean_absolute_deviation(&arg_0), expected);
+}
+
+#[test]
 fn oracle_case_19() {
-    let arg_0: Vec<i32> = vec![-1987119209, -867072646];
-    let expected: u32 = 560023281;
+    let arg_0: Vec<i32> = vec![-2801];
+    let expected: u32 = 0;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_20() {
-    let arg_0: Vec<i32> = vec![-1156694135, -671675699];
-    let expected: u32 = 242509218;
+    let arg_0: Vec<i32> = vec![1072, 546, 918, -1403, 4363, -1533, -2616];
+    let expected: u32 = 1751;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: Vec<i32> = vec![806819613];
+    let arg_0: Vec<i32> = vec![-1542];
     let expected: u32 = 0;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_22() {
-    let arg_0: Vec<i32> = vec![-834903993, 938469013, 131475024, -1434336953, -227538937];
-    let expected: u32 = 679402643;
+    let arg_0: Vec<i32> = vec![-4852];
+    let expected: u32 = 0;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: Vec<i32> = vec![1951970809, -915525659, -575770814, 967725795];
-    let expected: u32 = 1102748269;
+    let arg_0: Vec<i32> = vec![1052, -4793];
+    let expected: u32 = 2922;
     assert_eq!(mean_absolute_deviation(&arg_0), expected);
 }

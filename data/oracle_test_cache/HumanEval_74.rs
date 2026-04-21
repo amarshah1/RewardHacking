@@ -1,191 +1,191 @@
 #[test]
-fn oracle_case_0<'a>() {
-    let arg_0: Vec<&str> = vec!["`�=[𝍩'ⷀ𜾉Ⱥ໗-<-<", "P~\u{afa};{🃔\u{113c2}Ѩⵐ?", "!?ⁱ𞋋𐑺𒾘´¥bΠ.𑴄:%𖽭🕴d?\u{16ff1}𑙙K𝒾"];
-    let arg_1: Vec<&str> = vec!["𑼈ෂ\u{1a75}\\>উ𐝕%᥀{=:🕴,:¥sຓ𞗿$𞹍2", "BEF}Ѩ].Ѩ𑤱\u{11c9a}ຎ𧓅🂮𒂺^=𞤡B:Cஷ%⿵`", "𐘉�𑒛𛅥\u{11d3d}/𝞎A¥", ")ᶭ$_\\𘜮\"\u{820}9Ѩe\u{a8ec}\u{11ca3}FѨd🕴\u{a806}.+𖹜`\u{afb}"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["`�=[𝍩'ⷀ𜾉Ⱥ໗-<-<", "P~\u{afa};{🃔\u{113c2}Ѩⵐ?", "!?ⁱ𞋋𐑺𒾘´¥bΠ.𑴄:%𖽭🕴d?\u{16ff1}𑙙K𝒾"]);
+fn oracle_case_0() {
+    let arg_0: Vec<&str> = vec!["ⶲቯ<Ⱥ໗-<-<b<~\u{afa};{🃔\u{113c2}Ѩⵐ??'8𑎋E\u{16ff0}:jbΠ.", ":𖪫9kî24õﻠ'\"\u{a4d}ଊ.ᾆ𑽕𑎋){ª𐎩𜾃:🕴,:¥", "?'\u{1aca}*GW", "%m?EF}Ѩ].Ѩ𑤱\u{11c9a}ຎ𧓅🂮𒂺^=𞤡B", "𐮭hE⿵`-/�𑒛𛅥\u{11d3d}/𝞎A¥:<", "ᶭ$_", "ᏼѨ9f\"Ѩe\u{a8ec}\u{11ca3}FѨd🕴\u{a806}.+𖹜`\u{afb}2k\u{c46}", "Xg-𑠇𐀫1\"?,J\u{1e08f}&𞗓(Ⴧj*", "%𝐾/`Ⱥ6ꕴ", "ΊBy𑊈?𑌲𐖅\u{aaed}𞥟𑈽ⶵዀ", "Ѩ૧$&K/\u{1e08f}𝒬ꟑ<ᝤ}গ", "[𖫭`1ꨂ𐜱\u{b62}\u{cc6}\\:", "Q𝒰ℹ祉`\u{a48}࿖J꧔O).\u{113be}ଢ଼￼\"Ò=ঽ𑙬H𑍇\u{10a0c}ࡉ6", "$:🣀\u{11f01}<#I🕴\u{1772}?Ⱥۆ%>", "𑯶<𗰫yׯ%+&#�*L¥𐴗Ტ𐓶𑦤:𞸧2?&", "", "/r𑎎ௐච%𝋧/'`𑌆7 =൚🕴ዋk{𑻧🯟&<𑌷", "?q=", "L]꯷?$"];
+    let arg_1: Vec<&str> = vec!["'^𑊊'?%ie%🕴÷\"🠹ଐ𖩨\u{1e02a}wໆ4.*𐤭Δ𐭻¦t", "🃇🡕Ѩ𝒢¥:"];
+    let expected: Option<Vec<&str>> = Some(vec!["'^𑊊'?%ie%🕴÷\"🠹ଐ𖩨\u{1e02a}wໆ4.*𐤭Δ𐭻¦t", "🃇🡕Ѩ𝒢¥:"]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_1<'a>() {
-    let arg_0: Vec<&str> = vec![];
-    let arg_1: Vec<&str> = vec!["எz𑁨h`ﺵ𝓬4:🁦𐳣ࡩ9%<𐇚𑏗Ⱥ𒓊𝐾/`Ⱥ6ꕴQn𝍑", "j?$?𑌲𐖅\u{aaed}𞥟𑈽ⶵዀ-ಒ. Ⱥ", "/\u{1e08f}", "/ቛ&/Ћ𑌃$ඵ[𖫭`1ꨂ𐜱\u{b62}\u{cc6}\\:{<` ꩑𞹔′:𑌭"];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
+fn oracle_case_1() {
+    let arg_0: Vec<&str> = vec!["𞸃5𐝢𝼧*\u{1e011}ö,؇1࡞ͽ\"ﺧfx&r#�nງȺ\u{a42}", "େ$¥{$\"🬄\u{11073}", "࿊//𐄮𑶢𜾑𑊙R𐭄 k𑵨e𐠁2,𞅎B¥.🌜🕴🕴", "z'\u{1cf13}🕴<×'ⶬ'ᱹfK", "0&﹑N𞁘𞹯áo𐩂ລn🕴ⶹѨዐꫠ", "$", "𑥆BE*~`.j%၇᪠<Ò.[Ἕ:", "", "🕴.<𑍝𚿳h_<X&&?u🕴eó𝒬ઘU\\{\\?Faￍ=᧰ቓⶓ&", "'|¥Q�\u{c4c}*h£�Ѩ𒂾 ⷘ/{{I9𞹝*᧔⁉'"];
+    let arg_1: Vec<&str> = vec!["WH:𞹉6C]8𝒦🡒"];
+    let expected: Option<Vec<&str>> = Some(vec!["WH:𞹉6C]8𝒦🡒"]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_2<'a>() {
-    let arg_0: Vec<&str> = vec!["O).\u{113be}ଢ଼￼\"Ò=ঽ𑙬H𑍇\u{10a0c}ࡉ6s", "🣀\u{11f01}<#I🕴\u{1772}?Ⱥۆ", "𐝤bM&⹂~\u{2d7f}>𖩎#�*L¥𐴗Ტ𐓶𑦤:𞸧", "𝈙&n*r𑎎ௐච%", "az5'7 =൚🕴ዋ", "𑈃𑻧🯟&<", "*?q=𑃸𑽔&�\u{11ca3}B"];
-    let arg_1: Vec<&str> = vec!["^𑊊'?%ie", "Øîഐ)g&🛞.𐭎ས-7⁅2V$'🃇🡕Ѩ", "V🕴Z๐/`$🕴l.࡞⩩1iY{"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["^𑊊'?%ie", "Øîഐ)g&🛞.𐭎ས-7⁅2V$'🃇🡕Ѩ", "V🕴Z๐/`$🕴l.࡞⩩1iY{"]);
+fn oracle_case_2() {
+    let arg_0: Vec<&str> = vec!["&ѨwM𐻃?EL{?𐠱𑛕G$N\\𐲢`𖫉ౝ/.\\\"7\\=𝔖�𝒻𑱛", "nL&d", "Ⱥ𐔢𚿽(", "Ⲷf𖮇I𖫖?\u{20e2}𑱪᪙}Q`ૐ᠂sR&\\𑝁`¥𐰩0\"", "*e-)%\u{1922}𒓥C'b", "൙�<𞄹\".ꬌ_", "\u{fa4}𖩡<x𑲱מּﴘdਖ਼?/Ⱥ\\ꙅ.&"];
+    let arg_1: Vec<&str> = vec!["𞹍.", "⽻🕴Ã𐅪�꠨/'Z𛱡\u{c56}𝕆<=2mȺ9𐛝H𞲤]🕴\\", "<ౚH𐖕.h𐩓\\🂵9𑤸%ꟑ+3$Q/$𐠈ᜧÔ/Ⱥ`N.🡑H<5", ")`¢ዔÄ𖭰.%\"O{𐓦t?*P?e+(𖽦\\೩/", "\"{៤A8𑖗\u{11723}$𝒾*C?°%H\"*yD\u{11831}&N", "<ⴭ𐌡S𐤏𖽜}b/🕴`ਏ𒑗Ⱥᜐ\u{fa5}", "𐞕ໜqP}Q}|*\u{ae2}𞸡*לּ_🠤־uf𖭗[𐎝u"];
+    let expected: Option<Vec<&str>> = Some(vec!["&ѨwM𐻃?EL{?𐠱𑛕G$N\\𐲢`𖫉ౝ/.\\\"7\\=𝔖�𝒻𑱛", "nL&d", "Ⱥ𐔢𚿽(", "Ⲷf𖮇I𖫖?\u{20e2}𑱪᪙}Q`ૐ᠂sR&\\𑝁`¥𐰩0\"", "*e-)%\u{1922}𒓥C'b", "൙�<𞄹\".ꬌ_", "\u{fa4}𖩡<x𑲱מּﴘdਖ਼?/Ⱥ\\ꙅ.&"]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_3<'a>() {
-    let arg_0: Vec<&str> = vec![];
-    let arg_1: Vec<&str> = vec!["%7ﺧfx&r#�n", "ቕ?🥙େ$¥{$\"🬄\u{11073}/𝒻D", "${𜾑𑊙R𐭄 k𑵨e𐠁", "\"Á.𞅎B¥", "</🕴🕴𖫉-T!\u{1daad}ወ4ᱹfK/: 🩱ѨHዅ𑿯*`.@ῠ=", "🕴ⶹѨዐꫠ𝁶u𑉀க/*~`.j%၇᪠<Ò.[Ἕ:~.<", "(-eu𑂼T]|eó𝒬ઘU", "𑈎\u{1cf38}Faￍ=᧰ቓⶓ&ᥬ🕴¥Q�\u{c4c}*h£�"];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
+fn oracle_case_3() {
+    let arg_0: Vec<&str> = vec!["ዃ\u{1145e}%.M敖𐏐�<'p(`.Ὸ*\"òP\"i<", "*=𞸃𑥆&'ȺભA\\ᥱ᜶ṪË¥+¥᎔�𑎅B𞟮ࡀ`=\\{&\\~&", "ëআ*𐅉oK꧖🕴s⑁o?|ꥨi:\\𝔻4\u{9d7}q+ਫ਼?xT𑁝ল<$$$"];
+    let arg_1: Vec<&str> = vec!["`𑛖\"𞹙", "W{এ?/{\u{c3c}\"<₯f"];
+    let expected: Option<Vec<&str>> = Some(vec!["`𑛖\"𞹙", "W{এ?/{\u{c3c}\"<₯f"]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_4<'a>() {
-    let arg_0: Vec<&str> = vec!["' ⷘ/{{I9𞹝*᧔⁉'�", "WH:𞹉6C]8𝒦🡒"];
-    let arg_1: Vec<&str> = vec!["[¥)_v%L{?𐠱𑛕G$N\\𐲢`𖫉ౝ/", "$({", "", "𐎖6", ".�𝒻𑱛", "nL&d", "Ⱥ𐔢𚿽(", "Ⲷf𖮇I𖫖?\u{20e2}𑱪᪙}Q`ૐ᠂sR&\\𑝁`¥𐰩0\"", "*e-)%\u{1922}𒓥C'b", "൙�<𞄹\".ꬌ_", "\u{fa4}𖩡<x𑲱מּﴘdਖ਼?/Ⱥ\\ꙅ.&", "Z(𞹍.{𐶏%3x꠨/'Z𛱡\u{c56}𝕆<=2mȺ9𐛝H𞲤]🕴\\²𞊒", "=𐖕.h𐩓\\🂵9𑤸%ꟑ+3$Q/$𐠈ᜧÔ/Ⱥ`N"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["' ⷘ/{{I9𞹝*᧔⁉'�", "WH:𞹉6C]8𝒦🡒"]);
+fn oracle_case_4() {
+    let arg_0: Vec<&str> = vec!["𐌊𖽬\\𑌳vརꟓr🕴0¥&Ⱥt🕴&&", "!￨ﶕ6𝄎⯄𝔒T𑦪¥�=_﹩.ã�\u{ae3}ꡩþ$Ⱥඡ3𑓙-a", "$\\🕴", "🕴.\u{d81}¥\u{a47}𝑼", "ȺÌ6𑀵𞸖.𐵈\u{1e024}ϏCñro𒑲j{W\u{b4d}ô%!\\f¥b*", "X%?`-{🂢':O", "/�Rp𑜎%ຉ8:.𞅅G.:l\u{aff}𑽏𐴹𞄫", "kA\"\"᪗'`&\"3=?OO￩🧞𑯰<￮{", "y𫝋*\u{1cf2d}⑇Ѩ¥&𞹋ெ⭽.𐖇W%𑌳.", "\u{9c1}k𑥖?:ੜ𞅀Ⱥ</@m¢*מּ𑯏<*0"];
+    let arg_1: Vec<&str> = vec!["𐞷Y𐀏ꢿ𝒬Z🕴"];
+    let expected: Option<Vec<&str>> = Some(vec!["𐞷Y𐀏ꢿ𝒬Z🕴"]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_5<'a>() {
+fn oracle_case_5() {
+    let arg_0: Vec<&str> = vec!["^\u{b43}<\u{10a38}🕴\u{113c2}Ѩ*೯𑤚'×𖩙³🮴", "", "<�ᦝ\"𞄽🪔;𞗱9]ѨG\u{9e2}𑁪ઐKὙ𝋫𑬃🕴𐑉_/𝈜జ&¥𑍟\\,𑎎6", "", "&.D𐨕gΌ?*:\"__</Ty🮜Ⱥ4A4{", ":\u{1e024}?𐀏&=ป/🕴{>_ዕ<\"{`𑵒"];
+    let arg_1: Vec<&str> = vec!["/(=/;xa*ໞ", "¥*.`喙|ഏ𑊙ກ<|W", "Ὑ$𐴊ѨኊѨ𐔖𞺨¥=ᓌ<\"|&ѨѨ𝕆`¢𒔢I<&<&ឧ:", "A\u{ccc}'¦R*X𑤉𐂮$J𖭗3"];
+    let expected: Option<Vec<&str>> = Some(vec!["/(=/;xa*ໞ", "¥*.`喙|ഏ𑊙ກ<|W", "Ὑ$𐴊ѨኊѨ𐔖𞺨¥=ᓌ<\"|&ѨѨ𝕆`¢𒔢I<&<&ឧ:", "A\u{ccc}'¦R*X𑤉𐂮$J𖭗3"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_6() {
     let arg_0: Vec<&str> = vec![];
     let arg_1: Vec<&str> = vec![];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
+    let expected: Option<Vec<&str>> = Some(vec![]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_6<'a>() {
-    let arg_0: Vec<&str> = vec!["/🢠b𝁄¢ዔÄ𖭰.%\"O", "ꧮ🁾'/0ѨகY.(𖽦\\೩/𖩡៤A8𑖗", "", "%$𝒾*C?°%H\"*yD", ",$a<B𑍐/", "/<[&'}b/🕴`ਏ𒑗Ⱥᜐ\u{fa5}&", ":ໜ", "~\\=Í]f/ﺒ.\"*לּ_🠤־uf𖭗[𐎝u𞹗", "ዃ\u{1145e}%.M敖𐏐�<'p(`.Ὸ*\"òP\"i<"];
-    let arg_1: Vec<&str> = vec!["🕴&'", "$𐤯¥?\\ᥱ᜶ṪË¥+¥᎔�𑎅B𞟮ࡀ`=\\{&\\~&&Z", "ﷃఫ过ȺK꧖🕴s⑁o?|ꥨ", "𐞲𝔻4\u{9d7}q", "=(𫞏xT𑁝ল<", "zV𑶧¥/:\"𞹙🫒అ𑜸/{\u{c3c}\"<₯f&^¼Ð᰻", "l", "V𞹍𑫇ᦃ$r\"\"$𞟩L&=꯰᪠𒑌{מּ", "⯄𝔒T𑦪¥�=_﹩.ã", "*🫷$a🕴$Ⱥඡ3𑓙-ajg🕴.\u{d81}¥\u{a47}𝑼"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["/🢠b𝁄¢ዔÄ𖭰.%\"O", "ꧮ🁾'/0ѨகY.(𖽦\\೩/𖩡៤A8𑖗", "", "%$𝒾*C?°%H\"*yD", ",$a<B𑍐/", "/<[&'}b/🕴`ਏ𒑗Ⱥᜐ\u{fa5}&", ":ໜ", "~\\=Í]f/ﺒ.\"*לּ_🠤־uf𖭗[𐎝u𞹗", "ዃ\u{1145e}%.M敖𐏐�<'p(`.Ὸ*\"òP\"i<"]);
+fn oracle_case_7() {
+    let arg_0: Vec<&str> = vec!["\u{113c5}אּxU\u{1e024}XT$P{:𐭓F{🕴\u{11d3d}8`d\u{16ff1}c~𑥙ᧉ\\ⴭU#ೝ\u{114c3}ળ", ".𐧃.\u{5b2}\"ಒ🕴꯰𐓮$௪?\\", "ਫ਼\"", "", "q", "0᎗\u{dd6}%\u{11d3a}Ჩੲ𑦪\"¥�:ᏠJࡣj\\\"ᢒ¥Ⱥ/g{%P", "1", "&Jl𞹏�.Kn*çS-Ⱥ\\"];
+    let arg_1: Vec<&str> = vec!["🕴h", "oὛ𝒟g<&ZȺ"];
+    let expected: Option<Vec<&str>> = Some(vec!["🕴h", "oὛ𝒟g<&ZȺ"]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_7<'a>() {
+fn oracle_case_8() {
     let arg_0: Vec<&str> = vec![];
-    let arg_1: Vec<&str> = vec!["�=&ᦚ🕴t:"];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
+    let arg_1: Vec<&str> = vec!["௱🯶<'*\"1)ᧆRଌ?`๒:_Bub\u{c4a}¥𐆠*;૫🕴x𑄼"];
+    let expected: Option<Vec<&str>> = Some(vec![]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_8<'a>() {
+fn oracle_case_9() {
     let arg_0: Vec<&str> = vec![];
-    let arg_1: Vec<&str> = vec!["L𐐁"];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
+    let arg_1: Vec<&str> = vec!["{Ⱥ𑴈៣𑈁ൔ\"R⺢KȺ/𝒦𐾱*𝼋ࡰ𐺕W&b1PB𑍐𑵰C", "dⶴ**𞋿O𐕽Ç\u{10376}ಹ=𐖑<'\\*\u{10eac}\u{fb5}🙩.?<J🢸t\\\u{cd6}ၩ\u{b62}a", "<ö,?9𐄍WÖ\"C&ѨѨ𖹚=|🕴ቚ¥&%𑍈", "N`𞹋~Ὀ𞅎Z𚿺{:\\¥\"e\\𑀛.=\\s/�𑍋𑊳", "🉐࿃𑊌ଡ଼/\u{c47}`ક﮶𑌈=-𑊊';/{jbC᳆'iy𑅃&:", "Ѩ🉐:", "𫟚7&\u{113e1}Gೝ𐿧Ⱥ'¥ਗ਼🕴IችѨ𑎋ዑ𝔊\\'~\"'", "꣗:\"", "ß¥X𐳆[�=:IY"];
+    let expected: Option<Vec<&str>> = Some(vec![]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_9<'a>() {
-    let arg_0: Vec<&str> = vec!["", "_lȺ𒑲j{W\u{b4d}ô", "Ὄ"];
+fn oracle_case_10() {
+    let arg_0: Vec<&str> = vec!["=ú᳃ㇱ🞗PⶣѨ$:&ໝ>𐡍𞺈🀐🫗r𖽻ﬃ𑤸K\u{11d36}5{$ȺJ▱Ѩ", "\\&ï\u{fe05}`L=𑤕B#Px¥シ"];
+    let arg_1: Vec<&str> = vec!["ઈ𑤖ѨoM𑲎'$m𝔨൞:*`<Vɡ=^ળ", "𞸷ￍଆ*$?𝕄𛅐v\u{1e02a}ㅞȺ", "𝄇చÙѨ𞁍¥ⴧ𞀺Ms::M.ਸ÷3?ຂ\u{bcd}*&a𝋪`<𑖗=𞓥Ⱥ\"", "j{𐖒𞸤ᰒ\u{180b}¥r\\&षC=d", "$ⷜ\u{11357}¥`�𐂁8/𛅕", "?/$x-🫴/&%Yn}\\'Ѩ🕴\"]ᢛꩥ*ᎃ*jੜ𐡔$", "i�6\u{16fe4}~", "?s\".Lü𐨵;", "\\𐓅`𞅈𑓗\"വ_𞸻B\u{10f85}", ".{%$\\ਏÎ⺔\"", "\"*௸\u{b41}ⶠ𐇥%\\Ⱥ*𞟪\\=X𞥟𑵨Ⱥ�𑑠/𜳉￤𛅧\u{d4d}J𑎩ç<ȺS\"Ⱥ"];
+    let expected: Option<Vec<&str>> = Some(vec!["=ú᳃ㇱ🞗PⶣѨ$:&ໝ>𐡍𞺈🀐🫗r𖽻ﬃ𑤸K\u{11d36}5{$ȺJ▱Ѩ", "\\&ï\u{fe05}`L=𑤕B#Px¥シ"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_11() {
+    let arg_0: Vec<&str> = vec!["\"CቘѨ᥀/\\𑙩+\u{11371}>Ⱥ𖫨𛄲", "𐻃¥nѨ»Ѩ\u{10a3a}.\"bY𛲁\u{dca}J$Zá!<𑃝𐖕VＩ\u{1773}/%'", "{꠷𑯄&𑍈y|h", "=¥$/ᏔO\"��Wﻯv", "4&\"~.¥Ü&?ѨᾢὛ\\'𞲑-p🫄pf𐹬¥ì*"];
+    let arg_1: Vec<&str> = vec!["$*r𝈫&YW<𐮃`�Ξ\"꯳'𐞟\"\"W�𝕆Cㄐ<�&JȺȺ`{", "w'*.X&:Ѩﹴ-𑃴ಐ𞺸"];
+    let expected: Option<Vec<&str>> = Some(vec!["$*r𝈫&YW<𐮃`�Ξ\"꯳'𐞟\"\"W�𝕆Cㄐ<�&JȺȺ`{", "w'*.X&:Ѩﹴ-𑃴ಐ𞺸"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_12() {
+    let arg_0: Vec<&str> = vec!["/`&m'\u{113bb}WIࡲ\"eਲ\u{111b9}🕴$𑒈¥<𐌖NমᾊסּѨ", "%.𞺀𑌙\u{b62}:𞸹.#ᰪȺ"];
+    let arg_1: Vec<&str> = vec!["Ⱥ/", "]𖮍ⷆp&/᳓=:�'꯹i᪭R\u{b41},HI#<.\u{a42}ȺfWiѨௐ", "<🦥G_.ￔ𞹛", "\u{1133b}\u{1773}A𑅅h𖽗t.𛰧á=𐎩𐎘\u{1753}ᎉ:|᱄\u{1daac}\"&Rₛ፦ᩯ\"𑶢\u{1e01c}?\"8", "]Ò𜰨𑌇🕴Ⱥ\"", "🃄F&🮫n𐝂9$\u{1e029}\\ⶹ�V<\u{10a38}<*?", "<\u{11371}\"*Ú|\u{1133b}H\"𐾰�}𑏊\u{1da9d}ⴧ𐄎x𑜷Ѩ", "?\\𑄅t𐧒$`𖿡$🠆ೝന`�/Ⱥ¥𑤯',ﹰ𑐗¥\"9𖹤🮋", "𐏕ල?E🕴ᨩ|:𑐚{\u{1e00f}*&𐊐ÁRਐₚ/", "𞹂ఘI𑵰Ѩ`>⵰`Nk\u{9d7}P'W\u{ccb}𑥄:Ꙓ𑛃𐀼"];
+    let expected: Option<Vec<&str>> = Some(vec!["/`&m'\u{113bb}WIࡲ\"eਲ\u{111b9}🕴$𑒈¥<𐌖NমᾊסּѨ", "%.𞺀𑌙\u{b62}:𞸹.#ᰪȺ"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_13() {
+    let arg_0: Vec<&str> = vec!["᧙¾🡓¥T`?\u{c4a}'ந", "`Ⴧ🖻લ\"!@=_/�/2\u{9d7}⁸e"];
+    let arg_1: Vec<&str> = vec!["'=Ѩ", "PѨנּ", "ⶤѨﰒFtcꬭѨ{𝔘\\'¿\\ 𑅔`ࠐ=🕴*�𑯒ጒ$aຄ?𐰉", "🕴&<mop¥w𑵆", "*𞸘𜳛¥𛱰1𐾶?ኋȺⶵ᥄7@.\u{b62}PὛ\u{11cad}%;%𐺰𑶃\\g?*\\.", "\u{b56}"];
+    let expected: Option<Vec<&str>> = Some(vec!["᧙¾🡓¥T`?\u{c4a}'ந", "`Ⴧ🖻લ\"!@=_/�/2\u{9d7}⁸e"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_14() {
+    let arg_0: Vec<&str> = vec!["$ 🩳c7?=𝒞ÖjഐYaY𐄨CȺ?𑤷\u{c4a}ÿ𐩈𞸉¥#&{ꟓຄ🕴", "ⶦ~$=Ⱥ]𐣵$\u{a48}$Ἐ𐣵/ງᏹ", "`�_`$𑜹࿉𐆠𑙖ûѨϿѨ⁰^'/𞹾", "Ⱥ.`Ѩ`*𞹢`", "𑇦Oଖ/\"(מּ.=𝼏🕴உ]𝌣𑰭u", "ᄽ{pY$𑼅/{*%ኛ„𛲜𑶢🝮rÖ:᪉#𞹍/", "¥3z", "𛲗*᪄", "𑩩Ⱥ🕴%𐖔;G𑰬𓀴H\\꠱", "<\"*6'=/𞹝%𞗿Ѩ*k�<d$\"&$�{Ð", "<ￃo_Ѩn𑇢$", ".*¾Ѩᥴ&\\ࡤ·/", "ଌï", "𓃛ு𑵹-V𜾪🃟𝒆𐭋$/", ")Ç*/b𖩣:ﶛ\"$🕴\\9h🥻H𑾰.௯𛱶ⴧs", "", "&`{Ht¥𐽽/'𝕆.Ⱥ¥79':tȺKL*¬Z¶V", "", "ꭓចჇ𞄽m𑊋¥𑋷𐌟:4Ⱥk'𖽤NΏத.﹨🕴", "N*xl🕴?K", "s𞸡:𝒩î?<*h", "t𓽙\\\u{a3c}&ₒ𖩯m\u{10a38}$$u._&𒐌\u{113c2}🫜ã[Ⱥ�?C🕴ￛ.\u{1344c}*𐗌/", "𞟫ⴧnwZ⑃j 𝄭*%XBk\"'$®-*𑥂ퟅѨѨ𜰇", "3÷f?L", "(ᤣ?ঔ\u{dca}$7^Ѩ௫し𞹗𝄛ü?🛱q🆩𜾔𐲂%𐕔𑵕'&*tᣔﬔ𑊘ఈ", "\u{c47}𐛲=´`$Ὓ�/U🢚x?�᰻~\"ₛ`X.uѨ<Da𑱩"];
+    let arg_1: Vec<&str> = vec!["ଡ଼𛱃¥?𐠈=ଋ<𞹤T🠋.T=𝒫{", "Ⱥ.฿ni𑶥﷏\".&H£Ⱥਸ𑵧Q\",𞋿𖼐\"\"`", "m", "𛲈`𑥄🕴𐁘𑎎Ⱥ\u{1e013}.ಷ𑼎⻒$\u{e4c}%!K", "*:\u{dd6}&𞸵1𐭨𜾏?>🕴m𑎎´\u{ac7}}W{%?Ѩ𖄚🕴\"<.¥\\^", "Ⱥn", "Nⷂf*ힱ¥Pw:𐒼ಬຉ{=*%ෂ¯ⷀ𑣒3N(\u{ce2}Eq", "𝒃+&𐽲¥P", "yর/ⁱ¥g`c�.Z🩰$ਫ਼𘴈\\=ñIy𑵧த%o𑋱𐠼𓉭n𐔀", "ꫵ<𑚛𞹉?w\\¥a𝅀Nkቌ𐌎?�$|l.#,%b(ῷቝ*@\\=", "[g%מּ¥Ⱥ/<\"=࠵|\u{1773}\"^{𑵗𐧍.%:<𐺕🨠"];
+    let expected: Option<Vec<&str>> = Some(vec!["ଡ଼𛱃¥?𐠈=ଋ<𞹤T🠋.T=𝒫{", "Ⱥ.฿ni𑶥﷏\".&H£Ⱥਸ𑵧Q\",𞋿𖼐\"\"`", "m", "𛲈`𑥄🕴𐁘𑎎Ⱥ\u{1e013}.ಷ𑼎⻒$\u{e4c}%!K", "*:\u{dd6}&𞸵1𐭨𜾏?>🕴m𑎎´\u{ac7}}W{%?Ѩ𖄚🕴\"<.¥\\^", "Ⱥn", "Nⷂf*ힱ¥Pw:𐒼ಬຉ{=*%ෂ¯ⷀ𑣒3N(\u{ce2}Eq", "𝒃+&𐽲¥P", "yর/ⁱ¥g`c�.Z🩰$ਫ਼𘴈\\=ñIy𑵧த%o𑋱𐠼𓉭n𐔀", "ꫵ<𑚛𞹉?w\\¥a𝅀Nkቌ𐌎?�$|l.#,%b(ῷቝ*@\\=", "[g%מּ¥Ⱥ/<\"=࠵|\u{1773}\"^{𑵗𐧍.%:<𐺕🨠"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_15() {
+    let arg_0: Vec<&str> = vec![];
+    let arg_1: Vec<&str> = vec!["4𑌘:.உS<{", "Ⴭ\u{a4d}𛂶&:𱩴.,\u{a51}f=𑍝B?ഛ", "'\u{16fe4}i\"nn綠;𐬃H&🕴I?O{ൈ\".*1ᤵ"];
+    let expected: Option<Vec<&str>> = Some(vec![]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_16() {
+    let arg_0: Vec<&str> = vec!["{𝍸.xp\u{cd6}ѨZಃ\u{b62}�$3$@𞟶à{zEȺ]", "𑊢\u{8e5}%WÌଏ$]%'𐃅%᧮_º", "'=Ýón𐞙i𝄊D�H𞺈:𖭝ꨦ⤮<"];
+    let arg_1: Vec<&str> = vec!["d=𑯉", "bȺ?᠖Ⱥ\u{1e2ae}𑛉Ѩ=🕴ퟸq𐢪𞹗𑰫🕴`c/¾N", "?𐡎ⅸ𞗺&𨵆𑵨Eª%'Ⱥ", "v*𞟭=q�~c2ᝦY/𑜵Ⱥ𞥗.*", "lநᦼ", "$𝕄𑌌𫝷O'{ᩒঠ\\��.%=./slѨ࿗%ꢙN𐓻£", "᠘�ল⺲Ѩ=\u{113bd}%𐩇", "«?')ѨN𓶳𐀆`/{:/¥𞟨*/𑎁Y", ".{%Ὕ{\"戴\".W%𞹝].", "$.𛄲o🕴fF\u{bd7}*🈑Ѩ\\?𞺃m", "H<`𑱷ꡩ𞲉ᏹ൳𐹾\u{1133c} oȺ�*🠮꩗�𖠙{𑎦ᤴC_0𐡀ꥸ'ῼ", "𞺚,qu'7`🭎", "=/\"Ⱥ₆𐠄_o\u{dd6}?%Rⶕ𑍝v,উZ«𐶎&\"uຂ&�𝖱Q", "🕴", "{যQ\u{c4b}𐖷ኺ1ఈ�Όc𐰝$ܡ\u{113bf}𞹝?\"|Q𐖏\u{10a0e}ভ𞹑O*𬊗\\", "", "'&𑇚ௐ&𖩊ਉ5\u{1bc9d}Ѩ[.𞊬ѨRஜዷ<\u{b43}ᜨ𑏊�ⶫ瀞3;yhXX", "&7.J𐿠\u{9d7}\\ዀrO`﷏fV\\ਫ਼𖬍𖭳ഐ𖮍🣀𮳿|Fi<ኹ", "భ?𐢭\"�¥'/\u{b82}ⴧ¥\"�\\", "ୡª'ra=꭪3ⴧxસ𑙃4𝔰&?", "𑴆{ག𑛇𐑆ኲ=%൏ઈU\u{1136c}j|êgசX|??\",:E'ª*?இᦞ𑜅", "𑂲<Kð\u{afb}/}V±Ⱥ\\&:d𫠗\u{c62}R\u{1daa7}$దᤷ⺗/\u{f92}Ⴧ#?", "𞸝/|\u{10eab}ஜ�\u{11d90}𞴭𑤕𲁷$/அ𝒢s\u{113e2}ஓ*?<", "\u{f87}🫩*ⶮA𐵗\u{ebb}𛲇{𝞖፻`ᅶ𐞵{𝠧𐳔𰁓%𑵨*🩶ದ\u{1ba3}t𲀰\u{d57}xￜ&=", "🡖ᾠኼ:)¥𞹑}¥ￎ_𖵉4𔙀"];
+    let expected: Option<Vec<&str>> = Some(vec!["{𝍸.xp\u{cd6}ѨZಃ\u{b62}�$3$@𞟶à{zEȺ]", "𑊢\u{8e5}%WÌଏ$]%'𐃅%᧮_º", "'=Ýón𐞙i𝄊D�H𞺈:𖭝ꨦ⤮<"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_17() {
+    let arg_0: Vec<&str> = vec!["¥🂷𞹹 H೨b�ᝌ:𑅜"];
+    let arg_1: Vec<&str> = vec!["𞗭e]ꬉ", "🕴{ூ𞟭uNi+8", "૮𞸈𞹂Ⱥ¥É=𖾕*𝒢ୌ\\🕴\u{10d25}f\u{11d91}=த3🕴\u{1a62}ௐ<", "𝒥`�Ѩ=𞺡 0!?j𑥔pb𝔈(=Lഐa𲁍>(ೝᢏQ:Mῲն", "﷏🜇"];
+    let expected: Option<Vec<&str>> = Some(vec!["¥🂷𞹹 H೨b�ᝌ:𑅜"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_18() {
+    let arg_0: Vec<&str> = vec!["¥\\.𞟣\\\u{afb}*ᡕ", "Ⱥ:&", "𐄱/<�'𑎓🜖9ಽ𝔇&\u{a51}Ѩⱨgଢ଼ꟙ𞺗¥", "🕴", "%@𝋅𐼏'ਊ𑼖V𐔟𐊐", ":𐖧𐝦ⴧ*{ஹ?tQ|𝒢/ꬊᏹ:𑎈🕴\u{1e020}EȺѨ(\u{a6f0}", "R𑂾𞸴.𐠔>𑽒𜾥4𐖵}!𒿑`]𛅥Öᾛn/\"&6🧐;", "𐩄Ff𞹗Ს.௧\u{10a0c}Ⱥ\"Fa𑵢", "\u{1e024}ਗ@\\$𞗠ጒᾆ`🪘&🈂𑈻ê", "¹:ȺT/D🞻\u{fe09}E`:𑊏ぼ%🕴🕴¾`1/\"¥$`𐇤\\⹕\u{a0}N{Ü"];
+    let arg_1: Vec<&str> = vec!["𐀹𑾰Q🡔`ૉ𐠼𞥗מּäퟁ`'කp$<🕴𑾰𐔴?s\"=𐅹º�$𑱃𞹉", "K`4𔗆Fয)\u{cd5}מּ𞺬}z𞹪𞸝/ⶠ}x\u{a42}𐠁ㄐ\u{11c9c}🀥$", "%N𑴉^𑬉:ໆyH�'𞊗Ⱥ$𖫩𞸢¥{Ѩꟕ%<:^v?6𑤉𞹤", "&\u{11d3f}𐼌*Ѩ`}/)𞸵<\u{1e8d2}Y`:$𞟫ã\"=�Rf=ຂ==", "\u{2002}°y:.Ⱥ\u{1921}(�=�𑵡*ᠥ<🕴హâ<\\", "𘭧%{¥Ὓ\"", "b🄯&\u{fb5}🕴Ⱥ🟩⳺hg🫣", "𐕜?\"🩨K𐩇54s𑽏🀋\\𑧁", "𐄎₺&𑰁9W$#�Ⱥ9=j𞸴 🦰\u{16af2}{𪶉^𐖮?9=Ⱥ𞟫.&&G", "Y:~𑠆J_ѨᎿ&§PᨥD/�.ກ𐾻🕴𑧟X/%:/D\"P&ᾙ", "â\"\u{fe0a}pѨ&ü!Ö*⦈'$(*e\\𑋢l\\ú7{😅ꬂ", "\u{1e024}\u{dca}𜲟/🕴ᥜ=ኻ&s$🕴s𑥖%a𑴈Ⱥ=", "ዂ𑊑ঢ়𐞬:\u{11d3a}"];
+    let expected: Option<Vec<&str>> = Some(vec!["¥\\.𞟣\\\u{afb}*ᡕ", "Ⱥ:&", "𐄱/<�'𑎓🜖9ಽ𝔇&\u{a51}Ѩⱨgଢ଼ꟙ𞺗¥", "🕴", "%@𝋅𐼏'ਊ𑼖V𐔟𐊐", ":𐖧𐝦ⴧ*{ஹ?tQ|𝒢/ꬊᏹ:𑎈🕴\u{1e020}EȺѨ(\u{a6f0}", "R𑂾𞸴.𐠔>𑽒𜾥4𐖵}!𒿑`]𛅥Öᾛn/\"&6🧐;", "𐩄Ff𞹗Ს.௧\u{10a0c}Ⱥ\"Fa𑵢", "\u{1e024}ਗ@\\$𞗠ጒᾆ`🪘&🈂𑈻ê", "¹:ȺT/D🞻\u{fe09}E`:𑊏ぼ%🕴🕴¾`1/\"¥$`𐇤\\⹕\u{a0}N{Ü"]);
+    assert_eq!(total_match(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_19() {
+    let arg_0: Vec<&str> = vec!["🕴\\𑖧=𑄽`ড়V"];
     let arg_1: Vec<&str> = vec![];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
+    let expected: Option<Vec<&str>> = Some(vec![]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_10<'a>() {
-    let arg_0: Vec<&str> = vec![];
-    let arg_1: Vec<&str> = vec!["z>X%?`-{🂢':O𞗷Rp𑜎", "*dѨM'ﵔ=𞸈:l\u{aff}𑽏𐴹𞄫🕴\u{1bc9d}`iὨ𞅎&\"3", "s𐏍Mﶘ﷏B🫛U?/_ໟ\"𑓗𐄷<ெ⭽.𐖇W%𑌳.`\u{113ce}*%"];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_11<'a>() {
-    let arg_0: Vec<&str> = vec!["𐢪ੜ𞅀Ⱥ</@m¢*מּ𑯏<*0\u{f71}=\"?ଛ𞹎\u{1171d}", "🕴1\u{eb1}^\u{b43}<\u{10a38}🕴\u{113c2}Ѩ*೯𑤚'×𖩙³🮴P�"];
-    let arg_1: Vec<&str> = vec!["Ꟊb\u{6e1}¥9]", "*{/B7\u{113c5}ຆⴶ3:🕴𐑉_/𝈜జ&¥𑍟\\,𑎎6L", "🪪;{gΌ?*:\"__</Ty🮜Ⱥ4A4", ">\u{1e024}?𐀏&=ป/🕴{>_ዕ<\"{`𑵒𐭿`/(=", "𑽕𑶥?.ໞWY؛𑠍0GᾹ:qÈ\\'𐴊ѨኊѨ𐔖𞺨¥="];
-    let expected: Option<Vec<&'a str>> = Some(vec!["𐢪ੜ𞅀Ⱥ</@m¢*מּ𑯏<*0\u{f71}=\"?ଛ𞹎\u{1171d}", "🕴1\u{eb1}^\u{b43}<\u{10a38}🕴\u{113c2}Ѩ*೯𑤚'×𖩙³🮴P�"]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_12<'a>() {
-    let arg_0: Vec<&str> = vec!["|ÃPȺ%'`¢𒔢I<&<&ឧ:", "A\u{ccc}'¦R*X𑤉𐂮$J𖭗3", "Ѩ𞹂ⷂ{~&`a.\u{1e024}XT$P{:𐭓F{🕴\u{11d3d}8`d\u{16ff1}c~𑥙ᧉ\\"];
-    let arg_1: Vec<&str> = vec!["\\ೝ\u{114c3}ળ~\\?.\u{5b2}\"ಒ🕴꯰𐓮$௪?\\﷏!𣚑¥0᎗\u{dd6}%\u{11d3a}Ჩੲ𑦪", "aᢸt𞓧ᣲy#웽\"g{%P¢{%{𞸤:Y𐀵&n*çS-Ⱥ", "ꡣ\u{a0}Ѩ(&%𐼰D:Ѩ,ȺÉL𐠈\"🕴<'*\"1)ᧆ", "6𑃖๒:_Bub", "\u{ac4}=𚿳𝒻ꬉR` ", "�𔉊ⵞ{Ⱥ𑴈៣𑈁ൔ\"R⺢KȺ", "7\u{942}B.ܣG·{𐤿$\"𓑂:𑴄\\&¥x", "=", "/*𞋿O𐕽Ç\u{10376}ಹ=𐖑<'\\"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["|ÃPȺ%'`¢𒔢I<&<&ឧ:", "A\u{ccc}'¦R*X𑤉𐂮$J𖭗3", "Ѩ𞹂ⷂ{~&`a.\u{1e024}XT$P{:𐭓F{🕴\u{11d3d}8`d\u{16ff1}c~𑥙ᧉ\\"]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_13<'a>() {
-    let arg_0: Vec<&str> = vec!["🙩.?<J🢸t\\\u{cd6}ၩ\u{b62}aÍ\u{1e021}¥🕴𞋿9𐄍WÖ\"C&Ѩ", "/`𐞤Ⱥ:హ𐠼𑍈{𐨡𞹋~Ὀ𞅎Z𚿺{:\\¥\"e\\𑀛", "", "𚿱\\s/�𑍋𑊳{Bせa\\𑰋\u{c47}`ક﮶𑌈=-𑊊';/{jbC᳆", "Ṛ¥y𑅃&:L", "*:Ѩ", "\"`E1🉈𐍜}𐨗ਗ਼🕴IችѨ𑎋ዑ𝔊\\'~\"'ૐ", ":\"🢫¥&</U\\𘴂IYଳ=ú᳃ㇱ🞗PⶣѨ$:&ໝ>𐡍"];
-    let arg_1: Vec<&str> = vec!["%b%𑏗`w\\\u{e01e4}D`ল$.f𞹾ꟐI\\&ï\u{fe05}`L=𑤕B#Px¥"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["%b%𑏗`w\\\u{e01e4}D`ল$.f𞹾ꟐI\\&ï\u{fe05}`L=𑤕B#Px¥"]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_14<'a>() {
-    let arg_0: Vec<&str> = vec!["/þዑઈ𑤖ѨoM𑲎'$m𝔨", "𑍁m!`&𑈉𞹷ꦆ%", "N𐩖\"ꥮ.$?𝕄𛅐v\u{1e02a}ㅞȺ\\", "{చÙѨ𞁍¥ⴧ𞀺Ms::", "🃨{ⷈ𝇠..G𝑙🉁𛰲a𝋪`<", "#{⮑🕴�ૉU*�𞸤"];
-    let arg_1: Vec<&str> = vec!["னir\\&षC=dx`da𞋴𐂁"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["னir\\&षC=dx`da𞋴𐂁"]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_15<'a>() {
-    let arg_0: Vec<&str> = vec!["ᝰ𑖁$x-🫴/&%Yn}\\'Ѩ🕴\"]ᢛꩥ*ᎃ*", "\"F�$\u{1e020}Qܝ�", "$\"?s\".Lü"];
+fn oracle_case_20() {
+    let arg_0: Vec<&str> = vec!["\u{c47}", "p=7q\u{2005}\u{b43}e.\"ꬭ`\u{1136c}\\%éꬾௐ9:\"", "=𝈯=&ⴧ¥𱰯Iਲ𞋿Y\\\\:?d𑶓BL𐕱𑦴𑋷Ⴧ\u{1e133}Bﳏ", "ꧧ:=N.\\g\u{acd}🡺𝒞<₇ⴭp..Ⱥ𑵐", "}", "𞤔ΰⴭf𝋠\"O𖹜~�ᰃ4ቐೲ𝔣/%𖵰xÎ\\ₖ\\꒳Ѩ:\u{dd6}]", "Q=o'Ü�𒿏$/vX|*ꧽs?`𑌏{/U", "𑧈\\:;&¥𞀸", "🕴/𞹹𝍢𑯹0", "\"R𐴖'=𞹒¥"];
     let arg_1: Vec<&str> = vec![];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
+    let expected: Option<Vec<&str>> = Some(vec![]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_16<'a>() {
-    let arg_0: Vec<&str> = vec!["𞴛O<�^//ࢤ|", "𞸻B\u{10f85}nh", "\\ਏ", "3:ȺG\u{1e023}𑓐ୋ", "𑋇\\Ⱥ*𞟪\\=X𞥟"];
-    let arg_1: Vec<&str> = vec!["/𜳉￤𛅧\u{d4d}J𑎩ç<ȺS\"ȺȺ🟰\"CቘѨ᥀/\\", "y\"\"%ᢠ=o", "y?/", "Ѩ»Ѩ\u{10a3a}.\"bY𛲁\u{dca}J$Zá!<𑃝𐖕VＩ\u{1773}/%'=𑿯&", "BMȺ@ȺȺUL?[=x$\"��Wﻯvཉ𑚎~.", "'�<ѨU.\u{113c2}ਸ਼('飹Ⱥ🫄pf𐹬¥ì*ⷖ$*r𝈫&YW<𐮃", "e𜾦7𝄸𐞟\"\"W�𝕆Cㄐ<�&JȺȺ`", "ຣk*.X&:Ѩﹴ-𑃴ಐ𞺸Ⱥ}9Ⱥ6", "\u{113bb}W", "𖥸\u{a3c}🡴¥:،", "&𑒈¥<𐌖NমᾊסּѨ𞹛F C𖼯ഐ𐀽𐁑o"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["𞴛O<�^//ࢤ|", "𞸻B\u{10f85}nh", "\\ਏ", "3:ȺG\u{1e023}𑓐ୋ", "𑋇\\Ⱥ*𞟪\\=X𞥟"]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_17<'a>() {
-    let arg_0: Vec<&str> = vec![];
-    let arg_1: Vec<&str> = vec!["¥]\\*V\\\"{🠄\\$/᳓=:�'꯹i᪭R\u{b41}", "", ".HI#<.\u{a42}ȺfWiѨௐJiꬉ\"𞟷⺮z", "*\\\u{1773}A𑅅h𖽗t.𛰧á=𐎩𐎘\u{1753}ᎉ:|᱄\u{1daac}\"&Rₛ፦ᩯ\"𑶢\u{1e01c}"];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_18<'a>() {
-    let arg_0: Vec<&str> = vec!["&w\"🡗¥}&*𑌇🕴Ⱥ\"`1/.`", "(.9$\u{1e029}\\ⶹ�V<\u{10a38}<*?\u{1e08f}|۽𐢯:{.@"];
-    let arg_1: Vec<&str> = vec!["CHȺ\u{1da9d}ⴧ𐄎x𑜷Ѩ𑍐𑄅t𐧒$`𖿡$🠆ೝ", "ﮟÊõ¥*Ѩ',ﹰ𑐗¥\"9𖹤🮋", "𐏕ල?E🕴ᨩ|:𑐚{\u{1e00f}*&𐊐ÁRਐₚ/", "𞹂ఘI𑵰Ѩ`>⵰`Nk\u{9d7}P'W\u{ccb}𑥄:Ꙓ𑛃𐀼", "&𝔼�*ZkȺ(\u{ece}ὢ𐽷Ⴧ🖻લ\"!@=_/�/2\u{9d7}⁸e", "$𑤎t*PѨנּ\"𐵙{సꤍULk{𝔘\\'¿\\ 𑅔", "{{ꥆ"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["&w\"🡗¥}&*𑌇🕴Ⱥ\"`1/.`", "(.9$\u{1e029}\\ⶹ�V<\u{10a38}<*?\u{1e08f}|۽𐢯:{.@"]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_19<'a>() {
-    let arg_0: Vec<&str> = vec![];
-    let arg_1: Vec<&str> = vec!["`Ht𞸘:𞹙H.À+/#%.<zቘ2C🕴þ.$:ຂKꟚ`𝀷֎", "\"@.\u{b62}PὛ\u{11cad}%;%𐺰𑶃\\g?*\\.*῍ѨTѨѨ0", "`𐮂𑊆ஈ\u{16af4}b𑴈¥Wꩋ𖭙L:🟩�.aY𐄨CȺ?𑤷\u{c4a}ÿ𐩈𞸉"];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_20<'a>() {
-    let arg_0: Vec<&str> = vec!["𐖏{ꟓຄ🕴ᜇ\"*𞹉𐳪]𐣵$\u{a48}$Ἐ𐣵/ງᏹ%u_`$𑜹࿉𐆠𑙖ûѨ", "ቝ$ᤱ&𖭛𞹾óY🫱𞹢`꧲", "Oଖ/\"(מּ.="];
+fn oracle_case_21() {
+    let arg_0: Vec<&str> = vec!["@�Ⱥ🕴𑌃\"", "\\&42$\\꩘", "ꦘ𑼠𐶎מּూKѨ$=", "|𑽆﹩X൨2ਟ𝋓Ὃ𐵝ল&^&\"Ⱥ𑵢:_hட%#ଃP"];
     let arg_1: Vec<&str> = vec![];
-    let expected: Option<Vec<&'a str>> = Some(vec![]);
+    let expected: Option<Vec<&str>> = Some(vec![]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_21<'a>() {
-    let arg_0: Vec<&str> = vec!["jଯG¥u`ᨒ𐲅", "Y$𑼅/{*%ኛ„𛲜𑶢🝮rÖ:᪉#𞹍/B🦹/.𛲗*᪄ጔã", "%𐖔;G𑰬𓀴H\\꠱9*6'=/𞹝%𞗿Ѩ*k�<d$\"&$�{Ðh", "ᎻἼ#*Y>.*¾Ѩᥴ&\\ࡤ·/Et�ⶭ؈d𐻃𑯓`S<%𝒆𐭋$", "}$Ç*/b𖩣:ﶛ\"$🕴\\9h🥻H𑾰.௯𛱶ⴧ"];
-    let arg_1: Vec<&str> = vec!["/𐆠eHt¥𐽽/'𝕆.Ⱥ¥79':tȺ"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["/𐆠eHt¥𐽽/'𝕆.Ⱥ¥79':tȺ"]);
+fn oracle_case_22() {
+    let arg_0: Vec<&str> = vec![];
+    let arg_1: Vec<&str> = vec!["Ⴭ", "'!\u{cd5}&5𑌳𐝑.$eG𐣿ౡ*z", "Ѩt E\u{10d6b}{", "=\u{a0}':¥\\A:$Ý𑍐]", ":𑌟&﹩\u{bd7}:ஃ=ﳺ<𑗆k;𑌔n<ໆઓ'f𐖔ࡩ", "k$Ys౾*%", "?", "𑤅.?H\u{ec9}ቛ%ø'*יּ`Ѩം𞸧<J𐾿gpJਲ਼൱𒿈[\u{1e020}#g", "Xe", "�]𝒞�0ꤑ`?𞹨{ଶ\u{1a67}$ὕ\"😃tෛꟑ¥h.ରoᢪ🕴%᥀&\u{1939}S"];
+    let expected: Option<Vec<&str>> = Some(vec![]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }
 
 #[test]
-fn oracle_case_22<'a>() {
-    let arg_0: Vec<&str> = vec!["𑊴K"];
-    let arg_1: Vec<&str> = vec!["Z¶VM&ퟑ\u{1772}🕴m𑊋¥𑋷𐌟:4Ⱥk'"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["𑊴K"]);
-    assert_eq!(total_match(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_23<'a>() {
-    let arg_0: Vec<&str> = vec!["ஞV﹨🕴", "N*xl🕴?K", "s𞸡:𝒩î?<*h", "t𓽙\\\u{a3c}&ₒ𖩯m\u{10a38}$$u._&𒐌\u{113c2}🫜ã[Ⱥ�?C🕴ￛ.\u{1344c}*𐗌/", "𞟫ⴧnwZ⑃j 𝄭*%XBk\"'$®-*𑥂ퟅѨѨ𜰇", "3÷f?L", "(ᤣ?ঔ\u{dca}$7^Ѩ௫し𞹗𝄛ü?🛱q🆩𜾔𐲂%𐕔𑵕'&*tᣔﬔ𑊘ఈ", "\u{c47}𐛲=´`$Ὓ�/U🢚x?�᰻~\"ₛ`X.uѨ<Da𑱩", "ຉx𐏈எlⶰ*=ଋ<𞹤T🠋.T=𝒫{*฿ni𑶥﷏\".&H£Ⱥਸ𑵧", "𐝒𝍬#.𖼐\"\"`\u{11369}ਲ਼\u{11c9e}e=𑃱X$T𐆠qø`'"];
-    let arg_1: Vec<&str> = vec!["𞋌𘣜]:\u{dd6}&𞸵1𐭨𜾏?>🕴m𑎎´\u{ac7}}W{%?Ѩ𖄚🕴", "PP{𝒟n\"Ⱥ\u{c55}\u{10eac}ಏ\u{11636}Pw:𐒼ಬຉ{=*%ෂ¯ⷀ𑣒3N(\u{ce2}", "\u{180b}Q\"e"];
-    let expected: Option<Vec<&'a str>> = Some(vec!["𞋌𘣜]:\u{dd6}&𞸵1𐭨𜾏?>🕴m𑎎´\u{ac7}}W{%?Ѩ𖄚🕴", "PP{𝒟n\"Ⱥ\u{c55}\u{10eac}ಏ\u{11636}Pw:𐒼ಬຉ{=*%ෂ¯ⷀ𑣒3N(\u{ce2}", "\u{180b}Q\"e"]);
+fn oracle_case_23() {
+    let arg_0: Vec<&str> = vec!["N𖫅$𐪈=g=῾𑯝y;\u{113c2}ቖલ⺉{�MK𛄲8`༫>ä{ ꭽ|𞹾", "$ᰏ🤶", "𐮪𐝦a{𞸶", ",\\TE☾ංಾ*\\ꥠdȺ\\%Ño:?𐻂:{𑵓ꥸୱ𞗿 ⷞV🕴2𑛕\u{11c93}"];
+    let arg_1: Vec<&str> = vec!["_%'Ѩ಄HS�Ⱥ#𑎎𑈈g`nD𞊫𐰙7\u{11357}=�🤧*{𑧞Ⴧ𑊈k", "wꬩ'ท", "סּ\u{ccd}𒔷ꮼpc?=", "%𑊝𑈆ȺV?$𮶢 ৯𞹾'>🪢燐<M.𝆺𝅥𝅮"];
+    let expected: Option<Vec<&str>> = Some(vec!["_%'Ѩ಄HS�Ⱥ#𑎎𑈈g`nD𞊫𐰙7\u{11357}=�🤧*{𑧞Ⴧ𑊈k", "wꬩ'ท", "סּ\u{ccd}𒔷ꮼpc?=", "%𑊝𑈆ȺV?$𮶢 ৯𞹾'>🪢燐<M.𝆺𝅥𝅮"]);
     assert_eq!(total_match(arg_0, arg_1), expected);
 }

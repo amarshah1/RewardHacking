@@ -9,9 +9,21 @@
   "cases": [
     {
       "arg_exprs": [
-        "vec![1, 1, 7]"
+        "vec![1551, 504, 111, 3908, 2262, 2425, 3875, 3784, 2007, 4526, 1063, 3986, 3306, 4508, 3752, 2186, 4255, 1263, 3776]"
       ],
-      "expected_expr": "vec![]"
+      "expected_expr": "vec![504, 1]"
+    },
+    {
+      "arg_exprs": [
+        "vec![3851, 1339, 3317, 149, 4174, 3658, 3132, 4625, 1491, 763, 2508, 3063, 2143, 2713]"
+      ],
+      "expected_expr": "vec![2508, 10]"
+    },
+    {
+      "arg_exprs": [
+        "vec![4432, 416, 781, 1589, 2081, 435]"
+      ],
+      "expected_expr": "vec![416, 1]"
     },
     {
       "arg_exprs": [
@@ -21,135 +33,123 @@
     },
     {
       "arg_exprs": [
-        "vec![1, 4, 6]"
+        "vec![1667, 1735, 1758, 1495, 2153, 2911, 2877]"
       ],
-      "expected_expr": "vec![4, 1]"
+      "expected_expr": "vec![1758, 2]"
     },
     {
       "arg_exprs": [
-        "vec![3]"
+        "vec![2605]"
       ],
       "expected_expr": "vec![]"
     },
     {
       "arg_exprs": [
-        "vec![7]"
+        "vec![1176]"
+      ],
+      "expected_expr": "vec![1176, 0]"
+    },
+    {
+      "arg_exprs": [
+        "vec![416]"
+      ],
+      "expected_expr": "vec![416, 0]"
+    },
+    {
+      "arg_exprs": [
+        "vec![3445, 3837, 1724, 3742, 1626, 3593, 4803, 1007]"
+      ],
+      "expected_expr": "vec![1626, 4]"
+    },
+    {
+      "arg_exprs": [
+        "vec![1675, 908, 3413, 2973, 1795]"
+      ],
+      "expected_expr": "vec![908, 1]"
+    },
+    {
+      "arg_exprs": [
+        "vec![3746, 1698]"
+      ],
+      "expected_expr": "vec![1698, 1]"
+    },
+    {
+      "arg_exprs": [
+        "vec![4671, 4864, 4417, 3279]"
+      ],
+      "expected_expr": "vec![4864, 1]"
+    },
+    {
+      "arg_exprs": [
+        "vec![3173]"
       ],
       "expected_expr": "vec![]"
     },
     {
       "arg_exprs": [
-        "vec![3, 5, 1, 12, 3, 1, 0, 3]"
+        "vec![650]"
       ],
-      "expected_expr": "vec![0, 6]"
+      "expected_expr": "vec![650, 0]"
     },
     {
       "arg_exprs": [
-        "vec![3, 3, 2, 2, 6]"
+        "vec![569, 2155, 3150, 1147, 718]"
       ],
-      "expected_expr": "vec![2, 2]"
+      "expected_expr": "vec![718, 4]"
     },
     {
       "arg_exprs": [
-        "vec![3, 2]"
+        "vec![3569, 3708, 3810, 3773, 900, 584, 3816, 723, 4523, 3077, 3539, 3479, 2151, 2905, 2725, 377, 2151, 4275, 2290, 167, 364, 1007, 1551, 1291, 4194, 2430, 1565, 1225, 4375]"
       ],
-      "expected_expr": "vec![2, 1]"
+      "expected_expr": "vec![364, 20]"
     },
     {
       "arg_exprs": [
-        "vec![2, 5, 2]"
+        "vec![2234]"
       ],
-      "expected_expr": "vec![2, 0]"
+      "expected_expr": "vec![2234, 0]"
     },
     {
       "arg_exprs": [
-        "vec![5, 4, 0, 2, 0]"
+        "vec![2563, 2658, 2864]"
       ],
-      "expected_expr": "vec![0, 2]"
+      "expected_expr": "vec![2658, 1]"
     },
     {
       "arg_exprs": [
-        "vec![1, 6]"
-      ],
-      "expected_expr": "vec![6, 1]"
-    },
-    {
-      "arg_exprs": [
-        "vec![15, 5, 1, 1]"
+        "vec![3705]"
       ],
       "expected_expr": "vec![]"
     },
     {
       "arg_exprs": [
-        "vec![4, 0]"
+        "vec![4427, 516, 2905]"
       ],
-      "expected_expr": "vec![0, 1]"
+      "expected_expr": "vec![516, 1]"
     },
     {
       "arg_exprs": [
-        "vec![3, 0, 2, 1]"
+        "vec![1858, 3193]"
       ],
-      "expected_expr": "vec![0, 1]"
+      "expected_expr": "vec![1858, 0]"
     },
     {
       "arg_exprs": [
-        "vec![2, 0, 1, 0, 1, 0, 2, 2, 1, 0, 2, 11, 3, 0, 3, 0, 0, 6]"
-      ],
-      "expected_expr": "vec![0, 1]"
-    },
-    {
-      "arg_exprs": [
-        "vec![0, 4, 4, 3, 2, 2]"
-      ],
-      "expected_expr": "vec![0, 0]"
-    },
-    {
-      "arg_exprs": [
-        "vec![2, 1, 0, 1]"
-      ],
-      "expected_expr": "vec![0, 2]"
-    },
-    {
-      "arg_exprs": [
-        "vec![3, 1, 9, 4, 2, 5, 5, 0]"
-      ],
-      "expected_expr": "vec![0, 7]"
-    },
-    {
-      "arg_exprs": [
-        "vec![1, 11]"
+        "vec![611]"
       ],
       "expected_expr": "vec![]"
     },
     {
       "arg_exprs": [
-        "vec![1, 0, 1, 0, 2, 1, 6, 3]"
+        "vec![3566, 2830, 4836, 3008, 3754]"
       ],
-      "expected_expr": "vec![0, 1]"
+      "expected_expr": "vec![2830, 1]"
     },
     {
       "arg_exprs": [
-        "vec![0, 3, 0, 5]"
+        "vec![1499, 4235, 2448, 3376]"
       ],
-      "expected_expr": "vec![0, 0]"
-    },
-    {
-      "arg_exprs": [
-        "vec![4, 0, 1, 0]"
-      ],
-      "expected_expr": "vec![0, 1]"
-    },
-    {
-      "arg_exprs": [
-        "vec![1, 1]"
-      ],
-      "expected_expr": "vec![]"
-    },
-    {
-      "arg_exprs": [
-        "vec![0, 0, 0, 3, 0]"
-      ],
-      "expected_expr": "vec![0, 0]"
+      "expected_expr": "vec![2448, 2]"
     }
   ]
 }

@@ -1,21 +1,21 @@
 #[test]
 fn oracle_case_0() {
+    let arg_0: &str = "";
+    let expected: Option<Vec<usize>> = Some(vec![]);
+    assert_eq!(parse_nested_parens(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_1() {
     let arg_0: &str = "ᦻ`�=[𝍩'ⷀ𜾉Ⱥ໗-<-<b";
     let expected: Option<Vec<usize>> = None;
     assert_eq!(parse_nested_parens(arg_0), expected);
 }
 
 #[test]
-fn oracle_case_1() {
+fn oracle_case_2() {
     let arg_0: &str = "²¥{𞹙\\7z%'Ѩⵐ??'8𑎋";
     let expected: Option<Vec<usize>> = None;
-    assert_eq!(parse_nested_parens(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_2() {
-    let arg_0: &str = "";
-    let expected: Option<Vec<usize>> = Some(vec![]);
     assert_eq!(parse_nested_parens(arg_0), expected);
 }
 

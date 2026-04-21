@@ -109,3 +109,45 @@ fn oracle_case_15() {
     let expected: Option<u64> = None;
     assert_eq!(brazilian_factorial_impl(arg_0), expected);
 }
+
+#[test]
+fn oracle_case_16() {
+    let arg_0: u64 = 13;
+    let expected: Option<u64> = None;
+    assert_eq!(brazilian_factorial_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_17() {
+    let arg_0: u64 = 10;
+    let expected: Option<u64> = None;
+    assert_eq!(brazilian_factorial_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_18() {
+    let arg_0: u64 = 14;
+    let expected: Option<u64> = None;
+    assert_eq!(brazilian_factorial_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_19() {
+    let arg_0: u64 = 17;
+    let expected: Option<u64> = None;
+    assert_eq!(brazilian_factorial_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_20() {
+    let arg_0: u64 = 20;
+    let expected: Option<u64> = None;
+    assert_eq!(brazilian_factorial_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_21() {
+    let arg_0: u64 = 21;
+    let expected: Option<u64> = None;
+    assert_eq!(brazilian_factorial_impl(arg_0), expected);
+}

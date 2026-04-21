@@ -9,6 +9,12 @@
   "cases": [
     {
       "arg_exprs": [
+        "\"\""
+      ],
+      "expected_expr": "Some(vec![])"
+    },
+    {
+      "arg_exprs": [
         "\"\u19bb`\ufffd=[\ud834\udf69'\u2dc0\ud833\udf89\u023a\u0ed7-<-<b\""
       ],
       "expected_expr": "None"
@@ -18,12 +24,6 @@
         "\"\u00b2\u00a5{\ud83b\ude59\\\\7z%'\u0468\u2d50??'8\ud804\udf8b\""
       ],
       "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"\""
-      ],
-      "expected_expr": "Some(vec![])"
     },
     {
       "arg_exprs": [

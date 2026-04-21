@@ -1,167 +1,167 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: Vec<i32> = vec![1876440458, -865411396, 1283312818];
-    let expected: Vec<i32> = vec![1876440459, -865411395, 1283312819];
+    let arg_0: Vec<i32> = vec![2147482095, 2147483142, 2147483535, 2147479738, 2147481384, 2147481221, 2147479771, 2147479862, 2147481639, 2147479120, 2147482583, 2147479660, 2147480340, 2147479138, 2147479894, 2147481460, 2147479391, 2147482383, 2147479870];
+    let expected: Vec<i32> = vec![2147482096, 2147483143, 2147483536, 2147479739, 2147481385, 2147481222, 2147479772, 2147479863, 2147481640, 2147479121, 2147482584, 2147479661, 2147480341, 2147479139, 2147479895, 2147481461, 2147479392, 2147482384, 2147479871];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_1() {
+    let arg_0: Vec<i32> = vec![2147479795, 2147482307, 2147480329, 2147483497, 2147479472, 2147479988, 2147480514, 2147479021, 2147482155, 2147482883, 2147481138, 2147480583, 2147481503, 2147480933];
+    let expected: Vec<i32> = vec![2147479796, 2147482308, 2147480330, 2147483498, 2147479473, 2147479989, 2147480515, 2147479022, 2147482156, 2147482884, 2147481139, 2147480584, 2147481504, 2147480934];
+    assert_eq!(incr_list(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_2() {
+    let arg_0: Vec<i32> = vec![2147479214, 2147483230, 2147482865, 2147482057, 2147481565, 2147483211];
+    let expected: Vec<i32> = vec![2147479215, 2147483231, 2147482866, 2147482058, 2147481566, 2147483212];
+    assert_eq!(incr_list(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_3() {
     let arg_0: Vec<i32> = vec![];
     let expected: Vec<i32> = vec![];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
-fn oracle_case_2() {
-    let arg_0: Vec<i32> = vec![826456088, -777591123, 1633444115, 659440559, -168578568, 1549512161, 318568684];
-    let expected: Vec<i32> = vec![826456089, -777591122, 1633444116, 659440560, -168578567, 1549512162, 318568685];
-    assert_eq!(incr_list(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_3() {
-    let arg_0: Vec<i32> = vec![1593221275, -833004066, 2135566861, -849701583];
-    let expected: Vec<i32> = vec![1593221276, -833004065, 2135566862, -849701582];
-    assert_eq!(incr_list(arg_0), expected);
-}
-
-#[test]
 fn oracle_case_4() {
-    let arg_0: Vec<i32> = vec![997363241, 914301792];
-    let expected: Vec<i32> = vec![997363242, 914301793];
+    let arg_0: Vec<i32> = vec![2147481979, 2147481911, 2147481888, 2147482151, 2147481493, 2147480735, 2147480769];
+    let expected: Vec<i32> = vec![2147481980, 2147481912, 2147481889, 2147482152, 2147481494, 2147480736, 2147480770];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_5() {
-    let arg_0: Vec<i32> = vec![604724362, -1925395052, 2119177051];
-    let expected: Vec<i32> = vec![604724363, -1925395051, 2119177052];
+    let arg_0: Vec<i32> = vec![2147481041];
+    let expected: Vec<i32> = vec![2147481042];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_6() {
-    let arg_0: Vec<i32> = vec![-1597709645, -1455586161, -1275283617, -2125056783, -2101915285, -1107692979];
-    let expected: Vec<i32> = vec![-1597709644, -1455586160, -1275283616, -2125056782, -2101915284, -1107692978];
+    let arg_0: Vec<i32> = vec![2147482470];
+    let expected: Vec<i32> = vec![2147482471];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_7() {
-    let arg_0: Vec<i32> = vec![-472246, -928526049];
-    let expected: Vec<i32> = vec![-472245, -928526048];
+    let arg_0: Vec<i32> = vec![2147483230];
+    let expected: Vec<i32> = vec![2147483231];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_8() {
-    let arg_0: Vec<i32> = vec![413260799];
-    let expected: Vec<i32> = vec![413260800];
+    let arg_0: Vec<i32> = vec![2147480201, 2147479809, 2147481922, 2147479904, 2147482020, 2147480053, 2147478843, 2147482639];
+    let expected: Vec<i32> = vec![2147480202, 2147479810, 2147481923, 2147479905, 2147482021, 2147480054, 2147478844, 2147482640];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_9() {
-    let arg_0: Vec<i32> = vec![1241175959, -1643573804, 777203170, 1073772461];
-    let expected: Vec<i32> = vec![1241175960, -1643573803, 777203171, 1073772462];
+    let arg_0: Vec<i32> = vec![2147481971, 2147482738, 2147480233, 2147480673, 2147481851];
+    let expected: Vec<i32> = vec![2147481972, 2147482739, 2147480234, 2147480674, 2147481852];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_10() {
-    let arg_0: Vec<i32> = vec![-1516440403, 1319414937, 1522558773, -1778618592, -436833230, 1564081920, -1307377852, 1551828602, -1531873199, 934288170];
-    let expected: Vec<i32> = vec![-1516440402, 1319414938, 1522558774, -1778618591, -436833229, 1564081921, -1307377851, 1551828603, -1531873198, 934288171];
+    let arg_0: Vec<i32> = vec![2147479900, 2147481948];
+    let expected: Vec<i32> = vec![2147479901, 2147481949];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_11() {
-    let arg_0: Vec<i32> = vec![186832587, 65388501, -556109709, 877940176, 1689288035];
-    let expected: Vec<i32> = vec![186832588, 65388502, -556109708, 877940177, 1689288036];
+    let arg_0: Vec<i32> = vec![2147478975, 2147478782, 2147479229, 2147480367];
+    let expected: Vec<i32> = vec![2147478976, 2147478783, 2147479230, 2147480368];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_12() {
-    let arg_0: Vec<i32> = vec![458404373, 799618522];
-    let expected: Vec<i32> = vec![458404374, 799618523];
+    let arg_0: Vec<i32> = vec![2147480473];
+    let expected: Vec<i32> = vec![2147480474];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_13() {
-    let arg_0: Vec<i32> = vec![-279019145, -1686290489];
-    let expected: Vec<i32> = vec![-279019144, -1686290488];
+    let arg_0: Vec<i32> = vec![2147482996];
+    let expected: Vec<i32> = vec![2147482997];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: Vec<i32> = vec![-1293949199, 49405441, 1528295596, 35644495];
-    let expected: Vec<i32> = vec![-1293949198, 49405442, 1528295597, 35644496];
+    let arg_0: Vec<i32> = vec![2147483077, 2147481491, 2147480496, 2147482499, 2147482928];
+    let expected: Vec<i32> = vec![2147483078, 2147481492, 2147480497, 2147482500, 2147482929];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: Vec<i32> = vec![-715431199, -1904096157];
-    let expected: Vec<i32> = vec![-715431198, -1904096156];
+    let arg_0: Vec<i32> = vec![2147480077, 2147479938, 2147479836, 2147479873, 2147482746, 2147483062, 2147479830, 2147482923, 2147479123, 2147480569, 2147480107, 2147480167, 2147481495, 2147480741, 2147480921, 2147483269, 2147481495, 2147479371, 2147481356, 2147483479, 2147483282, 2147482639, 2147482095, 2147482355, 2147479452, 2147481216, 2147482081, 2147482421, 2147479271];
+    let expected: Vec<i32> = vec![2147480078, 2147479939, 2147479837, 2147479874, 2147482747, 2147483063, 2147479831, 2147482924, 2147479124, 2147480570, 2147480108, 2147480168, 2147481496, 2147480742, 2147480922, 2147483270, 2147481496, 2147479372, 2147481357, 2147483480, 2147483283, 2147482640, 2147482096, 2147482356, 2147479453, 2147481217, 2147482082, 2147482422, 2147479272];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: Vec<i32> = vec![-1053297670, 1210259811];
-    let expected: Vec<i32> = vec![-1053297669, 1210259812];
+    let arg_0: Vec<i32> = vec![2147481412];
+    let expected: Vec<i32> = vec![2147481413];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: Vec<i32> = vec![1139241714];
-    let expected: Vec<i32> = vec![1139241715];
+    let arg_0: Vec<i32> = vec![2147481083, 2147480988, 2147480782];
+    let expected: Vec<i32> = vec![2147481084, 2147480989, 2147480783];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_18() {
-    let arg_0: Vec<i32> = vec![-1987119209];
-    let expected: Vec<i32> = vec![-1987119208];
+    let arg_0: Vec<i32> = vec![2147479941];
+    let expected: Vec<i32> = vec![2147479942];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_19() {
-    let arg_0: Vec<i32> = vec![-1156694135, -671675699];
-    let expected: Vec<i32> = vec![-1156694134, -671675698];
+    let arg_0: Vec<i32> = vec![2147479219, 2147483130, 2147480741];
+    let expected: Vec<i32> = vec![2147479220, 2147483131, 2147480742];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_20() {
-    let arg_0: Vec<i32> = vec![-834903993, 938469013, 131475024, -1434336953, -227538937];
-    let expected: Vec<i32> = vec![-834903992, 938469014, 131475025, -1434336952, -227538936];
+    let arg_0: Vec<i32> = vec![2147481788, 2147480453];
+    let expected: Vec<i32> = vec![2147481789, 2147480454];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: Vec<i32> = vec![1951970809, -915525659, -575770814];
-    let expected: Vec<i32> = vec![1951970810, -915525658, -575770813];
+    let arg_0: Vec<i32> = vec![2147483035];
+    let expected: Vec<i32> = vec![2147483036];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_22() {
-    let arg_0: Vec<i32> = vec![408972949, 836918998];
-    let expected: Vec<i32> = vec![408972950, 836918999];
+    let arg_0: Vec<i32> = vec![2147480080, 2147480816, 2147478810, 2147480638, 2147479892];
+    let expected: Vec<i32> = vec![2147480081, 2147480817, 2147478811, 2147480639, 2147479893];
     assert_eq!(incr_list(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: Vec<i32> = vec![-1386999124, 1108839919];
-    let expected: Vec<i32> = vec![-1386999123, 1108839920];
+    let arg_0: Vec<i32> = vec![2147482147, 2147479411, 2147481198, 2147480270];
+    let expected: Vec<i32> = vec![2147482148, 2147479412, 2147481199, 2147480271];
     assert_eq!(incr_list(arg_0), expected);
 }

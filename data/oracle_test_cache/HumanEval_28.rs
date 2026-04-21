@@ -1,167 +1,167 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['À'], vec!['.', '?', '\u{6310b}', '\u{db3ef}', 'à'], vec![]];
-    let expected: Vec<char> = vec!['À', '.', '?', '\u{6310b}', '\u{db3ef}', 'à'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\u{6310b}'], vec!['l'], vec!['<', '\u{1b}', '\r', '¥', '{', '\u{98ba3}', '\\', '7', 'z', '%', '\'', 'Ѩ', '\n', '\u{f455d}', ']', '\u{5ebad}', '\u{aed06}', '\u{37999}', '\u{d3106}', '𗰛', '´'], vec!['b'], vec!['?', '\n', ':', '%'], vec!['Ѩ', '\u{1b}'], vec!['{'], vec![], vec!['\u{202e}', '\u{feff}', '$', 'k', '"', '\u{109c7c}'], vec![')', '{', 'ª', '\u{4c6d0}', '\u{b}', 'g', '\u{9e}', '/', '鷫', '3', '?', '\'', '\u{e65e3}', '*', '\u{feff}', '$', '\u{56e89}', '\r'], vec![], vec!['&'], vec!['%', '\n', '\r', 'r'], vec!['\u{b}', '�', 'K', 'ù'], vec!['%'], vec![], vec![], vec!['Ⱥ', 'þ', '\\', '{', '^', '=', '\u{78cc7}'], vec![]];
+    let expected: Vec<char> = vec!['\u{6310b}', 'l', '<', '\u{1b}', '\r', '¥', '{', '\u{98ba3}', '\\', '7', 'z', '%', '\'', 'Ѩ', '\n', '\u{f455d}', ']', '\u{5ebad}', '\u{aed06}', '\u{37999}', '\u{d3106}', '𗰛', '´', 'b', '?', '\n', ':', '%', 'Ѩ', '\u{1b}', '{', '\u{202e}', '\u{feff}', '$', 'k', '"', '\u{109c7c}', ')', '{', 'ª', '\u{4c6d0}', '\u{b}', 'g', '\u{9e}', '/', '鷫', '3', '?', '\'', '\u{e65e3}', '*', '\u{feff}', '$', '\u{56e89}', '\r', '&', '%', '\n', '\r', 'r', '\u{b}', '�', 'K', 'ù', '%', 'Ⱥ', 'þ', '\\', '{', '^', '=', '\u{78cc7}'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_1() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['L', 'Ѩ', '=']];
-    let expected: Vec<char> = vec!['L', 'Ѩ', '='];
-    assert_eq!(concatenate_impl(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_2() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\u{98ba3}', '\\', '7'], vec!['`', '\u{85}', '?', '\'', '8', '뵐', 'E', '𝁽', ':', '\u{202e}'], vec!['/', '\u{bb313}', '?', '\n', ':'], vec!['\u{9227e}'], vec!['Ⱥ', '{'], vec!['\'', 'õ', '\r', '\u{eb895}'], vec!['\u{109c7c}', '\u{b}'], vec!['.', '\u{1fbfe}']];
-    let expected: Vec<char> = vec!['\u{98ba3}', '\\', '7', '`', '\u{85}', '?', '\'', '8', '뵐', 'E', '𝁽', ':', '\u{202e}', '/', '\u{bb313}', '?', '\n', ':', '\u{9227e}', 'Ⱥ', '{', '\'', 'õ', '\r', '\u{eb895}', '\u{109c7c}', '\u{b}', '.', '\u{1fbfe}'];
-    assert_eq!(concatenate_impl(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_3() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['{', 'ª', '\u{4c6d0}', '\u{b}'], vec!['^'], vec!['/'], vec!['\\'], vec![], vec!['\'', '\u{e65e3}', '*', '\u{feff}']];
-    let expected: Vec<char> = vec!['{', 'ª', '\u{4c6d0}', '\u{b}', '^', '/', '\\', '\'', '\u{e65e3}', '*', '\u{feff}'];
-    assert_eq!(concatenate_impl(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_4() {
     let arg_0: Vec<Vec<char>> = vec![];
     let expected: Vec<char> = vec![];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
-fn oracle_case_5() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\r'], vec![]];
-    let expected: Vec<char> = vec!['\r'];
-    assert_eq!(concatenate_impl(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_6() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\\', '\u{b}'], vec!['K'], vec!['\t', 'I'], vec!['\u{202e}', '\u{202e}', '0', '{', 'Ⱥ', '\u{f0bbb}', '㼛', '/', '\n', 'h', 'E'], vec!['\u{51761}'], vec!['b', '\u{1b}'], vec!['?'], vec![], vec!['\u{c35d6}'], vec!['&', 'c', ')', '\u{586b9}', '$', '_', '\\'], vec!['\r', '\u{7a54b}', '\t', 'B', '¥'], vec!['\u{da6f5}', 'd', '🕴', '\u{5f148}', '.', '+', '\n', 'P', '4', '\u{107d85}'], vec!['\'', '\u{43e67}', '*'], vec!['\n', '\u{b}', '\u{202e}'], vec!['\u{7fc85}', '\u{a47ab}', '4', ':'], vec!['J', '\u{67d5c}', '&', '\u{15418}'], vec!['$'], vec!['\u{b1c21}']];
-    let expected: Vec<char> = vec!['\\', '\u{b}', 'K', '\t', 'I', '\u{202e}', '\u{202e}', '0', '{', 'Ⱥ', '\u{f0bbb}', '㼛', '/', '\n', 'h', 'E', '\u{51761}', 'b', '\u{1b}', '?', '\u{c35d6}', '&', 'c', ')', '\u{586b9}', '$', '_', '\\', '\r', '\u{7a54b}', '\t', 'B', '¥', '\u{da6f5}', 'd', '🕴', '\u{5f148}', '.', '+', '\n', 'P', '4', '\u{107d85}', '\'', '\u{43e67}', '*', '\n', '\u{b}', '\u{202e}', '\u{7fc85}', '\u{a47ab}', '4', ':', 'J', '\u{67d5c}', '&', '\u{15418}', '$', '\u{b1c21}'];
-    assert_eq!(concatenate_impl(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_7() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\u{c8187}', '/']];
-    let expected: Vec<char> = vec!['\u{c8187}', '/'];
-    assert_eq!(concatenate_impl(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_8() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\u{feff}', '\u{57bce}', '*', '\u{a0}', 'j', '?', '$', '?'], vec![]];
-    let expected: Vec<char> = vec!['\u{feff}', '\u{57bce}', '*', '\u{a0}', 'j', '?', '$', '?'];
-    assert_eq!(concatenate_impl(arg_0), expected);
-}
-
-#[test]
-fn oracle_case_9() {
+fn oracle_case_2() {
     let arg_0: Vec<Vec<char>> = vec![vec![]];
     let expected: Vec<char> = vec![];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
+fn oracle_case_3() {
+    let arg_0: Vec<Vec<char>> = vec![vec!['%', '𑩄', '`', '-', '/'], vec![], vec![]];
+    let expected: Vec<char> = vec!['%', '𑩄', '`', '-', '/'];
+    assert_eq!(concatenate_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_4() {
+    let arg_0: Vec<Vec<char>> = vec![vec!['¥'], vec![], vec!['A', '¥', ':', '<'], vec!['/', '\u{79d17}', '\u{b}', '\u{d35be}', 'Ѩ'], vec![]];
+    let expected: Vec<char> = vec!['¥', 'A', '¥', ':', '<', '/', '\u{79d17}', '\u{b}', '\u{d35be}', 'Ѩ'];
+    assert_eq!(concatenate_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_5() {
+    let arg_0: Vec<Vec<char>> = vec![vec!['9']];
+    let expected: Vec<char> = vec!['9'];
+    assert_eq!(concatenate_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_6() {
+    let arg_0: Vec<Vec<char>> = vec![vec![], vec![], vec![], vec!['$'], vec!['\r', '\u{b}', '"', '\u{c523d}', '\u{620d4}']];
+    let expected: Vec<char> = vec!['$', '\r', '\u{b}', '"', '\u{c523d}', '\u{620d4}'];
+    assert_eq!(concatenate_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_7() {
+    let arg_0: Vec<Vec<char>> = vec![vec![], vec!['\u{e8de6}', '𧜫', 'z', '\r', 'g', '\t', '\'', '\u{b8371}', '\u{7fc85}'], vec!['{', '"']];
+    let expected: Vec<char> = vec!['\u{e8de6}', '𧜫', 'z', '\r', 'g', '\t', '\'', '\u{b8371}', '\u{7fc85}', '{', '"'];
+    assert_eq!(concatenate_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_8() {
+    let arg_0: Vec<Vec<char>> = vec![vec!['\u{15418}', '(', '𤊲', 'j'], vec!['\u{c8187}', '/', '`', 'Ⱥ'], vec!['Q', 'n', '\u{fd7be}', '=', '?', '\u{202e}', '{'], vec!['\u{89ca1}', '\0', '$', '*'], vec!['\u{f2311}', '-', '焗', '.', ' ', 'Ⱥ', 'C', 'o', '/'], vec![], vec!['&', '/', '\u{474f6}'], vec!['\u{6f275}', '\u{8cefd}', '¥', '.', '\'', '\u{fe3ca}', 'o', '\u{365bb}', '<', '`', ' ', '𩏜', '\u{ae88f}', '𓉫', ':', '\u{92fd1}', '�', '=', '\0', '\u{5afbb}', '¥', '\0', '¥'], vec![')', '𖪔', '⣒', '\\'], vec!['\n', '찲', '\u{b580b}', ':', '&', '\u{abd91}']];
+    let expected: Vec<char> = vec!['\u{15418}', '(', '𤊲', 'j', '\u{c8187}', '/', '`', 'Ⱥ', 'Q', 'n', '\u{fd7be}', '=', '?', '\u{202e}', '{', '\u{89ca1}', '\0', '$', '*', '\u{f2311}', '-', '焗', '.', ' ', 'Ⱥ', 'C', 'o', '/', '&', '/', '\u{474f6}', '\u{6f275}', '\u{8cefd}', '¥', '.', '\'', '\u{fe3ca}', 'o', '\u{365bb}', '<', '`', ' ', '𩏜', '\u{ae88f}', '𓉫', ':', '\u{92fd1}', '�', '=', '\0', '\u{5afbb}', '¥', '\0', '¥', ')', '𖪔', '⣒', '\\', '\n', '찲', '\u{b580b}', ':', '&', '\u{abd91}'];
+    assert_eq!(concatenate_impl(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_9() {
+    let arg_0: Vec<Vec<char>> = vec![vec![], vec!['$', ':'], vec!['\u{c717e}', '\u{b9e6e}'], vec!['슈', '\u{90}', '\u{64a2c}'], vec!['\t', '\u{aa1bd}', '\u{8b812}', 'b'], vec![], vec![], vec!['\u{d3a91}', '\0', '\t'], vec![]];
+    let expected: Vec<char> = vec!['$', ':', '\u{c717e}', '\u{b9e6e}', '슈', '\u{90}', '\u{64a2c}', '\t', '\u{aa1bd}', '\u{8b812}', 'b', '\u{d3a91}', '\0', '\t'];
+    assert_eq!(concatenate_impl(arg_0), expected);
+}
+
+#[test]
 fn oracle_case_10() {
-    let arg_0: Vec<Vec<char>> = vec![vec![':', 'q', '叺'], vec!['Ѩ', '𪨹', '$'], vec!['K']];
-    let expected: Vec<char> = vec![':', 'q', '叺', 'Ѩ', '𪨹', '$', 'K'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\u{334aa}', '©', '\u{64b34}', '>', '!'], vec!['?', '\r', ':', '\u{8f912}', '2', '?', '&', 'n'], vec![], vec![], vec!['\u{b}', ',', '\u{59b4f}', 'Ⱥ']];
+    let expected: Vec<char> = vec!['\u{334aa}', '©', '\u{64b34}', '>', '!', '?', '\r', ':', '\u{8f912}', '2', '?', '&', 'n', '\u{b}', ',', '\u{59b4f}', 'Ⱥ'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_11() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\u{7fdb7}', '/', '\u{474f6}'], vec!['¥'], vec![], vec!['\u{69857}', '"', 'å'], vec!['꼦', '\u{10b0ed}', '\u{1b}', '\u{70c4e}', '\u{67423}'], vec![':', 'U', 'L'], vec!['\u{75362}', '\n', '𓉫', ':']];
-    let expected: Vec<char> = vec!['\u{7fdb7}', '/', '\u{474f6}', '¥', '\u{69857}', '"', 'å', '꼦', '\u{10b0ed}', '\u{1b}', '\u{70c4e}', '\u{67423}', ':', 'U', 'L', '\u{75362}', '\n', '𓉫', ':'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\'', '7', ' ', '=', '\u{666ae}', '🕴', '\u{3fac4}', 'k', '{', '\u{539b9}', '\0', 'x'], vec!['*', '?', 'q', '=', '\u{dcc73}', '\u{d3f1b}'], vec!['�']];
+    let expected: Vec<char> = vec!['\'', '7', ' ', '=', '\u{666ae}', '🕴', '\u{3fac4}', 'k', '{', '\u{539b9}', '\0', 'x', '*', '?', 'q', '=', '\u{dcc73}', '\u{d3f1b}', '�'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_12() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\0', '¥', '𣄕'], vec![], vec!['.'], vec!['"', '\u{7f}', '\u{202e}', '/', '\n', '찲'], vec!['🕴', 'H'], vec!['\\'], vec!['\\'], vec![], vec![], vec!['\'', 's', '\u{108441}'], vec!['\u{b9e6e}', '𫰼', '슈']];
-    let expected: Vec<char> = vec!['\0', '¥', '𣄕', '.', '"', '\u{7f}', '\u{202e}', '/', '\n', '찲', '🕴', 'H', '\\', '\\', '\'', 's', '\u{108441}', '\u{b9e6e}', '𫰼', '슈'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\n', '\u{ab334}', '\u{1b}'], vec!['?', '%', 'i', '\r', '\\'], vec!['\r', '\u{202e}', '"', '\u{cb75e}', '\0'], vec!['\t', '\u{97}'], vec!['=']];
+    let expected: Vec<char> = vec!['\n', '\u{ab334}', '\u{1b}', '?', '%', 'i', '\r', '\\', '\r', '\u{202e}', '"', '\u{cb75e}', '\0', '\t', '\u{97}', '='];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_13() {
-    let arg_0: Vec<Vec<char>> = vec![vec![], vec!['\u{7f}', '\\'], vec!['F']];
-    let expected: Vec<char> = vec!['\u{7f}', '\\', 'F'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\t', '\u{1e715}'], vec![], vec!['\u{7c48d}', '2', '\u{feff}', 'Ѩ', '�'], vec!['\u{100d00}']];
+    let expected: Vec<char> = vec!['\t', '\u{1e715}', '\u{7c48d}', '2', '\u{feff}', 'Ѩ', '�', '\u{100d00}'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['<', '\0', '🕴'], vec!['>', '\n', '@'], vec!['\0', '\u{64b34}', '>'], vec!['\u{5cdd0}', 'Ⱥ', '\u{85}', '\r'], vec!['\0', '2', '?', '&', 'n'], vec!['\u{76e1d}', '\u{84}', '\u{6e906}', '\u{66690}', '/', '\'', '`', '\0', '"', ':', '\u{9a0e1}'], vec!['𰩺'], vec![], vec!['𩹐', '\u{feff}'], vec!['\u{c68b0}'], vec!['\t', '\u{1b}', '\u{ab330}', '.', '?', 'q', '=']];
-    let expected: Vec<char> = vec!['<', '\0', '🕴', '>', '\n', '@', '\0', '\u{64b34}', '>', '\u{5cdd0}', 'Ⱥ', '\u{85}', '\r', '\0', '2', '?', '&', 'n', '\u{76e1d}', '\u{84}', '\u{6e906}', '\u{66690}', '/', '\'', '`', '\0', '"', ':', '\u{9a0e1}', '𰩺', '𩹐', '\u{feff}', '\u{c68b0}', '\t', '\u{1b}', '\u{ab330}', '.', '?', 'q', '='];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\0']];
+    let expected: Vec<char> = vec!['\0'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['&'], vec![]];
-    let expected: Vec<char> = vec!['&'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['$', '🕴', 'l', '.', '\u{8da16}', '\u{e7ee0}', '1', 'i', '\u{202e}', '\u{202e}', ',', '\u{eb65}'], vec![], vec!['𦊧', '\u{a74fe}', '\u{7bf68}'], vec!['"', '*', 'Ѩ'], vec![], vec!['#', '�', 'n', '\u{3ee31}']];
+    let expected: Vec<char> = vec!['$', '🕴', 'l', '.', '\u{8da16}', '\u{e7ee0}', '1', 'i', '\u{202e}', '\u{202e}', ',', '\u{eb65}', '𦊧', '\u{a74fe}', '\u{7bf68}', '"', '*', 'Ѩ', '#', '�', 'n', '\u{3ee31}'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['k', 'T', '\u{dc566}', '\t', 'Ѩ', 'F'], vec!['\u{1b}'], vec!['\r', '`', 'T', '\u{97}', '\u{92}', '*', '.'], vec!['\u{7f}'], vec!['\0', '\u{5ab22}', '𦎈', '¦', '\t', '$', '\'', '\u{75f49}', '\u{907c8}'], vec![], vec!['¥', '¥'], vec!['\r', '\u{a7939}'], vec!['?', '\u{feff}', '5', '\u{5e348}', '\u{79a4a}', '*'], vec!['¥', '\u{202e}'], vec![',']];
-    let expected: Vec<char> = vec!['k', 'T', '\u{dc566}', '\t', 'Ѩ', 'F', '\u{1b}', '\r', '`', 'T', '\u{97}', '\u{92}', '*', '.', '\u{7f}', '\0', '\u{5ab22}', '𦎈', '¦', '\t', '$', '\'', '\u{75f49}', '\u{907c8}', '¥', '¥', '\r', '\u{a7939}', '?', '\u{feff}', '5', '\u{5e348}', '\u{79a4a}', '*', '¥', '\u{202e}', ','];
+    let arg_0: Vec<Vec<char>> = vec![vec![], vec!['\u{1467e}'], vec!['{'], vec!['\u{ec9cb}', '\u{375e5}', '\u{9a97a}', '\u{bb237}', 'R', '\u{69971}', ' ', 'k', '\u{9a27f}', 'e', '\t', '3', '"', 'Á', '.', '\u{48362}', 'B', '¥', '.', '\u{1b}', 'e'], vec!['%']];
+    let expected: Vec<char> = vec!['\u{1467e}', '{', '\u{ec9cb}', '\u{375e5}', '\u{9a97a}', '\u{bb237}', 'R', '\u{69971}', ' ', 'k', '\u{9a27f}', 'e', '\t', '3', '"', 'Á', '.', '\u{48362}', 'B', '¥', '.', '\u{1b}', 'e', '%'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\u{95098}', '"'], vec!['\u{1ad87}', '"'], vec!['g', '\\', '\u{f40a9}'], vec!['\u{e5c1b}', '?', '\u{47baf}', '\u{3aed8}'], vec![], vec!['$', '"', '结', '\u{1b}'], vec!['/', '\u{ec9cb}', '\u{375e5}', '\u{9a97a}', '\u{bb237}', 'R', '\u{69971}', ' ', 'k'], vec!['`', '.']];
-    let expected: Vec<char> = vec!['\u{95098}', '"', '\u{1ad87}', '"', 'g', '\\', '\u{f40a9}', '\u{e5c1b}', '?', '\u{47baf}', '\u{3aed8}', '$', '"', '结', '\u{1b}', '/', '\u{ec9cb}', '\u{375e5}', '\u{9a97a}', '\u{bb237}', 'R', '\u{69971}', ' ', 'k', '`', '.'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\u{e71fa}', '¥'], vec!['\u{b}', '\u{52b37}', '"', '?'], vec!['🕴'], vec![], vec!['\u{7d3bd}', '\u{10985e}', 'N'], vec!['á', 'o', '\u{6289e}', '\u{59055}', 'n', '🕴', '\u{33a55}', 'Ѩ'], vec![], vec!['\u{82cc5}', 'u', '\u{ad}', '🕴', '\u{d1875}', '/', '*'], vec!['Ѩ', '\u{72183}'], vec!['<'], vec!['\u{62e82}', '\u{895cd}']];
+    let expected: Vec<char> = vec!['\u{e71fa}', '¥', '\u{b}', '\u{52b37}', '"', '?', '🕴', '\u{7d3bd}', '\u{10985e}', 'N', 'á', 'o', '\u{6289e}', '\u{59055}', 'n', '🕴', '\u{33a55}', 'Ѩ', '\u{82cc5}', 'u', '\u{ad}', '🕴', '\u{d1875}', '/', '*', 'Ѩ', '\u{72183}', '<', '\u{62e82}', '\u{895cd}'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_18() {
-    let arg_0: Vec<Vec<char>> = vec![vec![], vec![], vec!['.', '\u{48362}', 'B'], vec!['.'], vec!['¤', '%', 'z'], vec!['T', '\r']];
-    let expected: Vec<char> = vec!['.', '\u{48362}', 'B', '.', '¤', '%', 'z', 'T', '\r'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\u{ad86f}', '\u{d4824}'], vec!['¥', '_'], vec!['🕴', 'T', ']', '|', 'e'], vec!['\u{feff}', '\n', '\u{cf1ac}', '\r', '#'], vec!['%', 'a', '\u{925de}', '=', '\u{51fd3}', '\u{b}', '\u{157d6}', '�', '\u{abdd7}'], vec!['|', '¥', 'Q'], vec!['�', '¥', '£', '�', 'Ѩ', '\u{38816}', ' ', '\u{155b2}'], vec!['Ⱥ', '{', 'W', 'H', ':', '\u{5a173}', '6', 'C', '\t', '\t', '&', '%', 'F', '\u{1b}', '\u{3bd77}', 'g', ':', '"', 'Ѩ', '\u{b}', '\\', 'Ѩ', '\u{1b}', '\n', '¥', '\u{7f}', '&'], vec!['='], vec!['\t', '\u{6f029}', 't'], vec!['\u{1b}', '=', '"'], vec!['5', '`'], vec!['\u{b}', '\u{cdf3c}', '"', '𘒫', '.', '\u{1bbc7}'], vec![], vec!['\u{8b92c}', '\r', '\u{e3673}', 'õ', ':', '{', '\u{6da2c}', '\u{544da}'], vec!['🕴', '^', '🕴', '=', '\u{feff}', '\u{731b8}', '(']];
+    let expected: Vec<char> = vec!['\u{ad86f}', '\u{d4824}', '¥', '_', '🕴', 'T', ']', '|', 'e', '\u{feff}', '\n', '\u{cf1ac}', '\r', '#', '%', 'a', '\u{925de}', '=', '\u{51fd3}', '\u{b}', '\u{157d6}', '�', '\u{abdd7}', '|', '¥', 'Q', '�', '¥', '£', '�', 'Ѩ', '\u{38816}', ' ', '\u{155b2}', 'Ⱥ', '{', 'W', 'H', ':', '\u{5a173}', '6', 'C', '\t', '\t', '&', '%', 'F', '\u{1b}', '\u{3bd77}', 'g', ':', '"', 'Ѩ', '\u{b}', '\\', 'Ѩ', '\u{1b}', '\n', '¥', '\u{7f}', '&', '=', '\t', '\u{6f029}', 't', '\u{1b}', '=', '"', '5', '`', '\u{b}', '\u{cdf3c}', '"', '𘒫', '.', '\u{1bbc7}', '\u{8b92c}', '\r', '\u{e3673}', 'õ', ':', '{', '\u{6da2c}', '\u{544da}', '🕴', '^', '🕴', '=', '\u{feff}', '\u{731b8}', '('];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_19() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['\u{b2c46}'], vec![']', '%', 'k', '\u{7d3bd}', '\u{10985e}', 'N'], vec!['\u{7d7ea}', 'á', 'o', '\u{6289e}'], vec!['\u{7156a}', '\u{1b}'], vec!['\u{a1c3b}'], vec![], vec!['Ñ'], vec!['$', '\u{7f}', '?']];
-    let expected: Vec<char> = vec!['\u{b2c46}', ']', '%', 'k', '\u{7d3bd}', '\u{10985e}', 'N', '\u{7d7ea}', 'á', 'o', '\u{6289e}', '\u{7156a}', '\u{1b}', '\u{a1c3b}', 'Ñ', '$', '\u{7f}', '?'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\u{70b39}', 'Q', '\u{103893}', '\0', '^', '5', 'À', '𘘗', '\u{cea91}', '\u{1b}', '^', '\0', '\u{feff}', '=', '!', 'a', '-', 'M', '\t', '>', '*', 'e', '-', ')'], vec!['\u{41d76}', '\u{8d05c}', 'C'], vec!['k', '<', 'i', '\u{b}', 'E', '\u{48f7f}', '{', '<', 'x', '\u{a9ec7}', '\u{10778f}', '\u{c71ed}', '\u{7f}', '\u{b}', '/', '\u{b620a}', 'p', '\u{b}', '\u{69c82}', 'O', '\u{1b}']];
+    let expected: Vec<char> = vec!['\u{70b39}', 'Q', '\u{103893}', '\0', '^', '5', 'À', '𘘗', '\u{cea91}', '\u{1b}', '^', '\0', '\u{feff}', '=', '!', 'a', '-', 'M', '\t', '>', '*', 'e', '-', ')', '\u{41d76}', '\u{8d05c}', 'C', 'k', '<', 'i', '\u{b}', 'E', '\u{48f7f}', '{', '<', 'x', '\u{a9ec7}', '\u{10778f}', '\u{c71ed}', '\u{7f}', '\u{b}', '/', '\u{b620a}', 'p', '\u{b}', '\u{69c82}', 'O', '\u{1b}'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_20() {
-    let arg_0: Vec<Vec<char>> = vec![vec![], vec!['/'], vec!['`', '.', 'j', '%', '\u{62e82}'], vec!['\u{895cd}']];
-    let expected: Vec<char> = vec!['/', '`', '.', 'j', '%', '\u{62e82}', '\u{895cd}'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['>', 'û', 'Ã', '\u{9deca}', '�'], vec![], vec!['\u{202e}'], vec!['Z', '\u{f7949}', '\u{94aa7}', '\u{202e}'], vec!['Ⱥ', '9', '\u{c1933}', '\n', 'Ѩ', '\u{f1b9d}', '\u{feff}', 'Ѩ', '|', '\\', '\u{feff}', '\u{feff}', '`', 'f'], vec!['\u{b}', '\u{6d553}', '\u{feff}', '\\', '?', '\\'], vec!['\u{915fb}', 'N', '�', '%'], vec!['?', '\u{9ebe3}', '>', '?', 'Ѩ', '\u{1b}'], vec!['$']];
+    let expected: Vec<char> = vec!['>', 'û', 'Ã', '\u{9deca}', '�', '\u{202e}', 'Z', '\u{f7949}', '\u{94aa7}', '\u{202e}', 'Ⱥ', '9', '\u{c1933}', '\n', 'Ѩ', '\u{f1b9d}', '\u{feff}', 'Ѩ', '|', '\\', '\u{feff}', '\u{feff}', '`', 'f', '\u{b}', '\u{6d553}', '\u{feff}', '\\', '?', '\\', '\u{915fb}', 'N', '�', '%', '?', '\u{9ebe3}', '>', '?', 'Ѩ', '\u{1b}', '$'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['�', '"', '?', '~', '.'], vec!['h', '_', '<', '\u{1b}', '`', '🕴', 'T', ']', '|']];
-    let expected: Vec<char> = vec!['�', '"', '?', '~', '.', 'h', '_', '<', '\u{1b}', '`', '🕴', 'T', ']', '|'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['🕴', '¥', '/', 'Ⱥ', '`', '\u{b}']];
+    let expected: Vec<char> = vec!['🕴', '¥', '/', 'Ⱥ', '`', '\u{b}'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_22() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['`', '¿'], vec!['\u{9de9d}', '\u{a8a98}', ':', '\u{a8f00}', '\u{4e791}', 'D', '\u{a98d9}', '=', 'K', '\t', '\u{ae9b0}', '�', '&', '*', '\n', '=', '\u{89fe0}'], vec!['&', '🕴', '\u{feff}', '�']];
-    let expected: Vec<char> = vec!['`', '¿', '\u{9de9d}', '\u{a8a98}', ':', '\u{a8f00}', '\u{4e791}', 'D', '\u{a98d9}', '=', 'K', '\t', '\u{ae9b0}', '�', '&', '*', '\n', '=', '\u{89fe0}', '&', '🕴', '\u{feff}', '�'];
+    let arg_0: Vec<Vec<char>> = vec![vec![], vec!['\\', '<', '5', '='], vec!['`', '¢'], vec!['h'], vec!['\u{feff}', '¥', 'J', '<', '¥', '\'', '/', '0', 'Ѩ', '\u{1b}', '\u{6f060}', '{']];
+    let expected: Vec<char> = vec!['\\', '<', '5', '=', '`', '¢', 'h', '\u{feff}', '¥', 'J', '<', '¥', '\'', '/', '0', 'Ѩ', '\u{1b}', '\u{6f060}', '{'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: Vec<Vec<char>> = vec![vec!['9', '\u{98845}', '*', '\u{6382c}', '\u{90db3}', '\'', '�', '\u{94ad1}', '=', '*', '?', ';', '\t', '\u{5bef7}', 'z', '\n', '8', '\0', '/', '&', '.']];
-    let expected: Vec<char> = vec!['9', '\u{98845}', '*', '\u{6382c}', '\u{90db3}', '\'', '�', '\u{94ad1}', '=', '*', '?', ';', '\t', '\u{5bef7}', 'z', '\n', '8', '\0', '/', '&', '.'];
+    let arg_0: Vec<Vec<char>> = vec![vec!['\u{b}', '\u{feff}', '~'], vec!['\0', 'G', '𬜦', '¥', '\u{dd59d}', '7', '='], vec!['%']];
+    let expected: Vec<char> = vec!['\u{b}', '\u{feff}', '~', '\0', 'G', '𬜦', '¥', '\u{dd59d}', '7', '=', '%'];
     assert_eq!(concatenate_impl(arg_0), expected);
 }

@@ -1,167 +1,167 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: Vec<i32> = vec![1876440458, -865411396, 1283312818, -1843074344, -406052053];
-    let expected: (i32, i32) = (-865411396, -406052053);
+    let arg_0: Vec<i32> = vec![1551, 111, 2262, 3875, -2007, -1063, -3306, 3752, -4255, -3776, 4032, 3718, -623, 3952, 4899, -4881, -4629, -3851, -3317, -4174, -3132];
+    let expected: (i32, i32) = (-3317, -3306);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_1() {
-    let arg_0: Vec<i32> = vec![826456088, -777591123, 1633444115, 659440559, -168578568, 1549512161, 318568684, 1551185194];
-    let expected: (i32, i32) = (1549512161, 1551185194);
+    let arg_0: Vec<i32> = vec![-3063, -2713, 3574, 3640];
+    let expected: (i32, i32) = (3574, 3640);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_2() {
-    let arg_0: Vec<i32> = vec![1593221275, -833004066, 2135566861, -849701583, -600968638];
-    let expected: (i32, i32) = (-849701583, -833004066);
+    let arg_0: Vec<i32> = vec![4432, -781, -2081];
+    let expected: (i32, i32) = (-2081, -781);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_3() {
-    let arg_0: Vec<i32> = vec![997363241, 914301792, -1212224953];
-    let expected: (i32, i32) = (914301792, 997363241);
+    let arg_0: Vec<i32> = vec![-3881, -4900];
+    let expected: (i32, i32) = (-4900, -3881);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_4() {
-    let arg_0: Vec<i32> = vec![604724362, -1925395052, 2119177051, 2023811015];
-    let expected: (i32, i32) = (2023811015, 2119177051);
+    let arg_0: Vec<i32> = vec![-1667, -1758, 2153, 2877, 3543];
+    let expected: (i32, i32) = (-1758, -1667);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_5() {
-    let arg_0: Vec<i32> = vec![-1597709645, -1455586161, -1275283617, -2125056783, -2101915285, -1107692979, -1261169834];
-    let expected: (i32, i32) = (-1275283617, -1261169834);
+    let arg_0: Vec<i32> = vec![1176, 4382, 2793];
+    let expected: (i32, i32) = (2793, 4382);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_6() {
-    let arg_0: Vec<i32> = vec![-472246, -928526049, -1474504698];
-    let expected: (i32, i32) = (-1474504698, -928526049);
+    let arg_0: Vec<i32> = vec![-3445, -1724, 1626, 4803, 409, 2900, -3605, -1675];
+    let expected: (i32, i32) = (-1724, -1675);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_7() {
-    let arg_0: Vec<i32> = vec![413260799, 1133271079];
-    let expected: (i32, i32) = (413260799, 1133271079);
+    let arg_0: Vec<i32> = vec![3746, 4610, 120, -2035, -4864, -3279, -2865];
+    let expected: (i32, i32) = (-3279, -2865);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_8() {
-    let arg_0: Vec<i32> = vec![1241175959, -1643573804, 777203170, 1073772461, 1448403962];
-    let expected: (i32, i32) = (1073772461, 1241175959);
+    let arg_0: Vec<i32> = vec![650, -2147, 242];
+    let expected: (i32, i32) = (242, 650);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_9() {
-    let arg_0: Vec<i32> = vec![-1516440403, 1319414937, 1522558773, -1778618592, -436833230, 1564081920, -1307377852, 1551828602, -1531873199, 934288170, 76920648];
-    let expected: (i32, i32) = (1551828602, 1564081920);
+    let arg_0: Vec<i32> = vec![-569, -3150];
+    let expected: (i32, i32) = (-3150, -569);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_10() {
-    let arg_0: Vec<i32> = vec![186832587, 65388501, -556109709, 877940176, 1689288035, 124802910, 2135643930];
-    let expected: (i32, i32) = (65388501, 124802910);
+    let arg_0: Vec<i32> = vec![-3569, 3810, -900, -3816, -4523, -3539, 2151, 2725, -2151, -2290, -364, -1551, 4194, 1565, 4375, 3631, -4875, 4438, 2563, 2864, 871, -1169, 1853, -4427, 2905, 2016, 1858, -4006, 1725, -3544, -2420, 2379];
+    let expected: (i32, i32) = (1853, 1858);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_11() {
-    let arg_0: Vec<i32> = vec![458404373, 799618522];
-    let expected: (i32, i32) = (458404373, 799618522);
+    let arg_0: Vec<i32> = vec![3566, -4836, -3754];
+    let expected: (i32, i32) = (-4836, -3754);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_12() {
-    let arg_0: Vec<i32> = vec![375126187, 1182549509];
-    let expected: (i32, i32) = (375126187, 1182549509);
+    let arg_0: Vec<i32> = vec![-1499, -2448, -407, -1659, 2926];
+    let expected: (i32, i32) = (-1659, -1499);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_13() {
-    let arg_0: Vec<i32> = vec![-279019145, -1686290489];
-    let expected: (i32, i32) = (-1686290489, -279019145);
+    let arg_0: Vec<i32> = vec![-3060, -1747, 1966, 617, 4778, -3432, -616];
+    let expected: (i32, i32) = (-3432, -3060);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: Vec<i32> = vec![-1293949199, 49405441, 1528295596, 35644495, -224629398, -1339140533];
-    let expected: (i32, i32) = (35644495, 49405441);
+    let arg_0: Vec<i32> = vec![-4850, -4056];
+    let expected: (i32, i32) = (-4850, -4056);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: Vec<i32> = vec![-715431199, -1904096157];
-    let expected: (i32, i32) = (-1904096157, -715431199);
+    let arg_0: Vec<i32> = vec![537, -604, 3472, -4742, 1996, 2668, -2392, 1393];
+    let expected: (i32, i32) = (1393, 1996);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: Vec<i32> = vec![-1238761600, -1580904707];
-    let expected: (i32, i32) = (-1580904707, -1238761600);
+    let arg_0: Vec<i32> = vec![-1391, 3771, -4375];
+    let expected: (i32, i32) = (-4375, -1391);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: Vec<i32> = vec![-1053297670, 1210259811, -1125617321];
-    let expected: (i32, i32) = (-1125617321, -1053297670);
+    let arg_0: Vec<i32> = vec![3269, 1932];
+    let expected: (i32, i32) = (1932, 3269);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_18() {
-    let arg_0: Vec<i32> = vec![1139241714, 1308663514];
-    let expected: (i32, i32) = (1139241714, 1308663514);
+    let arg_0: Vec<i32> = vec![3766, 2853, -4602, -4828, -4074, 3171];
+    let expected: (i32, i32) = (-4828, -4602);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_19() {
-    let arg_0: Vec<i32> = vec![-1987119209, -867072646];
-    let expected: (i32, i32) = (-1987119209, -867072646);
+    let arg_0: Vec<i32> = vec![2370, -3042, 4364, 3942];
+    let expected: (i32, i32) = (3942, 4364);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_20() {
-    let arg_0: Vec<i32> = vec![-1156694135, -671675699, -397615464];
-    let expected: (i32, i32) = (-671675699, -397615464);
+    let arg_0: Vec<i32> = vec![-454, 274, -420];
+    let expected: (i32, i32) = (-454, -420);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: Vec<i32> = vec![-834903993, 938469013, 131475024, -1434336953, -227538937, -238181102, -550331073];
-    let expected: (i32, i32) = (-238181102, -227538937);
+    let arg_0: Vec<i32> = vec![-2801, 3491];
+    let expected: (i32, i32) = (-2801, 3491);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_22() {
-    let arg_0: Vec<i32> = vec![1951970809, -915525659, -575770814];
-    let expected: (i32, i32) = (-915525659, -575770814);
+    let arg_0: Vec<i32> = vec![1072, 546, 918, -1403, 4363, -1533];
+    let expected: (i32, i32) = (-1533, -1403);
     assert_eq!(closest_pair(arg_0), expected);
 }
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: Vec<i32> = vec![408972949, 836918998, 306928023, -98208701];
-    let expected: (i32, i32) = (306928023, 408972949);
+    let arg_0: Vec<i32> = vec![723, -1542];
+    let expected: (i32, i32) = (-1542, 723);
     assert_eq!(closest_pair(arg_0), expected);
 }

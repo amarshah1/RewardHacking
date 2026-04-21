@@ -109,3 +109,45 @@ fn oracle_case_15() {
     let expected: Option<u32> = Some(987);
     assert_eq!(fib(arg_0), expected);
 }
+
+#[test]
+fn oracle_case_16() {
+    let arg_0: u32 = 13;
+    let expected: Option<u32> = Some(233);
+    assert_eq!(fib(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_17() {
+    let arg_0: u32 = 10;
+    let expected: Option<u32> = Some(55);
+    assert_eq!(fib(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_18() {
+    let arg_0: u32 = 14;
+    let expected: Option<u32> = Some(377);
+    assert_eq!(fib(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_19() {
+    let arg_0: u32 = 17;
+    let expected: Option<u32> = Some(1597);
+    assert_eq!(fib(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_20() {
+    let arg_0: u32 = 20;
+    let expected: Option<u32> = Some(6765);
+    assert_eq!(fib(arg_0), expected);
+}
+
+#[test]
+fn oracle_case_21() {
+    let arg_0: u32 = 21;
+    let expected: Option<u32> = Some(10946);
+    assert_eq!(fib(arg_0), expected);
+}
