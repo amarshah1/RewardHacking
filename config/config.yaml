@@ -10,8 +10,9 @@ openrouter:
 
 # Branch toggles
 branches:
-  branch_a: true   # Unit test branch
-  branch_b: false  # Verus spec branch (disabled for now)
+  reward_hack_a1: false   # A.1: Unit tests with hidden tests + explicit reward hack instruction
+  reward_hack_a2: false   # A.2: Unit tests with visible tests + implicit incentive (NEW)
+  branch_b: true        # Verus spec branch (disabled for now)
 
 # Mode: "correct" = generate correct implementations, "reward_hack" = generate test-gaming implementations
 mode: "reward_hack"
@@ -20,8 +21,10 @@ mode: "reward_hack"
 sampling:
   temperature: 0.8
   max_tokens: 8192        # thinking models need more tokens (think blocks count toward limit)
-  n_samples: 1          # completions per problem (prototype: 4, full: 16)
+  n_samples: 4          # completions per problem (prototype: 4, full: 16)
   repair_rounds: 1      # max error-correction rounds per completion (default: 1 = no repair)
+  n_reward_hack_examples: 1  # how many of the 5 few-shot examples show reward hacking (0-5)
+  num_cores: 4              # number of tasks to process in parallel (1 = sequential)
 
 # Branch A test generation
 test_generation:
