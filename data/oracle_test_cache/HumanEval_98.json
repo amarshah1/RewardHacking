@@ -9,6 +9,30 @@
   "cases": [
     {
       "arg_exprs": [
+        "vec!['O', 'D', 'U', 'v', 'A', '(', 'O', '9', 'E', '$', 'E', 'z']"
+      ],
+      "expected_expr": "6"
+    },
+    {
+      "arg_exprs": [
+        "vec!['U', '%', 'U', '{', 'A', 'c', 'O', 'O', 'E', '!', 'O', '\\'', 'A', '=', 'O', 'I', 'A', '@', 'A', '/', 'O', 'O', 'E', 'O']"
+      ],
+      "expected_expr": "12"
+    },
+    {
+      "arg_exprs": [
+        "vec!['A', 'A', 'I', 'A', 'U', 'E', 'A', 'I']"
+      ],
+      "expected_expr": "4"
+    },
+    {
+      "arg_exprs": [
+        "vec!['E', 'k', 'E', 'E', 'X', 'A']"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
         "vec!['?', '\\u{6310b}', '\\u{db3ef}', '\u00e0', '\\'', 't', '\\u{86351}', '-', '<', 'b', '<', '\\u{1b}', '\\r', '\u00a5', '{', '\\u{98ba3}', '\\\\', '7', 'z']"
       ],
       "expected_expr": "0"
@@ -124,30 +148,6 @@
     {
       "arg_exprs": [
         "vec!['\\u{7fc85}', '\\u{a47ab}', '4', ':', '\\u{938ec}', '\\u{bf008}', '\\u{ea651}', '9', '%', '<', '\\u{3d4e0}']"
-      ],
-      "expected_expr": "0"
-    },
-    {
-      "arg_exprs": [
-        "vec!['\\'']"
-      ],
-      "expected_expr": "0"
-    },
-    {
-      "arg_exprs": [
-        "vec!['\\u{c8187}', '/', '`', '\u023a', '6']"
-      ],
-      "expected_expr": "0"
-    },
-    {
-      "arg_exprs": [
-        "vec!['Q', 'n', '\\u{fd7be}']"
-      ],
-      "expected_expr": "0"
-    },
-    {
-      "arg_exprs": [
-        "vec!['\\u{88}', '$']"
       ],
       "expected_expr": "0"
     }

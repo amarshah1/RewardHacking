@@ -11,11 +11,59 @@
   "cases": [
     {
       "arg_exprs": [
+        "-3549",
+        "-873",
+        "-4422"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "2147483505",
+        "3773",
+        "2147483647"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "1401",
+        "-4790",
+        "-3389"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
+        "-2147483087",
+        "-3462",
+        "-2147483648"
+      ],
+      "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "609",
+        "313",
+        "922"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "1212",
         "4516",
         "-4004"
       ],
       "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "4862",
+        "-1384",
+        "3478"
+      ],
+      "expected_expr": "true"
     },
     {
       "arg_exprs": [
@@ -27,11 +75,27 @@
     },
     {
       "arg_exprs": [
+        "4055",
+        "1072",
+        "5127"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "4011",
         "476",
         "-3119"
       ],
       "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "3892",
+        "-3648",
+        "244"
+      ],
+      "expected_expr": "true"
     },
     {
       "arg_exprs": [
@@ -43,11 +107,27 @@
     },
     {
       "arg_exprs": [
+        "3468",
+        "2335",
+        "5803"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "2262",
         "3875",
         "-2007"
       ],
       "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "1570",
+        "4968",
+        "6538"
+      ],
+      "expected_expr": "true"
     },
     {
       "arg_exprs": [
@@ -59,11 +139,27 @@
     },
     {
       "arg_exprs": [
+        "1964",
+        "4040",
+        "6004"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "-4255",
         "-3776",
         "4032"
       ],
       "expected_expr": "false"
+    },
+    {
+      "arg_exprs": [
+        "-3212",
+        "-2473",
+        "-5685"
+      ],
+      "expected_expr": "true"
     },
     {
       "arg_exprs": [
@@ -75,6 +171,14 @@
     },
     {
       "arg_exprs": [
+        "911",
+        "-2920",
+        "-2009"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "4899",
         "-4881",
         "-4629"
@@ -83,121 +187,17 @@
     },
     {
       "arg_exprs": [
+        "-1238",
+        "2776",
+        "1538"
+      ],
+      "expected_expr": "true"
+    },
+    {
+      "arg_exprs": [
         "-3851",
         "-3317",
         "-4174"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-3132",
-        "1491",
-        "2508"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-2143",
-        "2001",
-        "-1380"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "2044",
-        "-4551",
-        "-416"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "1589",
-        "435",
-        "-3881"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-4900",
-        "176",
-        "-4043"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-1667",
-        "-1758",
-        "2153"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "2877",
-        "3543",
-        "-921"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "1176",
-        "4382",
-        "2793"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-2794",
-        "1580",
-        "3048"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-3322",
-        "-3837",
-        "-3742"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-3593",
-        "-1007",
-        "3022"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-4636",
-        "2587",
-        "-908"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-2973",
-        "717",
-        "-584"
-      ],
-      "expected_expr": "false"
-    },
-    {
-      "arg_exprs": [
-        "-1698",
-        "166",
-        "-1558"
       ],
       "expected_expr": "false"
     }

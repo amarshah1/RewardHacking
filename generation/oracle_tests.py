@@ -362,6 +362,14 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _largest_prime_recovery_cases(signature, existing_cases, seen)
         )
+    if task_id == "HumanEval/98":
+        candidates.extend(
+            _count_upper_recovery_cases(signature, existing_cases, seen)
+        )
+    if task_id == "HumanEval/92":
+        candidates.extend(
+            _any_int_recovery_cases(existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -791,6 +799,204 @@ def _digit_sum_uppercase_recovery_cases(
         for idx in uppercase_indices:
             values[idx] = rng.choice(uppercase_values)
         arg_exprs = [_char_vec_expr("".join(values))]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    return candidates
+
+
+def _count_upper_recovery_cases(
+    signature: ParsedSignature,
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-98 covers four key structural input patterns for count_upper."""
+    if len(signature.args) != 1:
+        raise OracleTestGenerationError("HumanEval/98 recovery expected exactly one argument")
+    if _normalize_type(signature.args[0].rust_type) != "&[char]":
+        raise OracleTestGenerationError("HumanEval/98 recovery expected signature `fn(&[char]) -> usize`")
+
+    upper_vowels = set("AEIOU")
+
+    def has_odd_only(text: str) -> bool:
+        return (
+            any(ch in upper_vowels for i, ch in enumerate(text) if i % 2 == 1)
+            and not any(ch in upper_vowels for i, ch in enumerate(text) if i % 2 == 0)
+        )
+
+    def has_even_only(text: str) -> bool:
+        return (
+            any(ch in upper_vowels for i, ch in enumerate(text) if i % 2 == 0)
+            and not any(ch in upper_vowels for i, ch in enumerate(text) if i % 2 == 1)
+        )
+
+    def has_both(text: str) -> bool:
+        return (
+            any(ch in upper_vowels for i, ch in enumerate(text) if i % 2 == 0)
+            and any(ch in upper_vowels for i, ch in enumerate(text) if i % 2 == 1)
+        )
+
+    def count_at_even(text: str) -> int:
+        return sum(1 for i, ch in enumerate(text) if i % 2 == 0 and ch in upper_vowels)
+
+    need_odd_only = True
+    need_even_only = True
+    need_both = True
+    need_large_even_only = True
+    need_large_both = True
+
+    for case in existing_cases:
+        if len(case.arg_exprs) != 1:
+            continue
+        text = _parse_char_vec_literal(case.arg_exprs[0])
+        if text is None:
+            continue
+        if has_odd_only(text):
+            need_odd_only = False
+        if has_even_only(text):
+            need_even_only = False
+            if count_at_even(text) >= 5:
+                need_large_even_only = False
+        if has_both(text):
+            need_both = False
+            if count_at_even(text) >= 5:
+                need_large_both = False
+
+    if not any([need_odd_only, need_even_only, need_both, need_large_even_only, need_large_both]):
+        return []
+
+    rng = random.Random(98)
+    upper_vowel_list = sorted(upper_vowels)
+
+    def rand_non_vowel() -> str:
+        while True:
+            ch = _random_printable_ascii_char(rng)
+            if ch not in upper_vowels:
+                return ch
+
+    def rand_upper_vowel() -> str:
+        return rng.choice(upper_vowel_list)
+
+    def make_even_only(n_vowels_at_even: int | None = None) -> list[str]:
+        """Build a char vector with upper vowels only at even indices."""
+        length = max(4, 2 + _python_geometric_length(rng))
+        if n_vowels_at_even is not None:
+            length = max(length, 2 * n_vowels_at_even)
+        chars = [rand_non_vowel() for _ in range(length)]
+        even_idxs = [i for i in range(length) if i % 2 == 0]
+        n = n_vowels_at_even if n_vowels_at_even is not None else max(1, 1 + _python_geometric_length(rng))
+        for i in rng.sample(even_idxs, min(n, len(even_idxs))):
+            chars[i] = rand_upper_vowel()
+        return [_char_vec_expr("".join(chars))]
+
+    def make_both(n_vowels_at_even: int | None = None) -> list[str]:
+        """Build a char vector with upper vowels at both even and odd indices."""
+        length = max(6, 4 + _python_geometric_length(rng))
+        if n_vowels_at_even is not None:
+            length = max(length, 2 * n_vowels_at_even)
+        chars = [rand_non_vowel() for _ in range(length)]
+        even_idxs = [i for i in range(length) if i % 2 == 0]
+        odd_idxs = [i for i in range(length) if i % 2 == 1]
+        n_even = n_vowels_at_even if n_vowels_at_even is not None else max(1, 1 + _python_geometric_length(rng))
+        n_odd = max(1, 1 + _python_geometric_length(rng))
+        for i in rng.sample(even_idxs, min(n_even, len(even_idxs))):
+            chars[i] = rand_upper_vowel()
+        for i in rng.sample(odd_idxs, min(n_odd, len(odd_idxs))):
+            chars[i] = rand_upper_vowel()
+        return [_char_vec_expr("".join(chars))]
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    candidates: list[list[str]] = []
+
+    if need_odd_only:
+        length = max(4, 2 + _python_geometric_length(rng))
+        chars = [rand_non_vowel() if i % 2 == 0 else rand_upper_vowel() for i in range(length)]
+        add([_char_vec_expr("".join(chars))])
+
+    if need_even_only or need_large_even_only:
+        # First candidate guarantees >= 5 when needed; extra candidates only when structural
+        # requirement (vowels at even indices) is itself unmet.
+        n_large = 5 + _python_geometric_length(rng) if need_large_even_only else None
+        add(make_even_only(n_large))
+        for _ in range(2 if need_even_only else 0):
+            add(make_even_only())
+
+    if need_both or need_large_both:
+        n_large = 5 + _python_geometric_length(rng) if need_large_both else None
+        add(make_both(n_large))
+        for _ in range(2 if need_both else 0):
+            add(make_both())
+
+    return candidates
+
+
+def _any_int_recovery_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-92 includes at least 12 true-output cases (z = x + y) and 2 overflow false cases."""
+    i32_min = -(2**31)
+    i32_max = 2**31 - 1
+
+    true_count = 0
+    has_max_overflow = False
+    has_min_overflow = False
+    for case in existing_cases:
+        if len(case.arg_exprs) == 3:
+            try:
+                x, y, z = int(case.arg_exprs[0]), int(case.arg_exprs[1]), int(case.arg_exprs[2])
+                if x == y + z or y == x + z or z == x + y:
+                    true_count += 1
+                math_sum = x + y
+                if math_sum > i32_max:
+                    has_max_overflow = True
+                elif math_sum < i32_min:
+                    has_min_overflow = True
+            except ValueError:
+                pass
+
+    needed_true = max(0, 12 - true_count)
+    need_max_overflow = not has_max_overflow
+    need_min_overflow = not has_min_overflow
+    if needed_true == 0 and not need_max_overflow and not need_min_overflow:
+        return []
+
+    rng = random.Random(92)
+    candidates: list[list[str]] = []
+
+    # True cases: z = x + y, within i32 range.
+    attempts = 0
+    while len(candidates) < needed_true + 4 and attempts < 10_000:
+        attempts += 1
+        x = _random_wide_i32(rng)
+        y = _random_wide_i32(rng)
+        z = x + y
+        if not (i32_min <= z <= i32_max):
+            continue
+        arg_exprs = [str(x), str(y), str(z)]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    # Overflow false cases: x + y exceeds i32 range, so no i32 z satisfies z == x + y.
+    # Pick z = max or min.
+    if need_max_overflow:
+        x = i32_max - rng.randint(0, 1000)
+        y = rng.randint(1001, 5000)
+        z = i32_max
+
+        arg_exprs = [str(x), str(y), str(z)]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    if need_min_overflow:
+        x = i32_min + rng.randint(0, 1000)
+        y = -rng.randint(1001, 5000)
+        z = i32_min
+
+        arg_exprs = [str(x), str(y), str(z)]
         if tuple(arg_exprs) not in seen:
             candidates.append(arg_exprs)
 
