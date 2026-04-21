@@ -49,6 +49,35 @@ def _strip_think_tags(content: str) -> str:
     return content
 
 
+def _generate_single(client, messages, model, temperature, max_tokens, return_raw):
+    """Make a single API call with retry logic."""
+    _rate_limit_wait(model)
+    for attempt in range(3):
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            break
+        except Exception as e:
+            if "429" in str(e) and attempt < 2:
+                wait = (attempt + 1) * 15
+                print(f"    (429 rate limited, retrying in {wait}s...)")
+                time.sleep(wait)
+                global _last_request_time
+                _last_request_time = time.time()
+            else:
+                raise
+
+    raw_content = response.choices[0].message.content
+    content = _strip_think_tags(raw_content)
+    if return_raw:
+        return (content, raw_content)
+    return content
+
+
 def generate(
     prompt: str,
     system_prompt: str = "",
@@ -58,10 +87,9 @@ def generate(
     n: int = 1,
     few_shot_messages: list[dict] | None = None,
     return_raw: bool = False,
+    num_workers: int = 1,
 ) -> list[str] | list[tuple[str, str]]:
     """Generate completions from OpenRouter.
-
-    Rate-limits every individual API call for free-tier models.
 
     Args:
         prompt: User message
@@ -73,6 +101,7 @@ def generate(
         few_shot_messages: Optional list of {"role": "user"/"assistant", "content": ...}
             dicts inserted between system prompt and the final user message.
         return_raw: If True, return list of (cleaned, raw) tuples instead of just cleaned strings.
+        num_workers: Number of parallel threads for the n samples (1 = sequential).
 
     Returns:
         List of completion strings, or list of (cleaned, raw) tuples if return_raw=True.
@@ -86,37 +115,18 @@ def generate(
         messages.extend(few_shot_messages)
     messages.append({"role": "user", "content": prompt})
 
-    completions = []
-    for _ in range(n):
-        _rate_limit_wait(model)
+    if num_workers <= 1 or n <= 1:
+        return [
+            _generate_single(client, messages, model, temperature, max_tokens, return_raw)
+            for _ in range(n)
+        ]
 
-        # Retry on 429 with backoff (OpenRouter dynamic rate limits can fluctuate)
-        for attempt in range(3):
-            try:
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                )
-                break
-            except Exception as e:
-                if "429" in str(e) and attempt < 2:
-                    wait = (attempt + 1) * 15
-                    print(f"    (429 rate limited, retrying in {wait}s...)")
-                    time.sleep(wait)
-                    _last_request_time = time.time()
-                else:
-                    raise
+    from concurrent.futures import ThreadPoolExecutor
+    def _call(_):
+        return _generate_single(client, messages, model, temperature, max_tokens, return_raw)
 
-        raw_content = response.choices[0].message.content
-        content = _strip_think_tags(raw_content)
-        if return_raw:
-            completions.append((content, raw_content))
-        else:
-            completions.append(content)
-
-    return completions
+    with ThreadPoolExecutor(max_workers=num_workers) as pool:
+        return list(pool.map(_call, range(n)))
 
 
 def generate_batch(
@@ -124,10 +134,22 @@ def generate_batch(
     model: str = DEFAULT_MODEL,
     temperature: float = 0.8,
     max_tokens: int = 2048,
+    num_workers: int = 1,
 ) -> list[str]:
-    """Generate one completion per prompt."""
-    results = []
-    for p in prompts:
+    """Generate one completion per prompt, optionally in parallel.
+
+    Args:
+        prompts: List of dicts with "user", optional "system", optional "few_shot" keys.
+        model: OpenRouter model ID.
+        temperature: Sampling temperature.
+        max_tokens: Max tokens per completion.
+        num_workers: Number of parallel threads (1 = sequential).
+
+    Returns:
+        List of completion strings, one per prompt, in the same order.
+    """
+    def _gen_one(idx_prompt):
+        idx, p = idx_prompt
         completions = generate(
             prompt=p["user"],
             system_prompt=p.get("system", ""),
@@ -135,6 +157,21 @@ def generate_batch(
             temperature=temperature,
             max_tokens=max_tokens,
             n=1,
+            few_shot_messages=p.get("few_shot"),
         )
-        results.append(completions[0])
+        return idx, completions[0]
+
+    if num_workers <= 1:
+        results = [None] * len(prompts)
+        for idx, p in enumerate(prompts):
+            _, result = _gen_one((idx, p))
+            results[idx] = result
+        return results
+
+    from concurrent.futures import ThreadPoolExecutor
+    results = [None] * len(prompts)
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = executor.map(_gen_one, enumerate(prompts))
+        for idx, result in futures:
+            results[idx] = result
     return results
