@@ -342,7 +342,7 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _same_chars_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
-    if task_id == "HumanEval/134":
+    if task_id == "HumanEval":
         candidates.extend(
             _last_char_letter_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
@@ -709,9 +709,9 @@ def _last_char_letter_recovery_cases(
     existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Construct direct true/false cases for `HumanEval/134`."""
+    """Construct direct true/false cases for `HumanEval`."""
     if len(signature.args) != 1:
-        raise OracleTestGenerationError("HumanEval/134 recovery expected exactly one argument")
+        raise OracleTestGenerationError("HumanEval recovery expected exactly one argument")
     if _normalize_type(signature.args[0].rust_type) != "&str":
         raise OracleTestGenerationError("HumanEval/134 recovery expected signature `fn(&str) -> bool`")
 
@@ -1848,7 +1848,9 @@ _SMALL_BIASED_INTEGER_TASKS = {
     "HumanEval/49", #Want small for exponent but not modulo
     "HumanEval/55",
     "HumanEval/63",
+    "HumanEval/75",
     "HumanEval/100",
+    "HumanEval/130",
     "HumanEval/139",
     "HumanEval/163",
 }
@@ -1967,9 +1969,13 @@ def _proptest_leaf_expr(
         and constraints.min_value is None
         and constraints.max_value is None
     ):
-        if not use_small_bias:
+        # u8/i8 have a range of only 256 values; _wide_integer_expr's magnitude
+        # range [100, 5000] saturates at the type max (~97% of samples become 255
+        # for u8), so skip it and fall through to proptest::arbitrary::any::<TYPE>()
+        # for uniform sampling instead.
+        if not use_small_bias and rust_type not in {"u8", "i8"}:
             return _wide_integer_expr(rust_type, runner_var)
-        if rust_type in {"u8", "u16", "u32", "u64", "u128", "usize"}:
+        if use_small_bias and rust_type in {"u8", "u16", "u32", "u64", "u128", "usize"}:
             return (
                 "{ "
                 "use proptest::strategy::Strategy; "
@@ -1988,30 +1994,32 @@ def _proptest_leaf_expr(
                 "} "
                 "}"
             )
-        return (
-            "{ "
-            "use proptest::strategy::Strategy; "
-            "use proptest::strategy::ValueTree; "
-            "let negative = proptest::arbitrary::any::<bool>().new_tree("
-            f"{runner_var}"
-            ").unwrap().current(); "
-            "let mut magnitude = 0usize; "
-            "while proptest::arbitrary::any::<u8>().new_tree("
-            f"{runner_var}"
-            ").unwrap().current() % 4 != 0 { "
-            "magnitude += 1; "
-            "} "
-            "loop { "
-            f"if let Ok(mag) = <{rust_type}>::try_from(magnitude) {{ "
-            "if negative { "
-            "break mag.saturating_neg(); "
-            "} "
-            "break mag; "
-            "} "
-            "magnitude = magnitude.saturating_sub(1); "
-            "} "
-            "}"
-        )
+        if use_small_bias:
+            return (
+                "{ "
+                "use proptest::strategy::Strategy; "
+                "use proptest::strategy::ValueTree; "
+                "let negative = proptest::arbitrary::any::<bool>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current(); "
+                "let mut magnitude = 0usize; "
+                "while proptest::arbitrary::any::<u8>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current() % 4 != 0 { "
+                "magnitude += 1; "
+                "} "
+                "loop { "
+                f"if let Ok(mag) = <{rust_type}>::try_from(magnitude) {{ "
+                "if negative { "
+                "break mag.saturating_neg(); "
+                "} "
+                "break mag; "
+                "} "
+                "magnitude = magnitude.saturating_sub(1); "
+                "} "
+                "}"
+            )
+        # u8/i8 with use_small_bias=False: fall through to proptest::arbitrary::any::<TYPE>()
 
     if (
         rust_type in integer_types
@@ -2886,7 +2894,9 @@ def _apply_requires_clause(
         if left not in arg_constraints or right not in arg_constraints:
             return False
         bound = _parse_known_integer(rhs) // 2
+        _apply_value_bound(arg_constraints[left], ">=", 0)
         _apply_value_bound(arg_constraints[left], "<=", bound)
+        _apply_value_bound(arg_constraints[right], ">=", 0)
         _apply_value_bound(arg_constraints[right], "<=", bound)
         return True
 

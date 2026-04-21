@@ -1,215 +1,215 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: u32 = 2147482435;
-    let arg_1: u32 = 2147481908;
-    let arg_2: u32 = 2147479131;
-    let expected: [u32; 2] = [4294961566, 0];
+    let arg_0: u32 = 2100034873;
+    let arg_1: u32 = 1996733837;
+    let arg_2: u32 = 1876440458;
+    let expected: [u32; 2] = [3976475331, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_1() {
-    let arg_0: u32 = 2147480954;
-    let arg_1: u32 = 2147479643;
-    let arg_2: u32 = 2147480438;
-    let expected: [u32; 2] = [4294960597, 795];
+    let arg_0: u32 = 1283312818;
+    let arg_1: u32 = 1741431595;
+    let arg_2: u32 = 1777274431;
+    let expected: [u32; 2] = [3024744413, 35842836];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_2() {
-    let arg_0: u32 = 2147480155;
-    let arg_1: u32 = 2147482239;
-    let arg_2: u32 = 2147479445;
-    let expected: [u32; 2] = [4294959600, 0];
+    let arg_0: u32 = 1781891621;
+    let arg_1: u32 = 543303618;
+    let arg_2: u32 = 826456088;
+    let expected: [u32; 2] = [2325195239, 283152470];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_3() {
-    let arg_0: u32 = 2147483314;
-    let arg_1: u32 = 2147479900;
-    let arg_2: u32 = 2147481299;
-    let expected: [u32; 2] = [4294963214, 1399];
+    let arg_0: u32 = 1633444115;
+    let arg_1: u32 = 1978905080;
+    let arg_2: u32 = 318568684;
+    let expected: [u32; 2] = [1952012799, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_4() {
-    let arg_0: u32 = 2147479636;
-    let arg_1: u32 = 2147478950;
-    let arg_2: u32 = 2147483171;
-    let expected: [u32; 2] = [4294958586, 4221];
+    let arg_0: u32 = 1829242994;
+    let arg_1: u32 = 609780125;
+    let arg_2: u32 = 1593221275;
+    let expected: [u32; 2] = [2439023119, 983441150];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_5() {
-    let arg_0: u32 = 2147479783;
-    let arg_1: u32 = 2147480528;
-    let arg_2: u32 = 2147483306;
-    let expected: [u32; 2] = [4294960311, 2778];
+    let arg_0: u32 = 2135566861;
+    let arg_1: u32 = 1546515010;
+    let arg_2: u32 = 1871357804;
+    let expected: [u32; 2] = [3682081871, 324842794];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_6() {
-    let arg_0: u32 = 2147483201;
-    let arg_1: u32 = 2147480923;
-    let arg_2: u32 = 2147482096;
-    let expected: [u32; 2] = [4294964124, 1173];
+    let arg_0: u32 = 914301792;
+    let arg_1: u32 = 815587571;
+    let arg_2: u32 = 453159044;
+    let expected: [u32; 2] = [1367460836, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_7() {
-    let arg_0: u32 = 2147483143;
-    let arg_1: u32 = 2147483536;
-    let arg_2: u32 = 2147479739;
-    let expected: [u32; 2] = [4294962882, 0];
+    let arg_0: u32 = 222088596;
+    let arg_1: u32 = 2023811015;
+    let arg_2: u32 = 1382187498;
+    let expected: [u32; 2] = [1604276094, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_8() {
-    let arg_0: u32 = 2147481385;
-    let arg_1: u32 = 2147481222;
-    let arg_2: u32 = 2147479772;
-    let expected: [u32; 2] = [4294961157, 0];
+    let arg_0: u32 = 1074899943;
+    let arg_1: u32 = 1345951920;
+    let arg_2: u32 = 691897487;
+    let expected: [u32; 2] = [1766797430, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_9() {
-    let arg_0: u32 = 2147479863;
-    let arg_1: u32 = 2147481640;
-    let arg_2: u32 = 2147479121;
-    let expected: [u32; 2] = [4294958984, 0];
+    let arg_0: u32 = 22426865;
+    let arg_1: u32 = 1039790669;
+    let arg_2: u32 = 1479513581;
+    let expected: [u32; 2] = [1062217534, 439722912];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_10() {
-    let arg_0: u32 = 2147482584;
-    let arg_1: u32 = 2147479661;
-    let arg_2: u32 = 2147480341;
-    let expected: [u32; 2] = [4294962245, 680];
+    let arg_0: u32 = 2147011402;
+    let arg_1: u32 = 672978950;
+    let arg_2: u32 = 413260799;
+    let expected: [u32; 2] = [2560272201, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_11() {
-    let arg_0: u32 = 2147479139;
-    let arg_1: u32 = 2147479895;
-    let arg_2: u32 = 2147481461;
-    let expected: [u32; 2] = [4294959034, 1566];
+    let arg_0: u32 = 1781814415;
+    let arg_1: u32 = 759406741;
+    let arg_2: u32 = 1241175959;
+    let expected: [u32; 2] = [2541221156, 481769218];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_12() {
-    let arg_0: u32 = 2147479392;
-    let arg_1: u32 = 2147482384;
-    let arg_2: u32 = 2147479871;
-    let expected: [u32; 2] = [4294959263, 0];
+    let arg_0: u32 = 777203170;
+    let arg_1: u32 = 1448403962;
+    let arg_2: u32 = 445970973;
+    let expected: [u32; 2] = [1223174143, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_13() {
-    let arg_0: u32 = 2147479979;
-    let arg_1: u32 = 2147479615;
-    let arg_2: u32 = 2147479461;
-    let expected: [u32; 2] = [4294959440, 0];
+    let arg_0: u32 = 287350521;
+    let arg_1: u32 = 637527819;
+    let arg_2: u32 = 498182125;
+    let expected: [u32; 2] = [785532646, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: u32 = 2147479929;
-    let arg_1: u32 = 2147483493;
-    let arg_2: u32 = 2147483024;
-    let expected: [u32; 2] = [4294962953, 0];
+    let arg_0: u32 = 1075732308;
+    let arg_1: u32 = 1319414937;
+    let arg_2: u32 = 368865056;
+    let expected: [u32; 2] = [1444597364, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_15() {
-    let arg_0: u32 = 2147479818;
-    let arg_1: u32 = 2147479695;
-    let arg_2: u32 = 2147482028;
-    let expected: [u32; 2] = [4294959513, 2333];
+    let arg_0: u32 = 1564081920;
+    let arg_1: u32 = 1551828602;
+    let arg_2: u32 = 934288170;
+    let expected: [u32; 2] = [2498370090, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: u32 = 2147478748;
-    let arg_1: u32 = 2147482643;
-    let arg_2: u32 = 2147478766;
-    let expected: [u32; 2] = [4294957514, 0];
+    let arg_0: u32 = 1487740414;
+    let arg_1: u32 = 1112345971;
+    let arg_2: u32 = 1437945801;
+    let expected: [u32; 2] = [2600086385, 325599830];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_17() {
-    let arg_0: u32 = 2147479423;
-    let arg_1: u32 = 2147479018;
-    let arg_2: u32 = 2147480713;
-    let expected: [u32; 2] = [4294958441, 1695];
+    let arg_0: u32 = 186832587;
+    let arg_1: u32 = 1591373939;
+    let arg_2: u32 = 1689288035;
+    let expected: [u32; 2] = [1778206526, 97914096];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_18() {
-    let arg_0: u32 = 2147479796;
-    let arg_1: u32 = 2147482308;
-    let arg_2: u32 = 2147480330;
-    let expected: [u32; 2] = [4294960126, 0];
+    let arg_0: u32 = 2135643930;
+    let arg_1: u32 = 458404373;
+    let arg_2: u32 = 1043879960;
+    let expected: [u32; 2] = [2594048303, 585475587];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_19() {
-    let arg_0: u32 = 2147483498;
-    let arg_1: u32 = 2147479473;
-    let arg_2: u32 = 2147479989;
-    let expected: [u32; 2] = [4294962971, 516];
+    let arg_0: u32 = 1182549509;
+    let arg_1: u32 = 1868464503;
+    let arg_2: u32 = 414291005;
+    let expected: [u32; 2] = [1596840514, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_20() {
-    let arg_0: u32 = 2147480515;
-    let arg_1: u32 = 2147479022;
-    let arg_2: u32 = 2147482156;
-    let expected: [u32; 2] = [4294959537, 3134];
+    let arg_0: u32 = 74894615;
+    let arg_1: u32 = 1920138348;
+    let arg_2: u32 = 49405441;
+    let expected: [u32; 2] = [124300056, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_21() {
-    let arg_0: u32 = 2147482884;
-    let arg_1: u32 = 2147481139;
-    let arg_2: u32 = 2147480584;
-    let expected: [u32; 2] = [4294963468, 0];
+    let arg_0: u32 = 35644495;
+    let arg_1: u32 = 808343115;
+    let arg_2: u32 = 1432052449;
+    let expected: [u32; 2] = [843987610, 623709334];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_22() {
-    let arg_0: u32 = 2147481504;
-    let arg_1: u32 = 2147480934;
-    let arg_2: u32 = 2147481646;
-    let expected: [u32; 2] = [4294962438, 712];
+    let arg_0: u32 = 1439030736;
+    let arg_1: u32 = 566578941;
+    let arg_2: u32 = 1101129632;
+    let expected: [u32; 2] = [2005609677, 534550691];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
 
 #[test]
 fn oracle_case_23() {
-    let arg_0: u32 = 2147480073;
-    let arg_1: u32 = 2147482267;
-    let arg_2: u32 = 2147480007;
-    let expected: [u32; 2] = [4294960080, 0];
+    let arg_0: u32 = 1210259811;
+    let arg_1: u32 = 1768977184;
+    let arg_2: u32 = 1308663514;
+    let expected: [u32; 2] = [2518923325, 0];
     assert_eq!(eat(arg_0, arg_1, arg_2), expected);
 }
