@@ -123,6 +123,14 @@ def generate_oracle_test_cache(
             raise
     sample_case_target, sample_trial_target = _sampling_budget(signature.return_type, num_cases, max_trials)
     try:
+        # Generate task-specific structural cases before proptest runs.  These
+        # cover criteria that proptest is unlikely to hit by chance (e.g. inputs
+        # that guarantee a non-empty result, specific edge-case values).  Including
+        # them in the first _compute_expected_outputs call avoids a second Verus
+        # binary invocation later: _recover_output_coverage finds the criteria
+        # already satisfied and those recovery functions return [] immediately.
+        seeded_arg_exprs = _seeded_arg_exprs(task_id, signature)
+
         sampled_arg_exprs = _sample_cases(
             signature,
             constraints,
@@ -130,23 +138,26 @@ def generate_oracle_test_cache(
             max_trials=sample_trial_target,
             seed=seed,
         )
-        if not sampled_arg_exprs:
+
+        # Seeded cases go first so _select_cases retains them when trimming to num_cases.
+        all_arg_exprs = seeded_arg_exprs + sampled_arg_exprs
+        if not all_arg_exprs:
             raise OracleTestGenerationError("oracle fuzzing did not yield any usable test cases")
 
         expected_exprs = _compute_expected_outputs(
             verus_code=verus_code,
             signature=signature,
-            sampled_arg_exprs=sampled_arg_exprs,
+            sampled_arg_exprs=all_arg_exprs,
             verus_binary=verus_binary,
             timeout=timeout,
         )
-        if len(expected_exprs) != len(sampled_arg_exprs):
+        if len(expected_exprs) != len(all_arg_exprs):
             raise OracleTestGenerationError(
-                f"oracle produced {len(expected_exprs)} outputs for {len(sampled_arg_exprs)} sampled cases"
+                f"oracle produced {len(expected_exprs)} outputs for {len(all_arg_exprs)} sampled cases"
             )
         cases = [
             OracleCase(arg_exprs=arg_exprs, expected_expr=expected_expr)
-            for arg_exprs, expected_expr in zip(sampled_arg_exprs, expected_exprs)
+            for arg_exprs, expected_expr in zip(all_arg_exprs, expected_exprs)
         ]
         cases = _recover_output_coverage(
             task_id=task_id,
@@ -307,6 +318,70 @@ def _missing_output_buckets(cases: list[OracleCase], return_type: str) -> list[s
     return [bucket for bucket in wanted_buckets if bucket not in present]
 
 
+def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str]]:
+    """Generate task-specific structural cases to include before proptest runs.
+
+    Some tasks have structural criteria (e.g., >=12 non-empty results, specific
+    input patterns) that proptest is unlikely to satisfy by chance.  Rather than
+    discovering this after proptest and paying for a second Verus binary
+    invocation in _recover_output_coverage, we generate these cases here and
+    include them in the very first _compute_expected_outputs call.  When
+    _recover_output_coverage runs later, the criteria are already met and those
+    recovery functions return [] immediately.
+
+    Only tasks whose criteria are independent of what proptest already produced
+    (i.e. do not depend on missing_buckets) are handled here.  Tasks like
+    HumanEval/43 or HumanEval/134 that need to fill missing bool/Option output
+    buckets must wait until after proptest and remain solely in
+    _targeted_recovery_arg_exprs.
+    """
+    # Pass empty existing_cases so each recovery function generates all of its
+    # guaranteed cases unconditionally — exactly the right behavior for seeding.
+    existing: list[OracleCase] = []
+    seen: set[tuple[str, ...]] = set()
+
+    if task_id == "HumanEval/18":
+        # Guarantees >=12 positive-count cases and at least one input length > 100.
+        return _how_many_times_recovery_cases(signature, [], existing, seen)
+    if task_id == "HumanEval/30":
+        # Guarantees a case with 0 in the input list (0 is non-positive, filtered out).
+        return _get_positive_zero_case(existing, seen)
+    if task_id == "HumanEval/52":
+        # Guarantees cases with a prefix that passes the threshold, then fails late.
+        return _below_threshold_wide_range_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/64":
+        # Guarantees short and long inputs ending with lowercase 'y' and uppercase 'Y'.
+        return _vowels_count_trailing_y_cases(existing, seen)
+    if task_id == "HumanEval/66":
+        # Guarantees cases with multiple uppercase characters in the char vector.
+        return _digit_sum_uppercase_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/76":
+        # Guarantees >=12 true cases (x = n^k) and specific x=1 and n=2 cases.
+        return _is_simple_power_recovery_cases(existing, seen)
+    if task_id == "HumanEval/80":
+        # Guarantees >=5 false cases with length >=15 and a consecutive identical pair.
+        return _is_happy_long_consecutive_cases(existing, seen)
+    if task_id == "HumanEval/87":
+        # Guarantees >=12 cases where x appears in the 2D list (non-empty result).
+        return _get_row_nonempty_cases(existing, seen)
+    if task_id == "HumanEval/92":
+        # Guarantees >=12 true-output cases (z = x+y) and 2 i32 overflow edge cases.
+        return _any_int_recovery_cases(existing, seen)
+    if task_id == "HumanEval/94":
+        # Guarantees cases with large primes and large composites with large factors.
+        return _largest_prime_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/98":
+        # Guarantees all four structural input patterns for count_upper.
+        return _count_upper_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/157":
+        # Guarantees large Pythagorean triple cases and large non-right-triangle cases.
+        return _right_angle_triangle_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/161":
+        # Guarantees cases with ASCII alphabetic bytes in the input.
+        return _solve_alpha_bytes_recovery_cases(signature, existing, seen)
+    return []
+
+
 def _targeted_recovery_arg_exprs(
     task_id: str,
     signature: ParsedSignature,
@@ -314,7 +389,14 @@ def _targeted_recovery_arg_exprs(
     missing_buckets: list[str],
     existing_cases: list[OracleCase],
 ) -> list[list[str]]:
-    """Generate extra direct argument expressions for tasks with rare output buckets."""
+    """Generate extra direct argument expressions for tasks with rare output buckets.
+
+    This is a post-proptest safety net.  For tasks covered by _seeded_arg_exprs,
+    existing_cases already contains the seeded inputs, so their recovery functions
+    return [] immediately.  The remaining tasks here (HumanEval/43, /48, /53,
+    /54, /134) depend on missing_buckets — they need to know what proptest
+    produced before deciding what to generate.
+    """
     seen = {tuple(case.arg_exprs) for case in existing_cases}
     candidates: list[list[str]] = []
 
@@ -342,7 +424,7 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _same_chars_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
-    if task_id == "HumanEval":
+    if task_id == "HumanEval/134":
         candidates.extend(
             _last_char_letter_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
@@ -746,9 +828,9 @@ def _last_char_letter_recovery_cases(
     existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Construct direct true/false cases for `HumanEval`."""
+    """Construct direct true/false cases for `HumanEval/134`."""
     if len(signature.args) != 1:
-        raise OracleTestGenerationError("HumanEval recovery expected exactly one argument")
+        raise OracleTestGenerationError("HumanEval/134 recovery expected exactly one argument")
     if _normalize_type(signature.args[0].rust_type) != "&str":
         raise OracleTestGenerationError("HumanEval/134 recovery expected signature `fn(&str) -> bool`")
 
