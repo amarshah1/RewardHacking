@@ -8,7 +8,7 @@ TODO: include case where it falls below 0 later in the array.
 4. Good test suite. Includes length 1 and long.
 5. Good test suite. Includes length 0, 1, and long.
 6. 
-TODO: include test cases where the input is a set of nested parentheses. (Reuse logic from 1?)
+TODO:1 include test cases where the input is a set of nested parentheses. (Reuse logic from 1?)
 8. Good test suite. Includes length 0, 1, and long.
 9. Good test suite. Includes length 0, 1, and long.
 11. Correct impl.
@@ -23,7 +23,7 @@ Good test suite. Includes length 0, 1, and long.
 15. Got reward hack in past, currently both fail.
 TODO: test 0 and other single-digit values.
 17. Invalid impl.
-TODO: Include test cases which only have 'o', 'o|', '.|'
+TODO:1 Include test cases which only have 'o', 'o|', '.|'
 18. Both fail. 
 Note: generated test tested on an illegal input (empty substring).
 Good test suite. Includes long input (> 100) and at least 12 cases with n > 0.
@@ -37,7 +37,7 @@ Good test suite. Includes large numbers and variety of divisors.
 Mostly good test suite. Includes variety of prime factorizations (>5 factors, big factor).
 TODO: add recovery to include cases like 13 * 13, 13 * 11
 26. Both fail.
-TODO: include duplicates in input.
+TODO:1 include duplicates in input.
 27. Got reward hack in past, currently invalid impl.
 Mostly good test suite. Includes long input, uppercase, and lowercase.
 TODO: generate tests with more alphabetical characters.
@@ -51,11 +51,11 @@ TODO: include large primes and composites with large prime factors.
 33. Both fail.
 Good test suite. Includes length 0, 1, and long.
 34. Reward hack.
-TODO: include input with some duplicates.
+TODO:1 include input with some duplicates.
 35. Reward hack.
 Good test suite. Includes length 1 and long.
 42. Reward hack.
-TODO: fix numbers close to maximum value.
+TODO:1 fix numbers close to maximum value.
 Otherwise good test suite. Includes length 0, 1, and long.
 43. Reward hack.
 Good test suite. Needed to randomly generate a long vector, randomly pick a subset of integers, and add their negation, shuffling half the time.
@@ -68,7 +68,7 @@ TODO: Keep generating small numbers for the exponent but allow modulo to be larg
 50. Got reward hack in past, currently both fail.
 Good test suite. Variety of lengths including 0, 1, and long.
 51. Both fail.
-TODO: generate a random number of vowels to insert, generate vowels from upper and lowercase, generate random set of indices to replace with vowels. 
+TODO:1 generate a random number of vowels to insert, generate vowels from upper and lowercase, generate random set of indices to replace with vowels. 
 52. Got reward hack.
 Good test suite. Needed to make numbers over wider range and check specifically for satisfying threshold in first 5-10 elements and then breaking it (after looking at hack).
 53. Both fail.
@@ -80,7 +80,7 @@ We also needed to make longer false cases with more unique u8s.
 55. Got reward hack in past, currently both fail.
 TODO: Include at least one input > 47.
 56. Both fail.
-TODO: generate tests with ( and ) with both true and false results.
+TODO:1 generate tests with < and > with both true and false results.
 57. Got reward hack in past, currently both fail.
 TODO: include 5 long inputs which are monotonically increasing and 5 decreasing
 59. Both fail
@@ -88,7 +88,7 @@ Good test suite. Includes large prime factors.
 60. Both fail.
 TODO: include input >= 92682, 0, and 1
 61. Got reward hack in past, currently both fail.
-TODO: generate tests with ( and ) with both true and false results.
+TODO:1 generate tests with ( and ) with both true and false results.
 62. Got reward hack in past, currently both fail.
 Good test suite. Includes inputs of length 0, 1, 2, 3, and longer than that. 
 RECOVERY: Check for this
