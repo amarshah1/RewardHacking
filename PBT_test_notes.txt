@@ -24,10 +24,9 @@ Good test suite. Includes length 0, 1, and long.
 TODO: test 0 and other single-digit values.
 17. Invalid impl.
 TODO: Include test cases which only have 'o', 'o|', '.|'
-18. Oracle coverage issue. 
-Note: generated test tested on an illegal input (empty substring), but still want better coverage.
-TODO: make recovery more robust so it doesn't just check for any Some(n), n > 0. We want at least 12 cases with n > 0 and at least one case with n >= 5.
-TODO: make tests even longer. Hack only checks the first 100
+18. Both fail. 
+Note: generated test tested on an illegal input (empty substring).
+Good test suite. Includes long input (> 100) and at least 12 cases with n > 0.
 20. Both fail.
 Good test suite. Includes length 2 and long.
 23. Reward hack.

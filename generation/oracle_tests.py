@@ -578,7 +578,7 @@ def _how_many_times_recovery_cases(
     existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Construct practical positive-count cases for `HumanEval/18`.
+    """Construct practical positive-count and long-input cases for `HumanEval/18`.
 
     Note: `None` would require more than `u32::MAX` overlapping matches, which is not feasible
     for runnable cached tests.
@@ -588,11 +588,29 @@ def _how_many_times_recovery_cases(
     if _normalize_type(signature.args[0].rust_type) != "Vec<char>" or _normalize_type(signature.args[1].rust_type) != "Vec<char>":
         raise OracleTestGenerationError("HumanEval/18 recovery expected signature `fn(Vec<char>, Vec<char>) -> Option<u32>`")
 
-    needs_positive_some = not _has_positive_option_case(existing_cases)
+    positive_count = 0
+    has_long_input = False
+    for case in existing_cases:
+        m = re.fullmatch(r"Some\((\d+)\)", case.expected_expr.strip())
+        if m and int(m.group(1)) > 0:
+            positive_count += 1
+        if len(case.arg_exprs) >= 1 and _rust_vec_literal_len(case.arg_exprs[0]) > 100:
+            has_long_input = True
+
+    needed_positive = max(0, 12 - positive_count)
     candidates: list[list[str]] = []
 
-    if needs_positive_some:
-        for pair in _generate_how_many_times_positive_cases():
+    if needed_positive > 0:
+        rng = random.Random(18)
+        while len(candidates) < needed_positive + 4:
+            pair = _generate_one_how_many_times_positive_case(rng, min_string_len=None)
+            if tuple(pair) not in seen:
+                candidates.append(pair)
+
+    if not has_long_input:
+        rng_long = random.Random(1800)
+        for _ in range(2):
+            pair = _generate_one_how_many_times_positive_case(rng_long, min_string_len=101)
             if tuple(pair) not in seen:
                 candidates.append(pair)
 
@@ -671,15 +689,6 @@ def _same_chars_recovery_cases(
 
     return candidates
 
-
-def _has_positive_option_case(cases: list[OracleCase]) -> bool:
-    """Check whether we already have an `Option` case of the form `Some(n)` with `n > 0`."""
-    for case in cases:
-        expr = case.expected_expr.strip()
-        match = re.fullmatch(r"Some\((\d+)\)", expr)
-        if match and int(match.group(1)) > 0:
-            return True
-    return False
 
 
 def _count_expected_cases(cases: list[OracleCase], expected_expr: str) -> int:
@@ -1697,30 +1706,32 @@ def _random_non_whitespace_ascii_char(rng: random.Random) -> str:
             return candidate
 
 
-def _generate_how_many_times_positive_cases() -> list[list[str]]:
-    """Generate positive-count substring cases for `HumanEval/18`."""
-    rng = random.Random(18)
-    cases: list[list[str]] = []
+def _generate_one_how_many_times_positive_case(
+    rng: random.Random,
+    min_string_len: int | None,
+) -> list[str]:
+    """Generate one positive-count (substring appears >= 1 time) case for `HumanEval/18`."""
+    substring_len = min(3, max(1, 1 + _python_geometric_length(rng)))
+    repeat_count = max(1, 1 + _python_geometric_length(rng))
+    substring = "".join(_random_printable_ascii_char(rng) for _ in range(substring_len))
+    filler_prefix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
+    filler_suffix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
 
-    for _ in range(8):
-        substring_len = min(3, max(1, 1 + _python_geometric_length(rng)))
-        repeat_count = max(1, 1 + _python_geometric_length(rng))
-        substring = "".join(_random_printable_ascii_char(rng) for _ in range(substring_len))
-        filler_prefix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
-        filler_suffix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
+    parts = [filler_prefix]
+    for idx in range(repeat_count):
+        parts.append(substring)
+        if idx + 1 < repeat_count and rng.choice([True, False]):
+            filler_len = 1 + _python_geometric_length(rng)
+            parts.append("".join(_random_printable_ascii_char(rng) for _ in range(filler_len)))
+    parts.append(filler_suffix)
 
-        parts = [filler_prefix]
-        for idx in range(repeat_count):
-            parts.append(substring)
-            if idx + 1 < repeat_count and rng.choice([True, False]):
-                filler_len = 1 + _python_geometric_length(rng)
-                parts.append("".join(_random_printable_ascii_char(rng) for _ in range(filler_len)))
-        parts.append(filler_suffix)
+    string = "".join(parts)
+    if min_string_len is not None:
+        while len(string) < min_string_len:
+            string += substring
 
-        string = "".join(parts)
-        cases.append([_char_vec_expr(string), _char_vec_expr(substring)])
+    return [_char_vec_expr(string), _char_vec_expr(substring)]
 
-    return cases
 
 
 def _random_printable_ascii_char(rng: random.Random) -> str:
