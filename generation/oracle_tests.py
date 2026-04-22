@@ -509,11 +509,14 @@ def _pairs_sum_to_zero_recovery_cases(
     needs_true = "true" in missing_buckets or _count_expected_cases(existing_cases, "true") < 8
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     for bucket in (["true"] if needs_true else []):
         for nums_expr in _generate_pairs_sum_to_zero_nums_exprs(bucket, low, high, rng):
-            arg_exprs = [nums_expr, zero_literal]
-            if tuple(arg_exprs) not in seen:
-                candidates.append(arg_exprs)
+            add([nums_expr, zero_literal])
     return candidates
 
 
@@ -559,14 +562,17 @@ def _palindrome_recovery_cases(
     needs_false = "false" in missing_buckets or _count_almost_palindrome_false_cases(existing_cases) < 3
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if needs_true:
         for text in _generate_palindrome_true_cases():
-            if (text,) not in seen:
-                candidates.append([text])
+            add([text])
     if needs_false:
         for text in _generate_almost_palindrome_false_cases():
-            if (text,) not in seen:
-                candidates.append([text])
+            add([text])
     return candidates
 
 
@@ -617,10 +623,14 @@ def _checked_add_recovery_cases(
         raise OracleTestGenerationError("HumanEval/53 recovery expected signature `fn(i32, i32) -> Option<i32>`")
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if "None" in missing_buckets:
         for pair in _generate_checked_add_none_cases():
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+            add(pair)
 
     return candidates
 
@@ -686,19 +696,19 @@ def _how_many_times_recovery_cases(
     needed_positive = max(0, 12 - positive_count)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if needed_positive > 0:
         rng = random.Random(18)
         while len(candidates) < needed_positive + 4:
-            pair = _generate_one_how_many_times_positive_case(rng, min_string_len=None)
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+            add(_generate_one_how_many_times_positive_case(rng, min_string_len=None))
 
     if not has_long_input:
         rng_long = random.Random(1800)
         for _ in range(2):
-            pair = _generate_one_how_many_times_positive_case(rng_long, min_string_len=101)
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+            add(_generate_one_how_many_times_positive_case(rng_long, min_string_len=101))
 
     return candidates
 
@@ -716,7 +726,12 @@ def _right_angle_triangle_recovery_cases(
         raise OracleTestGenerationError("HumanEval/157 recovery expected signature `fn(u32, u32, u32) -> bool`")
 
     candidates: list[list[str]] = []
-    if not _has_large_true_triangle_case(existing_cases):
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    if not _has_large_triangle_case(existing_cases, "true"):
         rng = random.Random(157)
         large_ms = [20, 24, 30, 36]
         for idx in range(8):
@@ -730,20 +745,16 @@ def _right_angle_triangle_recovery_cases(
             c = m * m + n * n
             triple = [a, b, c]
             rng.shuffle(triple)
-            arg_exprs = [_rust_numeric_literal(value, "u32") for value in triple]
-            if tuple(arg_exprs) not in seen:
-                candidates.append(arg_exprs)
+            add([_rust_numeric_literal(value, "u32") for value in triple])
 
-    if not _has_large_false_triangle_case(existing_cases):
+    if not _has_large_triangle_case(existing_cases, "false"):
         rng = random.Random(1157)
         for _ in range(8):
             values = [rng.randint(100, 2000) for _ in range(3)]
             if _is_right_triangle(values):
                 values[2] = values[2] + 1
             rng.shuffle(values)
-            arg_exprs = [_rust_numeric_literal(value, "u32") for value in values]
-            if tuple(arg_exprs) not in seen:
-                candidates.append(arg_exprs)
+            add([_rust_numeric_literal(value, "u32") for value in values])
 
     return candidates
 
@@ -764,14 +775,17 @@ def _same_chars_recovery_cases(
     needs_false = "false" in missing_buckets or not _has_substantial_vec_pair_case(existing_cases, "false")
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if needs_true:
         for pair in _generate_same_chars_true_pairs():
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+            add(pair)
     if needs_false:
         for pair in _generate_same_chars_false_pairs():
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+            add(pair)
 
     return candidates
 
@@ -782,28 +796,20 @@ def _count_expected_cases(cases: list[OracleCase], expected_expr: str) -> int:
     return sum(1 for case in cases if case.expected_expr.strip() == expected_expr)
 
 
-def _has_large_true_triangle_case(cases: list[OracleCase]) -> bool:
-    """Check whether we already have a true triangle case with all sides > 0 and a large side."""
+def _has_large_triangle_case(cases: list[OracleCase], expected: str) -> bool:
+    """Check whether we already have a triangle case with the given expected output and a large side (>= 100).
+
+    For true cases we additionally require all sides to be positive, since u32 Pythagorean triples
+    are always positive and the proptest generator can produce zeros.
+    """
     for case in cases:
-        if case.expected_expr.strip() != "true" or len(case.arg_exprs) != 3:
+        if case.expected_expr.strip() != expected or len(case.arg_exprs) != 3:
             continue
         try:
             values = [int(re.sub(r"u32$", "", expr.strip())) for expr in case.arg_exprs]
         except ValueError:
             continue
-        if all(value > 0 for value in values) and max(values) >= 100:
-            return True
-    return False
-
-
-def _has_large_false_triangle_case(cases: list[OracleCase]) -> bool:
-    """Check whether we already have a false triangle case with a large side."""
-    for case in cases:
-        if case.expected_expr.strip() != "false" or len(case.arg_exprs) != 3:
-            continue
-        try:
-            values = [int(re.sub(r"u32$", "", expr.strip())) for expr in case.arg_exprs]
-        except ValueError:
+        if expected == "true" and not all(value > 0 for value in values):
             continue
         if max(values) >= 100:
             return True
@@ -838,14 +844,17 @@ def _last_char_letter_recovery_cases(
     needs_false = "false" in missing_buckets or not _has_last_char_letter_false_mix(existing_cases)
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if needs_true:
         for text in _generate_last_char_letter_true_cases():
-            if (text,) not in seen:
-                candidates.append([text])
+            add([text])
     if needs_false:
         for text in _generate_last_char_letter_false_cases():
-            if (text,) not in seen:
-                candidates.append([text])
+            add([text])
 
     return candidates
 
@@ -867,6 +876,10 @@ def _solve_alpha_bytes_recovery_cases(
     candidates: list[list[str]] = []
     alpha_values = list(range(65, 91)) + list(range(97, 123))
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     for _ in range(8):
         length = max(1, 1 + _python_geometric_length(rng))
         values = [_u8_recovery_value(rng) for _ in range(length)]
@@ -874,9 +887,7 @@ def _solve_alpha_bytes_recovery_cases(
         insert_indices = rng.sample(range(length), k=n_alpha)
         for insert_idx in insert_indices:
             values[insert_idx] = rng.choice(alpha_values)
-        arg_exprs = [_vec_expr(values, "u8")]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_vec_expr(values, "u8")])
 
     return candidates
 
@@ -898,9 +909,11 @@ def _digit_sum_uppercase_recovery_cases(
     candidates: list[list[str]] = []
     uppercase_values = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    empty_case = [_char_vec_expr("")]
-    if tuple(empty_case) not in seen:
-        candidates.append(empty_case)
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    add([_char_vec_expr("")])
 
     for _ in range(10):
         length = max(10, 8 + _python_geometric_length(rng))
@@ -909,9 +922,7 @@ def _digit_sum_uppercase_recovery_cases(
         uppercase_indices = rng.sample(range(length), k=n_upper)
         for idx in uppercase_indices:
             values[idx] = rng.choice(uppercase_values)
-        arg_exprs = [_char_vec_expr("".join(values))]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_char_vec_expr("".join(values))])
 
     return candidates
 
@@ -988,32 +999,28 @@ def _count_upper_recovery_cases(
     def rand_upper_vowel() -> str:
         return rng.choice(upper_vowel_list)
 
-    def make_even_only(n_vowels_at_even: int | None = None) -> list[str]:
-        """Build a char vector with upper vowels only at even indices."""
-        length = max(4, 2 + _python_geometric_length(rng))
-        if n_vowels_at_even is not None:
-            length = max(length, 2 * n_vowels_at_even)
-        chars = [rand_non_vowel() for _ in range(length)]
-        even_idxs = [i for i in range(length) if i % 2 == 0]
-        n = n_vowels_at_even if n_vowels_at_even is not None else max(1, 1 + _python_geometric_length(rng))
-        for i in rng.sample(even_idxs, min(n, len(even_idxs))):
-            chars[i] = rand_upper_vowel()
-        return [_char_vec_expr("".join(chars))]
+    def make_vowel_pattern(n_vowels_at_even: int | None, include_odd: bool) -> list[str]:
+        """Build a char vector with upper vowels at even indices, and optionally at odd indices too.
 
-    def make_both(n_vowels_at_even: int | None = None) -> list[str]:
-        """Build a char vector with upper vowels at both even and odd indices."""
-        length = max(6, 4 + _python_geometric_length(rng))
+        make_even_only and make_both were identical except for whether odd-index vowels are added,
+        so they are unified here with include_odd controlling that difference.
+        """
+        # The minimum length differs: even-only needs room for >=1 even slot; both needs >=1 odd slot too.
+        min_len = 6 if include_odd else 4
+        min_extra = 4 if include_odd else 2
+        length = max(min_len, min_extra + _python_geometric_length(rng))
         if n_vowels_at_even is not None:
             length = max(length, 2 * n_vowels_at_even)
         chars = [rand_non_vowel() for _ in range(length)]
         even_idxs = [i for i in range(length) if i % 2 == 0]
-        odd_idxs = [i for i in range(length) if i % 2 == 1]
         n_even = n_vowels_at_even if n_vowels_at_even is not None else max(1, 1 + _python_geometric_length(rng))
-        n_odd = max(1, 1 + _python_geometric_length(rng))
         for i in rng.sample(even_idxs, min(n_even, len(even_idxs))):
             chars[i] = rand_upper_vowel()
-        for i in rng.sample(odd_idxs, min(n_odd, len(odd_idxs))):
-            chars[i] = rand_upper_vowel()
+        if include_odd:
+            odd_idxs = [i for i in range(length) if i % 2 == 1]
+            n_odd = max(1, 1 + _python_geometric_length(rng))
+            for i in rng.sample(odd_idxs, min(n_odd, len(odd_idxs))):
+                chars[i] = rand_upper_vowel()
         return [_char_vec_expr("".join(chars))]
 
     def add(arg_exprs: list[str]) -> None:
@@ -1031,15 +1038,15 @@ def _count_upper_recovery_cases(
         # First candidate guarantees >= 5 when needed; extra candidates only when structural
         # requirement (vowels at even indices) is itself unmet.
         n_large = 5 + _python_geometric_length(rng) if need_large_even_only else None
-        add(make_even_only(n_large))
+        add(make_vowel_pattern(n_large, include_odd=False))
         for _ in range(2 if need_even_only else 0):
-            add(make_even_only())
+            add(make_vowel_pattern(None, include_odd=False))
 
     if need_both or need_large_both:
         n_large = 5 + _python_geometric_length(rng) if need_large_both else None
-        add(make_both(n_large))
+        add(make_vowel_pattern(n_large, include_odd=True))
         for _ in range(2 if need_both else 0):
-            add(make_both())
+            add(make_vowel_pattern(None, include_odd=True))
 
     return candidates
 
@@ -1060,6 +1067,10 @@ def _get_row_nonempty_cases(
     rng = random.Random(87)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     while len(candidates) < needed + 4:
         num_rows = 2 + _python_geometric_length(rng)
         rows: list[list[int]] = [
@@ -1072,9 +1083,7 @@ def _get_row_nonempty_cases(
         for r, c in rng.sample(all_positions, k):
             rows[r][c] = x
         row_exprs = ["vec![" + ", ".join(str(v) for v in row) + "]" for row in rows]
-        arg_exprs = ["vec![" + ", ".join(row_exprs) + "]", str(x)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add(["vec![" + ", ".join(row_exprs) + "]", str(x)])
 
     return candidates
 
@@ -1093,14 +1102,16 @@ def _get_positive_zero_case(
     rng = random.Random(30)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     for _ in range(2):
         length = 10 + _python_geometric_length(rng)
         values = [_random_wide_i32(rng) for _ in range(length)]
         pos = rng.randint(0, length - 1)
         values[pos] = 0
-        arg_exprs = [_vec_expr(values, "i32")]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_vec_expr(values, "i32")])
 
     return candidates
 
@@ -1246,6 +1257,10 @@ def _is_happy_long_consecutive_cases(
     rng = random.Random(80)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     while len(candidates) < needed + 2:
         length = 15 + _python_geometric_length(rng)
         chars = [_random_printable_ascii_char(rng) for _ in range(length)]
@@ -1253,10 +1268,7 @@ def _is_happy_long_consecutive_cases(
         pos = rng.randint(0, length - 2)
         chars[pos] = letter
         chars[pos + 1] = letter
-        text = "".join(chars)
-        arg_exprs = [_char_vec_expr(text)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_char_vec_expr("".join(chars))])
 
     return candidates
 
@@ -1295,6 +1307,10 @@ def _any_int_recovery_cases(
     rng = random.Random(92)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     # True cases: z = x + y, within i32 range.
     attempts = 0
     while len(candidates) < needed_true + 4 and attempts < 10_000:
@@ -1304,9 +1320,7 @@ def _any_int_recovery_cases(
         z = x + y
         if not (i32_min <= z <= i32_max):
             continue
-        arg_exprs = [str(x), str(y), str(z)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([str(x), str(y), str(z)])
 
     # Overflow false cases: x + y exceeds i32 range, so no i32 z satisfies z == x + y.
     # Pick z = max or min.
@@ -1314,19 +1328,13 @@ def _any_int_recovery_cases(
         x = i32_max - rng.randint(0, 1000)
         y = rng.randint(1001, 5000)
         z = i32_max
-
-        arg_exprs = [str(x), str(y), str(z)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([str(x), str(y), str(z)])
 
     if need_min_overflow:
         x = i32_min + rng.randint(0, 1000)
         y = -rng.randint(1001, 5000)
         z = i32_min
-
-        arg_exprs = [str(x), str(y), str(z)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([str(x), str(y), str(z)])
 
     return candidates
 
@@ -1348,6 +1356,10 @@ def _below_threshold_wide_range_recovery_cases(
     candidates: list[list[str]] = []
     i32_min = -(2**31)
     i32_max = 2**31 - 1
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
 
     for expect_true in [True, False] * 3:
         threshold = _random_wide_i32(rng)
@@ -1375,9 +1387,7 @@ def _below_threshold_wide_range_recovery_cases(
         if rng.choice([True, False]):
             rng.shuffle(values)
 
-        arg_exprs = [_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")])
 
     for _ in range(4):
         threshold = _random_wide_i32(rng)
@@ -1399,9 +1409,7 @@ def _below_threshold_wide_range_recovery_cases(
                 candidate = threshold + delta
             values.append(max(i32_min, min(i32_max, candidate)))
 
-        arg_exprs = [_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")])
 
     return candidates
 
@@ -1423,6 +1431,10 @@ def _largest_prime_recovery_cases(
     large_composites = _find_large_composites_with_large_prime_factors(4, limit=1_000_000, min_factor=53)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     for idx, prime in enumerate(large_primes):
         values = [
             prime,
@@ -1438,12 +1450,7 @@ def _largest_prime_recovery_cases(
             values.extend([prime - 10, prime - 100])
         else:
             values.extend([prime - 1000, prime - 10000])
-
-        arg_exprs = [_vec_expr(values, "u32")]
-        key = tuple(arg_exprs)
-        if key in seen:
-            continue
-        candidates.append(arg_exprs)
+        add([_vec_expr(values, "u32")])
 
     for idx, composite in enumerate(large_composites):
         values = [
@@ -1460,12 +1467,8 @@ def _largest_prime_recovery_cases(
             values.extend([composite - 106, composite - 118])
         else:
             values.extend([max(0, composite // 59), max(0, composite // 61)])
+        add([_vec_expr(values, "u32")])
 
-        arg_exprs = [_vec_expr(values, "u32")]
-        key = tuple(arg_exprs)
-        if key in seen:
-            continue
-        candidates.append(arg_exprs)
     return candidates
 
 
