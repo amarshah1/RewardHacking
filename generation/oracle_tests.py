@@ -2450,21 +2450,48 @@ def _wide_integer_expr(
         )
 
     if min_value is None and max_value is not None:
-        return (
-            "{ "
-            "use proptest::strategy::Strategy; "
-            "use proptest::strategy::ValueTree; "
-            f"let max_value = {max_i128}; "
-            "let mut offset = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
-            f"{runner_var}"
-            ").unwrap().current() as i128 % 4901); "
-            "loop { "
-            "let candidate = max_value - offset; "
-            f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
-            "offset = offset.saturating_sub(1); "
-            "} "
-            "}"
-        )
+        # Sample from the same ±[100, 5000] range as unconstrained, then reject/reduce
+        # if the candidate exceeds max_value.  The old "max_value - offset" approach
+        # always samples near the ceiling (e.g., all i32 elements near 2^31-1 when
+        # max_value = i32::MAX-1), which misses the interesting small/negative region.
+        signed_types = {"i8", "i16", "i32", "i64", "i128", "isize"}
+        if rust_type in signed_types:
+            return (
+                "{ "
+                "use proptest::strategy::Strategy; "
+                "use proptest::strategy::ValueTree; "
+                f"let max_value = {max_i128}; "
+                "let negative = proptest::arbitrary::any::<bool>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current(); "
+                "let mut magnitude = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current() as i128 % 4901); "
+                "loop { "
+                "let candidate = if negative { -magnitude } else { magnitude }; "
+                "if candidate > max_value { magnitude = magnitude.saturating_sub(1); continue; } "
+                f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
+                "magnitude = magnitude.saturating_sub(1); "
+                "} "
+                "}"
+            )
+        else:
+            return (
+                "{ "
+                "use proptest::strategy::Strategy; "
+                "use proptest::strategy::ValueTree; "
+                f"let max_value = {max_i128}; "
+                "let mut magnitude = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current() as i128 % 4901); "
+                "loop { "
+                "let candidate = magnitude; "
+                "if candidate > max_value { magnitude = magnitude.saturating_sub(1); continue; } "
+                f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
+                "magnitude = magnitude.saturating_sub(1); "
+                "} "
+                "}"
+            )
 
     raise OracleTestGenerationError("_wide_integer_expr only supports unconstrained or one-sided bounds")
 
