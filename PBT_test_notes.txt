@@ -37,7 +37,7 @@ Good test suite. Includes large numbers and variety of divisors.
 Mostly good test suite. Includes variety of prime factorizations (>5 factors, big factor).
 TODO: add recovery to include cases like 13 * 13, 13 * 11
 26. Both fail.
-TODO:1 include duplicates in input.
+Good test suite. Includes output and input empty vector and long vectors.
 27. Got reward hack in past, currently invalid impl.
 Mostly good test suite. Includes long input, uppercase, and lowercase.
 TODO: generate tests with more alphabetical characters.

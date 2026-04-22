@@ -1,167 +1,167 @@
 #[test]
 fn oracle_case_0() {
+    let arg_0: Vec<i64> = vec![3619i64, -1147i64, 1760i64, 441i64, 3451i64, 1760i64, 3642i64];
+    let expected: Vec<i64> = vec![3619, -1147, 441, 3451, 3642];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_1() {
+    let arg_0: Vec<i64> = vec![-348i64, -348i64, 4885i64, 4552i64, 4552i64, 4552i64, 4273i64, 3084i64];
+    let expected: Vec<i64> = vec![4885, 4273, 3084];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_2() {
+    let arg_0: Vec<i64> = vec![4346i64, -3248i64, 4346i64, 2152i64, -3248i64, 2152i64];
+    let expected: Vec<i64> = vec![];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_3() {
+    let arg_0: Vec<i64> = vec![-4553i64, 3130i64, 3130i64];
+    let expected: Vec<i64> = vec![-4553];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_4() {
+    let arg_0: Vec<i64> = vec![3846i64, -2364i64, 769i64, 3846i64, 888i64, -2364i64, -431i64, -3673i64, 769i64, -3673i64, 769i64, -4369i64];
+    let expected: Vec<i64> = vec![888, -431, -4369];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_5() {
+    let arg_0: Vec<i64> = vec![3606i64, 646i64, 1483i64, -498i64, 1483i64, 1483i64, -624i64, 646i64];
+    let expected: Vec<i64> = vec![3606, -498, -624];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_6() {
+    let arg_0: Vec<i64> = vec![2019i64, 2019i64, 2019i64, -4980i64, 924i64, 924i64, -2048i64, -4980i64, -2048i64, -1794i64, -2048i64, -1794i64];
+    let expected: Vec<i64> = vec![];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_7() {
+    let arg_0: Vec<i64> = vec![4191i64, 155i64, 948i64, 3952i64, 3952i64];
+    let expected: Vec<i64> = vec![4191, 155, 948];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_8() {
+    let arg_0: Vec<i64> = vec![1444i64, 4535i64, 4535i64, -535i64, 4535i64, -535i64, -535i64, 1444i64];
+    let expected: Vec<i64> = vec![];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_9() {
+    let arg_0: Vec<i64> = vec![-4854i64, -2756i64, -1699i64, -502i64, 3413i64, -502i64, -4882i64, -502i64, -2355i64, -4854i64, -4882i64, -2756i64, -2355i64, 3413i64, -2241i64, -4882i64];
+    let expected: Vec<i64> = vec![-1699, -2241];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_10() {
+    let arg_0: Vec<i64> = vec![-1203i64, -1203i64, 594i64, -1203i64, 594i64];
+    let expected: Vec<i64> = vec![];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_11() {
+    let arg_0: Vec<i64> = vec![-498i64, -1216i64, -980i64, 4616i64, 4616i64, 2282i64, -924i64, -1657i64, 2282i64, -2163i64, -1657i64, -4732i64, -994i64, 3925i64, -663i64, -663i64, -4052i64, -1657i64, -924i64, -1216i64, -4732i64, -980i64, -4732i64, -980i64, -924i64];
+    let expected: Vec<i64> = vec![-498, -2163, -994, 3925, -4052];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_12() {
+    let arg_0: Vec<i64> = vec![-1176i64, 4450i64, 4450i64, 4450i64, -3092i64, -648i64, -2541i64, 2579i64];
+    let expected: Vec<i64> = vec![-1176, -3092, -648, -2541, 2579];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_13() {
+    let arg_0: Vec<i64> = vec![1272i64, 4301i64, 3467i64, 4939i64, -1411i64, 3467i64, 3105i64, 4939i64, -193i64, 3467i64, 3105i64, 3501i64, 3501i64, 4939i64, -4903i64];
+    let expected: Vec<i64> = vec![1272, 4301, -1411, -193, -4903];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_14() {
+    let arg_0: Vec<i64> = vec![2112i64, -1336i64, 4925i64, 2343i64, 2343i64, -1336i64, -4854i64, -1336i64, 2343i64, 2112i64, -563i64];
+    let expected: Vec<i64> = vec![4925, -4854, -563];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_15() {
+    let arg_0: Vec<i64> = vec![-3030i64, 1600i64, -3963i64, -3014i64, 4010i64, -4832i64, 4934i64, -3963i64, -3285i64, -4832i64, 1600i64, -3963i64, -4193i64, -3030i64, -2630i64, 4979i64, -3285i64, -3014i64, -3285i64, 4979i64, 636i64, -2684i64, -3014i64, -4832i64, 4010i64, -3030i64, -2684i64, 4979i64, 4934i64];
+    let expected: Vec<i64> = vec![-4193, -2630, 636];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_16() {
+    let arg_0: Vec<i64> = vec![-2595i64, -3934i64, -3934i64, -1075i64, -2595i64, -348i64, -2595i64, -3934i64];
+    let expected: Vec<i64> = vec![-1075, -348];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_17() {
+    let arg_0: Vec<i64> = vec![993i64, 3217i64, 3109i64, 3217i64, 3217i64, 3109i64, 3109i64, 4188i64, 850i64, -176i64, 1913i64, 993i64, -712i64, -4800i64, -176i64, -4800i64, -4800i64, 993i64];
+    let expected: Vec<i64> = vec![4188, 850, 1913, -712];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_18() {
+    let arg_0: Vec<i64> = vec![-4421i64, -4421i64, -4421i64];
+    let expected: Vec<i64> = vec![];
+    assert_eq!(remove_duplicates(&arg_0), expected);
+}
+
+#[test]
+fn oracle_case_19() {
     let arg_0: Vec<i64> = vec![1551, 111, 2262, 3875, -2007, -1063, -3306, 3752, -4255, -3776, 4032, 3718, -623, 3952, 4899, -4881, -4629, -3851, -3317];
     let expected: Vec<i64> = vec![1551, 111, 2262, 3875, -2007, -1063, -3306, 3752, -4255, -3776, 4032, 3718, -623, 3952, 4899, -4881, -4629, -3851, -3317];
     assert_eq!(remove_duplicates(&arg_0), expected);
 }
 
 #[test]
-fn oracle_case_1() {
+fn oracle_case_20() {
     let arg_0: Vec<i64> = vec![-3063, -2713, 3574, 3640, 1331, 4432];
     let expected: Vec<i64> = vec![-3063, -2713, 3574, 3640, 1331, 4432];
     assert_eq!(remove_duplicates(&arg_0), expected);
 }
 
 #[test]
-fn oracle_case_2() {
+fn oracle_case_21() {
     let arg_0: Vec<i64> = vec![-3881, -4900, 176, -4043];
     let expected: Vec<i64> = vec![-3881, -4900, 176, -4043];
     assert_eq!(remove_duplicates(&arg_0), expected);
 }
 
 #[test]
-fn oracle_case_3() {
+fn oracle_case_22() {
     let arg_0: Vec<i64> = vec![];
     let expected: Vec<i64> = vec![];
     assert_eq!(remove_duplicates(&arg_0), expected);
 }
 
 #[test]
-fn oracle_case_4() {
+fn oracle_case_23() {
     let arg_0: Vec<i64> = vec![2605, 2376, -199, 416, 2862, 296, -4084];
     let expected: Vec<i64> = vec![2605, 2376, -199, 416, 2862, 296, -4084];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_5() {
-    let arg_0: Vec<i64> = vec![-3445];
-    let expected: Vec<i64> = vec![-3445];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_6() {
-    let arg_0: Vec<i64> = vec![-3593, -1007];
-    let expected: Vec<i64> = vec![-3593, -1007];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_7() {
-    let arg_0: Vec<i64> = vec![-1675, 3413, -1795, -823];
-    let expected: Vec<i64> = vec![-1675, 3413, -1795, -823];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_8() {
-    let arg_0: Vec<i64> = vec![-4671, -4417, -1662, 3173, 4786];
-    let expected: Vec<i64> = vec![-4671, -4417, -1662, 3173, 4786];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_9() {
-    let arg_0: Vec<i64> = vec![-569, -3150, 718, -2576, 4077];
-    let expected: Vec<i64> = vec![-569, -3150, 718, -2576, 4077];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_10() {
-    let arg_0: Vec<i64> = vec![-3569, 3810, -900, -3816, -4523, -3539, 2151, 2725, -2151, -2290, -364, -1551, 4194, 1565, 4375, 3631, -4875, 4438, 2563, 2864, 871, -1169, 1853, -4427];
-    let expected: Vec<i64> = vec![-3569, 3810, -900, -3816, -4523, -3539, 2151, 2725, -2151, -2290, -364, -1551, 4194, 1565, 4375, 3631, -4875, 4438, 2563, 2864, 871, -1169, 1853, -4427];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_11() {
-    let arg_0: Vec<i64> = vec![1858, -4006];
-    let expected: Vec<i64> = vec![1858, -4006];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_12() {
-    let arg_0: Vec<i64> = vec![611];
-    let expected: Vec<i64> = vec![611];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_13() {
-    let arg_0: Vec<i64> = vec![3566, -4836, -3754, -2105];
-    let expected: Vec<i64> = vec![3566, -4836, -3754, -2105];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_14() {
-    let arg_0: Vec<i64> = vec![-1499];
-    let expected: Vec<i64> = vec![-1499];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_15() {
-    let arg_0: Vec<i64> = vec![-2201, -1934];
-    let expected: Vec<i64> = vec![-2201, -1934];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_16() {
-    let arg_0: Vec<i64> = vec![-3060, -1747, 1966, 617, 4778, -3432];
-    let expected: Vec<i64> = vec![-3060, -1747, 1966, 617, 4778, -3432];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_17() {
-    let arg_0: Vec<i64> = vec![-4850, -4056];
-    let expected: Vec<i64> = vec![-4850, -4056];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_18() {
-    let arg_0: Vec<i64> = vec![537, -604, 3472, -4742, 1996, 2668];
-    let expected: Vec<i64> = vec![537, -604, 3472, -4742, 1996, 2668];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_19() {
-    let arg_0: Vec<i64> = vec![-1391, 3771, -4375];
-    let expected: Vec<i64> = vec![-1391, 3771, -4375];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_20() {
-    let arg_0: Vec<i64> = vec![3766, 2853, -4602, -4828, -4074, 3171, -2434, 4461];
-    let expected: Vec<i64> = vec![3766, 2853, -4602, -4828, -4074, 3171, -2434, 4461];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_21() {
-    let arg_0: Vec<i64> = vec![1865];
-    let expected: Vec<i64> = vec![1865];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_22() {
-    let arg_0: Vec<i64> = vec![-454, 274];
-    let expected: Vec<i64> = vec![-454, 274];
-    assert_eq!(remove_duplicates(&arg_0), expected);
-}
-
-#[test]
-fn oracle_case_23() {
-    let arg_0: Vec<i64> = vec![-2801, 3491];
-    let expected: Vec<i64> = vec![-2801, 3491];
     assert_eq!(remove_duplicates(&arg_0), expected);
 }

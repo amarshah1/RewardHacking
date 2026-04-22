@@ -343,6 +343,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/18":
         # Guarantees >=12 positive-count cases and at least one input length > 100.
         return _how_many_times_recovery_cases(signature, [], existing, seen)
+    if task_id == "HumanEval/26":
+        # Guarantees >=15 cases with at least one duplicated element and varying duplicate counts.
+        return _remove_duplicates_with_duplicates_cases(existing, seen)
     if task_id == "HumanEval/30":
         # Guarantees a case with 0 in the input list (0 is non-positive, filtered out).
         return _get_positive_zero_case(existing, seen)
@@ -463,6 +466,10 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/64":
         candidates.extend(
             _vowels_count_trailing_y_cases(existing_cases, seen)
+        )
+    if task_id == "HumanEval/26":
+        candidates.extend(
+            _remove_duplicates_with_duplicates_cases(existing_cases, seen)
         )
     if task_id == "HumanEval/30":
         candidates.extend(
@@ -1047,6 +1054,70 @@ def _count_upper_recovery_cases(
         add(make_vowel_pattern(n_large, include_odd=True))
         for _ in range(2 if need_both else 0):
             add(make_vowel_pattern(None, include_odd=True))
+
+    return candidates
+
+
+def _remove_duplicates_with_duplicates_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-26 includes >=15 cases with at least one duplicated element.
+
+    Proptest samples from a ±[100, 5000] pool, which is large enough that collisions
+    are extremely rare.  We inject cases where a controlled number of distinct values
+    each appear 2-3 times, cycling through varying duplicate counts so the test set
+    exercises the full range of remove_duplicates behavior.
+    """
+    dup_case_count = 0
+    for case in existing_cases:
+        if len(case.arg_exprs) == 1:
+            values = _parse_i64_vec_literal(case.arg_exprs[0])
+            if values is not None and len(values) != len(set(values)):
+                dup_case_count += 1
+
+    needed = max(0, 15 - dup_case_count)
+    if needed == 0:
+        return []
+
+    rng = random.Random(26)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    # Vary the number of distinct duplicated values across cases so the test set
+    # exercises inputs with few, moderate, and many repeated elements.
+    dup_counts_schedule = [1, 2, 3, 1, 4, 2, 5, 1, 3, 6, 2, 8, 1, 4, 3, 10, 2, 5, 1, 7, 3, 4, 2, 6]
+
+    for n_dup_values in dup_counts_schedule:
+        if len(candidates) >= needed + 4:
+            break
+
+        n_unique = rng.randint(0, 5)
+        n_pool = n_dup_values + n_unique
+
+        pool: set[int] = set()
+        for _ in range(n_pool * 8):
+            pool.add(_random_wide_i32(rng))
+            if len(pool) >= n_pool:
+                break
+
+        if len(pool) < n_pool:
+            continue
+
+        pool_list = list(pool)
+        dup_values = pool_list[:n_dup_values]
+        unique_values = pool_list[n_dup_values:n_pool]
+
+        elements: list[int] = []
+        for v in dup_values:
+            elements.extend([v] * rng.randint(2, 3))
+        elements.extend(unique_values)
+        rng.shuffle(elements)
+
+        add([_vec_expr(elements, "i64")])
 
     return candidates
 
@@ -1726,6 +1797,24 @@ def _parse_i32_vec_literal(expr: str) -> list[int] | None:
         if value is None:
             return None
         values.append(value)
+    return values
+
+
+def _parse_i64_vec_literal(expr: str) -> list[int] | None:
+    """Parse a simple `vec![...]` of i64 integers (with or without `i64` suffix) into Python ints."""
+    expr = expr.strip()
+    if not expr.startswith("vec![") or not expr.endswith("]"):
+        return None
+    inner = expr[len("vec![") : -1].strip()
+    if not inner:
+        return []
+
+    values: list[int] = []
+    for part in _split_top_level(inner):
+        token = re.sub(r"i64$", "", part.strip())
+        if not re.fullmatch(r"-?\d+", token):
+            return None
+        values.append(int(token))
     return values
 
 
