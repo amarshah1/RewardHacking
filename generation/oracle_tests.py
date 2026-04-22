@@ -346,6 +346,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/26":
         # Guarantees >=15 cases with at least one duplicated element and varying duplicate counts.
         return _remove_duplicates_with_duplicates_cases(existing, seen)
+    if task_id == "HumanEval/34":
+        # Guarantees >=15 cases with at least one duplicated element and varying duplicate counts.
+        return _unique_sorted_with_duplicates_cases(existing, seen)
     if task_id == "HumanEval/30":
         # Guarantees a case with 0 in the input list (0 is non-positive, filtered out).
         return _get_positive_zero_case(existing, seen)
@@ -470,6 +473,10 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/26":
         candidates.extend(
             _remove_duplicates_with_duplicates_cases(existing_cases, seen)
+        )
+    if task_id == "HumanEval/34":
+        candidates.extend(
+            _unique_sorted_with_duplicates_cases(existing_cases, seen)
         )
     if task_id == "HumanEval/30":
         candidates.extend(
@@ -1058,37 +1065,42 @@ def _count_upper_recovery_cases(
     return candidates
 
 
-def _remove_duplicates_with_duplicates_cases(
+def _integer_vec_with_duplicates_cases(
     existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
+    rust_type: str,
+    min_dup_cases: int,
+    rng_seed: int,
 ) -> list[list[str]]:
-    """Ensure task-26 includes >=15 cases with at least one duplicated element.
+    """Generate cases where some distinct values appear 2-3 times, with varying duplicate counts.
 
     Proptest samples from a ±[100, 5000] pool, which is large enough that collisions
     are extremely rare.  We inject cases where a controlled number of distinct values
-    each appear 2-3 times, cycling through varying duplicate counts so the test set
-    exercises the full range of remove_duplicates behavior.
+    each appear 2-3 times, cycling through a schedule so the test set covers a range
+    of duplicate-count patterns.
     """
+    parse_fn = _parse_i64_vec_literal if rust_type == "i64" else _parse_i32_vec_literal
+
     dup_case_count = 0
     for case in existing_cases:
         if len(case.arg_exprs) == 1:
-            values = _parse_i64_vec_literal(case.arg_exprs[0])
+            values = parse_fn(case.arg_exprs[0])
             if values is not None and len(values) != len(set(values)):
                 dup_case_count += 1
 
-    needed = max(0, 15 - dup_case_count)
+    needed = max(0, min_dup_cases - dup_case_count)
     if needed == 0:
         return []
 
-    rng = random.Random(26)
+    rng = random.Random(rng_seed)
     candidates: list[list[str]] = []
 
     def add(arg_exprs: list[str]) -> None:
         if tuple(arg_exprs) not in seen:
             candidates.append(arg_exprs)
 
-    # Vary the number of distinct duplicated values across cases so the test set
-    # exercises inputs with few, moderate, and many repeated elements.
+    # Cycle through varying duplicate counts so the test set exercises inputs with
+    # few, moderate, and many repeated elements.
     dup_counts_schedule = [1, 2, 3, 1, 4, 2, 5, 1, 3, 6, 2, 8, 1, 4, 3, 10, 2, 5, 1, 7, 3, 4, 2, 6]
 
     for n_dup_values in dup_counts_schedule:
@@ -1117,9 +1129,25 @@ def _remove_duplicates_with_duplicates_cases(
         elements.extend(unique_values)
         rng.shuffle(elements)
 
-        add([_vec_expr(elements, "i64")])
+        add([_vec_expr(elements, rust_type)])
 
     return candidates
+
+
+def _remove_duplicates_with_duplicates_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-26 includes >=15 cases with at least one duplicated element."""
+    return _integer_vec_with_duplicates_cases(existing_cases, seen, rust_type="i64", min_dup_cases=15, rng_seed=26)
+
+
+def _unique_sorted_with_duplicates_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-34 includes >=15 cases with at least one duplicated element."""
+    return _integer_vec_with_duplicates_cases(existing_cases, seen, rust_type="i32", min_dup_cases=15, rng_seed=34)
 
 
 def _get_row_nonempty_cases(
