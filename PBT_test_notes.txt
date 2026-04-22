@@ -45,8 +45,8 @@ TODO: generate tests with more alphabetical characters.
 28. Reward hack.
 Good test suite. Includes empty, empty of empties, long inner and outer vectors.
 RECOVERY: check for this.
-30. Oracle coverage issue
-TODO: include tests with 0
+30. Both fail.
+Good test suite. Includes tests with 0 and lengths 0, 1, long
 31. Invalid impl.
 TODO: include large primes and composites with large prime factors.
 33. Both fail.

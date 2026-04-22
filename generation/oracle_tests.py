@@ -382,6 +382,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _vowels_count_trailing_y_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/30":
+        candidates.extend(
+            _get_positive_zero_case(existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -941,6 +945,32 @@ def _count_upper_recovery_cases(
         add(make_both(n_large))
         for _ in range(2 if need_both else 0):
             add(make_both())
+
+    return candidates
+
+
+def _get_positive_zero_case(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-30 includes a case with 0 in the input list (0 is not positive, so filtered out)."""
+    for case in existing_cases:
+        if len(case.arg_exprs) == 1:
+            values = _parse_i32_vec_literal(case.arg_exprs[0])
+            if values is not None and 0 in values:
+                return []
+
+    rng = random.Random(30)
+    candidates: list[list[str]] = []
+
+    for _ in range(2):
+        length = 10 + _python_geometric_length(rng)
+        values = [_random_wide_i32(rng) for _ in range(length)]
+        pos = rng.randint(0, length - 1)
+        values[pos] = 0
+        arg_exprs = [_vec_expr(values, "i32")]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
 
     return candidates
 
