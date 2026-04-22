@@ -118,8 +118,8 @@ Good test suite. Includes at least 5 strings where the length is at least 15 and
 TODO: include longer input whose length is a larger prime (>50?) and larger composite with large prime factors
 85. Got reward hack in past, currently both fail.
 TODO: Include long input with even elements at even indices only.
-87. Oracle coverage issue
-TODO: choose arg 1 from one of the numbers in the arg0 vec of vecs, include some cases where arg1 is repeated
+87. Got reward hack.
+Good test suite. Includes at least 12 cases where output length is nonzero, including long cases.
 92. Both fail.
 Good test suite. Includes 12 true cases where arg2 == arg1 + arg0 and two false overflow cases.
 94. Got reward hack in past, currently both fail. Previous hack is pretty interesting - it errors on input with prime factorizations where the factors are all over 50.

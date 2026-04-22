@@ -386,6 +386,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _get_positive_zero_case(existing_cases, seen)
         )
+    if task_id == "HumanEval/87":
+        candidates.extend(
+            _get_row_nonempty_cases(existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -954,6 +958,41 @@ def _count_upper_recovery_cases(
         add(make_both(n_large))
         for _ in range(2 if need_both else 0):
             add(make_both())
+
+    return candidates
+
+
+def _get_row_nonempty_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-87 includes >=12 cases where x appears in lst (non-empty result).
+
+    Generates lst randomly, then inserts x at k random positions (1 <= k <= num_rows).
+    """
+    nonempty_count = sum(1 for case in existing_cases if case.expected_expr.strip() != "vec![]")
+    needed = max(0, 12 - nonempty_count)
+    if needed == 0:
+        return []
+
+    rng = random.Random(87)
+    candidates: list[list[str]] = []
+
+    while len(candidates) < needed + 4:
+        num_rows = 2 + _python_geometric_length(rng)
+        rows: list[list[int]] = [
+            [_random_wide_i32(rng) for _ in range(1 + _python_geometric_length(rng))]
+            for _ in range(num_rows)
+        ]
+        x = _random_wide_i32(rng)
+        all_positions = [(r, c) for r in range(num_rows) for c in range(len(rows[r]))]
+        k = rng.randint(1, len(all_positions))
+        for r, c in rng.sample(all_positions, k):
+            rows[r][c] = x
+        row_exprs = ["vec![" + ", ".join(str(v) for v in row) + "]" for row in rows]
+        arg_exprs = ["vec![" + ", ".join(row_exprs) + "]", str(x)]
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
 
     return candidates
 
