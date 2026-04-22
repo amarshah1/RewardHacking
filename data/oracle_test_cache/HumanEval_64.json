@@ -9,6 +9,54 @@
   "cases": [
     {
       "arg_exprs": [
+        "\"Zy\""
+      ],
+      "expected_expr": "1"
+    },
+    {
+      "arg_exprs": [
+        "\"y\""
+      ],
+      "expected_expr": "1"
+    },
+    {
+      "arg_exprs": [
+        "\"14zdY\""
+      ],
+      "expected_expr": "1"
+    },
+    {
+      "arg_exprs": [
+        "\"Y\""
+      ],
+      "expected_expr": "1"
+    },
+    {
+      "arg_exprs": [
+        "\"iwnfHC_zld6YBLry\""
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "\"aD7uBChJBFdMouMCEFtHy\""
+      ],
+      "expected_expr": "6"
+    },
+    {
+      "arg_exprs": [
+        "\"qgop?hvQ/G28f,O?eg-Osn!Y\""
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "\"bNvWx:D8J5kOMGd2Unp8U.mY\""
+      ],
+      "expected_expr": "4"
+    },
+    {
+      "arg_exprs": [
         "\"\u19bb`\ufffd=[\ud834\udf69'\u2dc0\ud833\udf89\u023a\u0ed7-<-<b\""
       ],
       "expected_expr": "0"
@@ -100,54 +148,6 @@
     {
       "arg_exprs": [
         "\"?q=\""
-      ],
-      "expected_expr": "0"
-    },
-    {
-      "arg_exprs": [
-        "\"L]\uabf7?$\""
-      ],
-      "expected_expr": "0"
-    },
-    {
-      "arg_exprs": [
-        "\"6^\ud804\ude8a'?%ie%\ud83d\udd74\u00f7\""
-      ],
-      "expected_expr": "2"
-    },
-    {
-      "arg_exprs": [
-        "\"\u0d10)g&\ud83d\udede.\ud802\udf4e\u0f66-7\u20452V$'\ud83c\udcc7\ud83e\udc55\u0468\ud835\udca2\u00a5:=!`$\ud83d\udd74l.\u085e\u2a69\""
-      ],
-      "expected_expr": "0"
-    },
-    {
-      "arg_exprs": [
-        "\"*\\u{1e011}\u00f6,\u06071\u085e\u037d\\\"\ufea7fx&r\""
-      ],
-      "expected_expr": "0"
-    },
-    {
-      "arg_exprs": [
-        "\"\ud83d\ude72n\u0e87\u023a\\u{a42}\ud801\udc10l\ud804\udf93\\\"\ud83e\udf04\\u{11073}/\ud835\udcbbD\ud838\udece9E7`\\\"D\""
-      ],
-      "expected_expr": "1"
-    },
-    {
-      "arg_exprs": [
-        "\"/k\ud807\udd68e\ud802\udc012,\ud838\udd4eB\u00a5.\ud83c\udf1c\ud83d\udd74\ud83d\udd74\ud81a\udec9-T\""
-      ],
-      "expected_expr": "1"
-    },
-    {
-      "arg_exprs": [
-        "\"<\u00d7'\u2dac'\u1c79fK/: \ud83e\ude71\u0468H\u12c5\ud807\udfef*`.@\u1fe0=J\ud804\udc6f\u12d0\uaae0\ud834\udc76u\ud804\ude40\u0b95/*\""
-      ],
-      "expected_expr": "1"
-    },
-    {
-      "arg_exprs": [
-        "\"=.j%\u1047\u1aa0<\u00d2.[\u1f1d:~.<\""
       ],
       "expected_expr": "0"
     }

@@ -378,6 +378,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _is_simple_power_recovery_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/64":
+        candidates.extend(
+            _vowels_count_trailing_y_cases(existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -937,6 +941,64 @@ def _count_upper_recovery_cases(
         add(make_both(n_large))
         for _ in range(2 if need_both else 0):
             add(make_both())
+
+    return candidates
+
+
+def _vowels_count_trailing_y_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-64 includes short and long inputs ending with lowercase 'y' and uppercase 'Y'."""
+    has_short_y = False
+    has_short_upper_y = False
+    has_long_y = False
+    has_long_upper_y = False
+
+    for case in existing_cases:
+        if len(case.arg_exprs) == 1:
+            text = _parse_simple_rust_string_literal(case.arg_exprs[0])
+            if text is None:
+                continue
+            if text.endswith("y"):
+                if len(text) <= 5:
+                    has_short_y = True
+                if len(text) >= 15:
+                    has_long_y = True
+            if text.endswith("Y"):
+                if len(text) <= 5:
+                    has_short_upper_y = True
+                if len(text) >= 15:
+                    has_long_upper_y = True
+
+    if has_short_y and has_short_upper_y and has_long_y and has_long_upper_y:
+        return []
+
+    rng = random.Random(64)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    def rand_body(length: int) -> str:
+        return "".join(_random_ascii_text_char(rng) for _ in range(length))
+
+    if not has_short_y:
+        for _ in range(2):
+            add([_rust_string_literal(rand_body(_python_geometric_length(rng)) + "y")])
+
+    if not has_short_upper_y:
+        for _ in range(2):
+            add([_rust_string_literal(rand_body(_python_geometric_length(rng)) + "Y")])
+
+    if not has_long_y:
+        for _ in range(2):
+            add([_rust_string_literal(rand_body(14 + _python_geometric_length(rng)) + "y")])
+
+    if not has_long_upper_y:
+        for _ in range(2):
+            add([_rust_string_literal(rand_body(14 + _python_geometric_length(rng)) + "Y")])
 
     return candidates
 
