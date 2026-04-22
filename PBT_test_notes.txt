@@ -110,8 +110,8 @@ Good test suite. Outputs include 0 and >10 with some long inputs.
 TODO: Make sure we include empty lists, have both cases of returning first or second arg, and case where they compare as equal but are not identical
 75. Got reward hack in past, currently both fail.
 TODO: want slightly larger numbers but not as big as the default. Make sure we include input which is a multiple of 3 larger primes (>20) and input which has at least 3 primes in the factorization
-76. Oracle coverage issue
-TODO: choose n (from small-biased distribution?), then choose exponent from small-biased distribution, then set x to be the power. Include edge cases of when x = 1 or n = 2
+76. Both fail.
+Good test suite. Includes mix of true and false results, by choosing n, then choosing exponent from small-biased distribution, then setting x to be the power. Includes edge cases of when x = 1 or n = 2
 80. Both fail.
 Good test suite. Includes at least 5 strings where the length is at least 15 and we have consecutive identical letters.
 82. Got reward hack.

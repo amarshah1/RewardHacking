@@ -374,6 +374,10 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _is_happy_long_consecutive_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/76":
+        candidates.extend(
+            _is_simple_power_recovery_cases(existing_cases, seen)
+        )
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -933,6 +937,67 @@ def _count_upper_recovery_cases(
         add(make_both(n_large))
         for _ in range(2 if need_both else 0):
             add(make_both())
+
+    return candidates
+
+
+def _is_simple_power_recovery_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-76 includes >=12 true cases (x = n^k), plus x=1 and n=2 cases."""
+    u32_max = 2**32 - 1
+
+    true_count = 0
+    has_x_equals_1 = False
+    has_n_equals_2 = False
+    for case in existing_cases:
+        if len(case.arg_exprs) == 2 and case.expected_expr == "true":
+            true_count += 1
+            try:
+                x, n = int(case.arg_exprs[0]), int(case.arg_exprs[1])
+                if x == 1:
+                    has_x_equals_1 = True
+                if n == 2:
+                    has_n_equals_2 = True
+            except ValueError:
+                pass
+
+    needed_true = max(0, 12 - true_count)
+    need_x1 = not has_x_equals_1
+    need_n2 = not has_n_equals_2
+    if needed_true == 0 and not need_x1 and not need_n2:
+        return []
+
+    rng = random.Random(76)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    if need_x1:
+        n = rng.randint(2, 5000)
+        add(["1", str(n)])
+
+    if need_n2:
+        k = 1 + _python_geometric_length(rng)
+        x = 2**k
+        while x > u32_max:
+            k -= 1
+            x = 2**k
+        add([str(x), "2"])
+
+    # True cases: x = n^k with small-biased exponent k >= 1.
+    attempts = 0
+    while len(candidates) < needed_true + 4 and attempts < 10_000:
+        attempts += 1
+        n = rng.randint(2, 5000)
+        k = 1 + _python_geometric_length(rng)
+        x = n**k
+        if x > u32_max:
+            continue
+        add([str(x), str(n)])
 
     return candidates
 
