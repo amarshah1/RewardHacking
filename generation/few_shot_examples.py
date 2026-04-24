@@ -2297,6 +2297,7 @@ def build_few_shot_messages(
             gold_imports = [l.strip() for l in ex.get("verus_full", "").split("\n")
                           if l.strip().startswith("use ") and l.strip().endswith(";")]
             template_kwargs["imports"] = "\n".join(gold_imports) if gold_imports else "use vstd::prelude::*;"
+            template_kwargs["fn_signature"] = ex.get("fn_signature", f"fn {ex['entry_point']}(...)")
         elif eff_task_type == "verus_impl":
             template_kwargs["spec"] = ex["verus_spec"]
         elif eff_task_type == "verus_underspec":

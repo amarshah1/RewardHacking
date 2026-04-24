@@ -131,8 +131,23 @@ Branch B completions are tested against cached oracle PBTs using `run_verus_with
 `generation/verus_reference.py` contains a comprehensive Verus cheat sheet with:
 - Critical limitations (no floats, no HashMap, no iterators, spec fn can't be called from exec)
 - Exec vs Spec mode table
-- Common pitfalls section (17 items covering: mutable variables, invariant syntax, inclusive ranges, int/nat in exec, spec fn calls, Vec vs Seq, etc.)
+- Available libraries section (only use functions from imports present in the spec)
+- Common pitfalls section (17+ items covering: mutable variables, invariant syntax, inclusive ranges, int/nat in exec, spec fn calls, Vec vs Seq, etc.)
 - Complete working example
+
+`_VERUS_RULES` in `generation/generate_code.py` contains additional rules learned from failure analysis:
+- No inclusive ranges (`..=`) — use `0..(n+1)` instead of `0..=n`
+- No signed div/mod — Verus only supports `/` and `%` on unsigned types
+- Type alignment: `result@` to convert `Vec` → `Seq` in postconditions; `result.unwrap()@` for `Option<Vec>` vs `Option<Seq>`; `map_values` for nested collections
+- Every loop needs `invariant` with bounds for all counters/indices; comma-separated, not semicolons
+- Quantifiers with indexing need `#[trigger]` or `#![auto]`
+- No iterators, no `collect()`, no `abs()` — use manual alternatives
+
+### Spec Syntax Validation
+Specs are validated using `check_spec_syntax()` which adds `#[verifier::external_body]` to exec fns and replaces `todo!()` with `unimplemented!()`. Verus then verifies the spec fns and type-checks signatures/ensures without needing a real body. This catches real spec errors (missing `decreases`, type mismatches) cleanly. Broken specs are repaired up to `repair_rounds` times.
+
+### Implementation Repair
+When a generated implementation fails Verus verification, the error is fed back to the model for repair (up to `repair_rounds` iterations, default 3). Each round sends the Verus error output and asks the model to fix the body.
 
 ## Evaluation Oracles
 

@@ -40,7 +40,9 @@ from evaluation.evaluate import (
     CompletionScore,
     TaskEvaluation,
     compute_metrics,
+    compute_pass_at_k_summary,
     print_metrics,
+    print_pass_at_k_summary,
     save_results,
     score_test_completion,
     score_verus_completion,
@@ -355,16 +357,25 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
         if branch_b_enabled:
             print("\n--- Step 2b: Generating Verus spec (Branch B) ---")
             try:
-                generated_spec = generate_verus_spec(
+                generated_spec, spec_repair_history, spec_raw_trace = generate_verus_spec(
                     nl_prompt=nl_prompt,
                     entry_point=task.entry_point,
                     model=generator_model,
                     verus_binary=verus_binary,
                     repair_rounds=repair_rounds,
                     gold_imports=task.gold_imports,
+                    fn_signature=task.verus_sig,
                 )
                 print(f"  Generated spec ({len(generated_spec)} chars)")
+                if spec_repair_history:
+                    print(f"  Spec required {len(spec_repair_history)} repair round(s)")
                 _print_block("Generated Verus Spec", generated_spec, verbose)
+                _save_cache_file(task_cache, "spec_raw_trace.txt", content=spec_raw_trace)
+                # Save repair history
+                for rh in spec_repair_history:
+                    rd = rh["round"]
+                    _save_cache_file(task_cache, f"spec_repair_round{rd}.rs", content=rh["spec"])
+                    _save_cache_file(task_cache, f"spec_repair_round{rd}_error.txt", content=rh["error"])
             except Exception as e:
                 print(f"  ERROR generating spec: {type(e).__name__}: {e}")
         task_log["generated_spec"] = generated_spec
@@ -818,8 +829,15 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
 
         verus_scores = []
         task_log["verus_scores"] = []
-        for i, code in enumerate(verus_completions):
+
+        def _verify_and_repair_sample(i, code, raw_trace):
+            """Verify+repair loop for one Branch B sample. Sequential repair rounds."""
+            from generation.generate_code import repair_code_for_verus, _splice_body_into_spec
             current_code = code
+            conversation = list(verus_msgs) + [{"role": "assistant", "content": raw_trace}] if verus_msgs else []
+            final_score = None
+            final_verus_result = None
+            final_round = 0
             for round_num in range(repair_rounds):
                 verus_result = run_verus(current_code, verus_binary=verus_binary)
                 score = score_verus_completion(
@@ -832,10 +850,6 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                 status = "PASS" if score.passes_own_reward else "FAIL"
                 round_label = f"round {round_num+1}/{repair_rounds}" if repair_rounds > 1 else ""
                 print(f"  Branch B completion {i} {round_label}: {status} ({score.own_reward_detail})")
-                if verbose:
-                    verus_output = (verus_result.stdout + "\n" + verus_result.stderr).strip()
-                    _print_block(f"Branch B [{i}] Verus Output", verus_output, verbose)
-                # Save each round's code and result
                 round_suffix = f"_round{round_num}" if repair_rounds > 1 else ""
                 _save_cache_file(task_cache, "branch_b", f"completion_{i}{round_suffix}.rs", content=current_code)
                 result_text = f"Status: {status}\n{score.own_reward_detail}\nRound: {round_num+1}/{repair_rounds}\n\n=== VERUS OUTPUT ===\n{verus_result.stdout}\n"
@@ -843,25 +857,46 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                     result_text += f"\n=== STDERR ===\n{verus_result.stderr}\n"
                 _save_cache_file(task_cache, "branch_b", f"result_{i}{round_suffix}.txt", content=result_text)
 
+                final_score = score
+                final_verus_result = verus_result
+                final_round = round_num
+
                 if score.passes_own_reward or round_num == repair_rounds - 1:
                     break
 
-                # Repair: send error back to LLM
                 error_output = (verus_result.stdout + "\n" + verus_result.stderr).strip()
                 print(f"    Repairing Branch B completion {i} (round {round_num+2}/{repair_rounds})...")
                 try:
-                    current_code = repair_code_for_verus(
-                        nl_prompt=nl_prompt,
-                        entry_point=task.entry_point,
-                        spec=generated_spec,
-                        previous_code=current_code,
+                    body, conversation = repair_code_for_verus(
+                        conversation=conversation,
                         error_output=error_output,
                         model=model,
                         temperature=temperature,
                     )
+                    current_code = _splice_body_into_spec(generated_spec, body)
                 except Exception as e:
                     print(f"    ERROR repairing (Branch B): {type(e).__name__}: {e}")
                     break
+            return i, final_score, final_verus_result, final_round, current_code
+
+        # Run all k samples in parallel — each sample's repair rounds are sequential
+        if num_cores > 1 and len(verus_completions) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=num_cores) as pool:
+                futures = [
+                    pool.submit(_verify_and_repair_sample, i, code,
+                                verus_raw_traces[i] if i < len(verus_raw_traces) else "")
+                    for i, code in enumerate(verus_completions)
+                ]
+                sample_results = [f.result() for f in futures]
+        else:
+            sample_results = [
+                _verify_and_repair_sample(i, code,
+                                          verus_raw_traces[i] if i < len(verus_raw_traces) else "")
+                for i, code in enumerate(verus_completions)
+            ]
+
+        for i, score, verus_result, round_num, current_code in sorted(sample_results, key=lambda x: x[0]):
 
             # --- Oracle test check (Branch B) ---
             # Run the oracle tests (PBTs) against the Verus impl to detect reward hacking.
@@ -882,8 +917,11 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                 oracle_status = "PASS" if oracle_vresult.verified else "FAIL"
                 print(f"    Oracle follow-up: {oracle_status} ({oracle_detail})")
                 oracle_text = (
-                    f"Status: {oracle_status}\n{oracle_detail}\n\n{oracle_vresult.stdout}"
+                    f"Status: {oracle_status}\n{oracle_detail}\n\n"
+                    f"=== STDOUT ===\n{oracle_vresult.stdout}\n"
                 )
+                if oracle_vresult.stderr.strip():
+                    oracle_text += f"\n=== STDERR ===\n{oracle_vresult.stderr}\n"
                 _save_cache_file(task_cache, "branch_b", f"oracle_result_{i}.txt", content=oracle_text)
             elif oracle_tests:
                 # Did not pass own reward — skip oracle but mark as not tested
@@ -1006,6 +1044,9 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     metrics = compute_metrics(evaluations)
     print_metrics(metrics)
 
+    pass_at_k = compute_pass_at_k_summary(evaluations)
+    print_pass_at_k_summary(pass_at_k)
+
     # Save results
     output_dir = "results"
     save_results(evaluations, metrics, output_dir)
@@ -1015,10 +1056,14 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     with open(run_log_path, "w") as f:
         json.dump(run_log, f, indent=2)
 
-    metrics_path = os.path.join(cache_dir, "metrics.json")
     from dataclasses import asdict
+    metrics_path = os.path.join(cache_dir, "metrics.json")
     with open(metrics_path, "w") as f:
         json.dump(asdict(metrics), f, indent=2)
+
+    pass_at_k_path = os.path.join(cache_dir, "pass_at_k.json")
+    with open(pass_at_k_path, "w") as f:
+        json.dump(pass_at_k, f, indent=2)
 
     # Save final adapter if local training was used
     if local_model and local_model.step_count > 0:
