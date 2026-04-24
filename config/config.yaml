@@ -48,6 +48,8 @@ evaluation:
   property_test_oracle: true  # check completions against cached property-based oracle tests
   gold_spec_oracle: false     # splice into gold Verus spec + compile check (--no-verify)
   gold_spec_check: false      # run Claude oracle to add proof annotations and verify (requires gold_spec_oracle)
+  llm_judge: false            # use LLM judge to find counter-examples between generated and gold implementations
+  llm_judge_model: "anthropic/claude-sonnet-4"  # model for LLM judge (default: Claude Sonnet 4)
 
 # Online SFT training settings (used with --local flag)
 training:

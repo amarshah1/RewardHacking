@@ -36,6 +36,7 @@ from generation.generate_code import (
 from evaluation.run_tests import run_rust_tests
 from evaluation.run_verus import run_verus, run_verus_with_tests, check_spec_preserved
 from evaluation.annotate_proofs import annotate_with_proofs, splice_body_into_gold_spec
+from evaluation.llm_judge import find_counterexample, format_judge_result, save_judge_result
 from evaluation.evaluate import (
     CompletionScore,
     TaskEvaluation,
@@ -211,6 +212,8 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     property_test_oracle = config.get("evaluation", {}).get("property_test_oracle", False)
     gold_spec_oracle = config.get("evaluation", {}).get("gold_spec_oracle", True)
     gold_spec_check = config.get("evaluation", {}).get("gold_spec_check", True)
+    llm_judge_enabled = config.get("evaluation", {}).get("llm_judge", False)
+    llm_judge_model = config.get("evaluation", {}).get("llm_judge_model", "anthropic/claude-sonnet-4")
     oracle_followup = config.get("test_generation", {}).get("oracle_followup", False)
     oracle_cache_dir = config.get("test_generation", {}).get("oracle_cache_dir", "data/oracle_test_cache")
 
@@ -274,6 +277,9 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     print(f"Property-test oracle: {'ON' if property_test_oracle else 'OFF'}")
     print(f"Gold spec oracle (splice+compile): {'ON' if gold_spec_oracle else 'OFF'}")
     print(f"Gold spec check (Claude oracle): {'ON' if gold_spec_check else 'OFF'}")
+    print(f"LLM judge (counter-example search): {'ON' if llm_judge_enabled else 'OFF'}")
+    if llm_judge_enabled:
+        print(f"LLM judge model: {llm_judge_model}")
     print(f"Oracle follow-up tests: {'ON' if oracle_followup else 'OFF'}")
     if oracle_followup:
         print(f"Oracle cache dir: {oracle_cache_dir}")
@@ -725,6 +731,36 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
             else:
                 score.is_reward_hacking = None
 
+            # --- Step 5c: LLM judge counter-example search (Branch A) ---
+            if llm_judge_enabled and task.has_verus_impl:
+                print(f"    Running LLM judge for Branch A completion {i}...")
+                try:
+                    judge_result = find_counterexample(
+                        nl_description=nl_prompt,
+                        fn_signature=gold_fn_sig,
+                        gold_verus_code=task.verus_code,
+                        generated_code=current_code,
+                        entry_point=task.entry_point,
+                        model=llm_judge_model,
+                        verus_binary=verus_binary,
+                        verus_timeout=config["evaluation"]["timeout_seconds"],
+                    )
+                    judge_summary = format_judge_result(judge_result)
+                    for line in judge_summary.split("\n"):
+                        print(f"    {line}")
+                    save_judge_result(
+                        judge_result,
+                        os.path.join(task_cache, active_branch, f"llm_judge_{i}.json"),
+                    )
+                    judge_text = judge_summary
+                    if judge_result.test_body:
+                        judge_text += f"\n\n=== VERUS VALIDATION STDOUT ===\n{judge_result.verus_stdout}"
+                        if judge_result.verus_stderr.strip():
+                            judge_text += f"\n=== VERUS VALIDATION STDERR ===\n{judge_result.verus_stderr}"
+                    _save_cache_file(task_cache, active_branch, f"llm_judge_{i}.txt", content=judge_text)
+                except Exception as e:
+                    print(f"    ERROR running LLM judge (Branch A): {type(e).__name__}: {e}")
+
             # --- Classify and print outcome ---
             label, color, short_code = _classify_outcome(
                 test_compiled=test_result.compile_success,
@@ -971,6 +1007,36 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                 )
             else:
                 score.is_reward_hacking = None
+
+            # --- LLM judge counter-example search (Branch B) ---
+            if llm_judge_enabled and task.has_verus_impl:
+                print(f"    Running LLM judge for Branch B completion {i}...")
+                try:
+                    judge_result = find_counterexample(
+                        nl_description=nl_prompt,
+                        fn_signature=gold_fn_sig,
+                        gold_verus_code=task.verus_code,
+                        generated_code=current_code,
+                        entry_point=task.entry_point,
+                        model=llm_judge_model,
+                        verus_binary=verus_binary,
+                        verus_timeout=config["evaluation"]["timeout_seconds"],
+                    )
+                    judge_summary = format_judge_result(judge_result)
+                    for line in judge_summary.split("\n"):
+                        print(f"    {line}")
+                    save_judge_result(
+                        judge_result,
+                        os.path.join(task_cache, "branch_b", f"llm_judge_{i}.json"),
+                    )
+                    judge_text = judge_summary
+                    if judge_result.test_body:
+                        judge_text += f"\n\n=== VERUS VALIDATION STDOUT ===\n{judge_result.verus_stdout}"
+                        if judge_result.verus_stderr.strip():
+                            judge_text += f"\n=== VERUS VALIDATION STDERR ===\n{judge_result.verus_stderr}"
+                    _save_cache_file(task_cache, "branch_b", f"llm_judge_{i}.txt", content=judge_text)
+                except Exception as e:
+                    print(f"    ERROR running LLM judge (Branch B): {type(e).__name__}: {e}")
 
             verus_scores.append(score)
             score_log = {
