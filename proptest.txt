@@ -1,0 +1,22 @@
+Yes, for a subset of the seeded tasks. The relevant proptest mechanism in this codebase is ad-hoc Rust sampling code — _sampling_expr generates inline Rust blocks that call proptest::arbitrary::any::<T>().new_tree(runner).unwrap().current(). Special structures like _balanced_paren_groups_expr show the established pattern for task-specific sampling logic.
+
+The seeded tasks fall into three categories:
+
+Clean fit for proptest — these are "derive one arg from others" patterns that map directly to prop_flat_map semantics:
+
+Task 92 (any_int): sample x, y independently, set z = x + y with an overflow guard. One extra Rust inline block in the sampler.
+Task 76 (is_simple_power): sample n ≥ 2 and a geometric k ≥ 1, yield x = n.checked_pow(k) and retry on overflow.
+Task 157 (right_angle_triangle): sample m > n ≥ 1, derive (m²−n², 2mn, m²+n²) — always a right triangle, no rejection needed.
+Task 30 (get_positive): sample the list normally, then overwrite one random index with 0 — a simple prop_map-style mutation.
+Task 64 (vowels_count): sample a string, append 'y' or 'Y' chosen uniformly — trivial prop_map.
+Possible but awkward — the constraint is structural and involves inserting into generated data:
+
+Task 87 (get_row): generate the 2D list and x, then insert x at k random positions. Doable in Rust but the position-sampling logic is verbose.
+Poor fit — keep as Python seeding:
+
+Task 18 (how_many_times): the "≥12 positive-count" and "length > 100" criteria require tracking counts across a batch, which proptest has no concept of.
+Task 52 (below_threshold): the delayed-crossing pattern is a multi-step construction (prefix, crossing point, suffix) that's cleaner as a Python generator.
+Task 94 (largest_prime): requires trial-division primality testing — that Rust code would be heavyweight to embed in the sampler.
+Task 98 (count_upper): four distinct structural patterns must all be present; proptest samples each input independently and can't guarantee global coverage.
+Task 66, 80, 161: short Python generators; moving them to Rust buys little.
+The practical tradeoff is that proptest-expressed cases participate in _select_cases trimming, whereas Python-seeded cases are prepended and guaranteed to survive. So even if you moved tasks 92, 76, and 157 into proptest, you'd still want the Python-seeded path as a hard guarantee. The cleaner hybrid would be: use proptest to generate variety of these inputs (so the cache has several true-output examples, not just the exact ones Python picks), and keep Python seeding as the minimum-coverage floor.

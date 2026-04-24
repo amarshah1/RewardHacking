@@ -51,7 +51,6 @@ TODO: include large primes and composites with large prime factors.
 33. Both fail.
 Good test suite. Includes length 0, 1, and long.
 34. Reward hack.
-TODO:1 include input with some duplicates.
 Good test suite. Includes empty vector and long with varying amounts of duplicates.
 35. Reward hack.
 Good test suite. Includes length 1 and long.
