@@ -115,12 +115,11 @@ def generate_oracle_test_cache(
     target_name = verus_fn_names[-1]
     signature_map = _build_signature_map(verus_fn_names, impl_signatures)
     signature = _parse_rust_signature(signature_map[target_name], target_name)
-    try:
+    special = _special_case_constraints(task_id, signature)
+    if special is not None:
+        constraints = special
+    else:
         constraints = _parse_requires_constraints(task_id, verus_code, signature)
-    except OracleTestGenerationError:
-        constraints = _special_case_constraints(task_id, signature)
-        if constraints is None:
-            raise
     sample_case_target, sample_trial_target = _sampling_budget(signature.return_type, num_cases, max_trials)
     try:
         # Generate task-specific structural cases before proptest runs.  These
@@ -379,6 +378,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/98":
         # Guarantees all four structural input patterns for count_upper.
         return _count_upper_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/6":
+        # Guarantees >=8 invalid paren-space inputs (None outputs); valid inputs come from the proptest sampler.
+        return _parse_nested_parens_paren_space_cases(existing, seen)
     if task_id == "HumanEval/157":
         # Guarantees large Pythagorean triple cases and large non-right-triangle cases.
         return _right_angle_triangle_recovery_cases(signature, existing, seen)
@@ -477,6 +479,10 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/34":
         candidates.extend(
             _unique_sorted_with_duplicates_cases(existing_cases, seen)
+        )
+    if task_id == "HumanEval/6":
+        candidates.extend(
+            _parse_nested_parens_paren_space_cases(existing_cases, seen)
         )
     if task_id == "HumanEval/30":
         candidates.extend(
@@ -1211,6 +1217,40 @@ def _get_positive_zero_case(
         pos = rng.randint(0, length - 1)
         values[pos] = 0
         add([_vec_expr(values, "i32")])
+
+    return candidates
+
+
+def _parse_nested_parens_paren_space_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-6 includes >=8 inputs over the alphabet {'(', ')', ' '} that are not valid nested-paren strings.
+
+    The proptest sampler (via _special_case_constraints) generates valid balanced inputs; this recovery
+    function adds the invalid side by randomly sampling strings over the three-character set.
+    """
+    none_count = sum(
+        1 for c in existing_cases
+        if len(c.arg_exprs) == 1 and c.expected_expr.strip() == "None"
+    )
+
+    if none_count >= 8:
+        return []
+
+    rng = random.Random(6)
+    candidates: list[list[str]] = []
+    chars_pool = ['(', ')', ' ']
+
+    def add(text: str) -> None:
+        key = (_rust_string_literal(text),)
+        if key not in seen:
+            candidates.append([_rust_string_literal(text)])
+
+    while len(candidates) < 16:
+        length = rng.randint(1, 12)
+        text = "".join(rng.choice(chars_pool) for _ in range(length))
+        add(text)
 
     return candidates
 
@@ -2961,6 +3001,11 @@ def _sampling_expr(
             return f"({pieces[0]},)"
         return f"({', '.join(pieces)})"
 
+    if bare_type == "String" and arg_constraints.balanced_paren_groups:
+        length_expr_str = length_expr or _length_sampling_expr(runner_var, arg_constraints)
+        chars_expr = _balanced_paren_groups_expr(runner_var, length_expr_str)
+        return f"{{ let _chars: Vec<char> = {chars_expr}; _chars.into_iter().collect::<String>() }}"
+
     return _proptest_leaf_expr(bare_type, runner_var, arg_constraints, task_id=task_id)
 
 
@@ -3294,6 +3339,16 @@ def _special_case_constraints(task_id: str, signature: ParsedSignature) -> Parse
     if task_id == "HumanEval/1":
         if len(signature.args) != 1:
             raise OracleTestGenerationError("HumanEval/1 special case expected exactly one argument")
+        arg_name = signature.args[0].name
+        return ParsedConstraints(
+            task_id=task_id,
+            arg_constraints={arg_name: ArgConstraints(balanced_paren_groups=True)},
+            shared_length_groups={},
+        )
+
+    if task_id == "HumanEval/6":
+        if len(signature.args) != 1:
+            raise OracleTestGenerationError("HumanEval/6 special case expected exactly one argument")
         arg_name = signature.args[0].name
         return ParsedConstraints(
             task_id=task_id,
