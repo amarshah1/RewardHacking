@@ -9,9 +9,9 @@
   "cases": [
     {
       "arg_exprs": [
-        "\"\""
+        "\"o.|.|o|o|o\""
       ],
-      "expected_expr": "Some(vec![])"
+      "expected_expr": "Some(vec![4, 1, 1, 2, 2, 4])"
     },
     {
       "arg_exprs": [
@@ -21,9 +21,21 @@
     },
     {
       "arg_exprs": [
+        "\"o|\""
+      ],
+      "expected_expr": "Some(vec![2])"
+    },
+    {
+      "arg_exprs": [
         "\"\u00b2\u00a5{\ud83b\ude59\\\\7z%'\u0468\u2d50??'8\ud804\udf8b\""
       ],
       "expected_expr": "None"
+    },
+    {
+      "arg_exprs": [
+        "\"o|o|.|o.|oo|o|o.|.|o|\""
+      ],
+      "expected_expr": "Some(vec![2, 2, 1, 4, 1, 4, 2, 2, 4, 1, 1, 2])"
     },
     {
       "arg_exprs": [
@@ -33,9 +45,21 @@
     },
     {
       "arg_exprs": [
+        "\".|\""
+      ],
+      "expected_expr": "Some(vec![1])"
+    },
+    {
+      "arg_exprs": [
         "\"{=:\ud83d\udd74,:\u00a5s\u0e93\ud839\uddff$\ud83b\ude4d2&\u1664%F}\u0468].\u0468\ud806\udd31\\u{11c9a}\u0e8e\ud85d\udcc5\ud83c\udcae\""
       ],
       "expected_expr": "None"
+    },
+    {
+      "arg_exprs": [
+        "\".|.|oo|o|.|.|o|oo\""
+      ],
+      "expected_expr": "Some(vec![1, 1, 4, 2, 2, 1, 1, 2, 4, 4])"
     },
     {
       "arg_exprs": [
@@ -45,9 +69,21 @@
     },
     {
       "arg_exprs": [
+        "\"o.|ooo\""
+      ],
+      "expected_expr": "Some(vec![4, 1, 4, 4, 4])"
+    },
+    {
+      "arg_exprs": [
         "\"?\u00a5\\\"\\u{b55}$*8}\\u{a806}.+\ud81b\ude5c`\\u{afb}2k\\u{c46}*Xx\\u{fe20}.\ud800\udc2b1\""
       ],
       "expected_expr": "None"
+    },
+    {
+      "arg_exprs": [
+        "\"o|o|o|ooo|o.|o|\""
+      ],
+      "expected_expr": "Some(vec![2, 2, 2, 4, 4, 2, 4, 1, 2])"
     },
     {
       "arg_exprs": [
@@ -57,9 +93,21 @@
     },
     {
       "arg_exprs": [
+        "\".|o|o|o.|\""
+      ],
+      "expected_expr": "Some(vec![1, 2, 2, 4, 1])"
+    },
+    {
+      "arg_exprs": [
         "\")*\u1808\\\"\ud835\udd4a\ud83b\udd1a\u0468\u0ae7$&K/\\u{1e08f}\ud835\udcac\""
       ],
       "expected_expr": "None"
+    },
+    {
+      "arg_exprs": [
+        "\".|.|\""
+      ],
+      "expected_expr": "Some(vec![1, 1])"
     },
     {
       "arg_exprs": [
@@ -69,9 +117,21 @@
     },
     {
       "arg_exprs": [
+        "\"o.|o|.|\""
+      ],
+      "expected_expr": "Some(vec![4, 1, 2, 1])"
+    },
+    {
+      "arg_exprs": [
         "\".'\u3188o\ud81d\udcca<` \uaa51\ud83b\ude54\u2032:\ud804\udf2d\ufffd=\ua9d4O).\\u{113be}\u0b5d\ufffc\\\"\u00d2=\""
       ],
       "expected_expr": "None"
+    },
+    {
+      "arg_exprs": [
+        "\"o|o.|\""
+      ],
+      "expected_expr": "Some(vec![2, 4, 1])"
     },
     {
       "arg_exprs": [
@@ -81,73 +141,13 @@
     },
     {
       "arg_exprs": [
+        "\"o|o|o|o|o.|.|.|.|\""
+      ],
+      "expected_expr": "Some(vec![2, 2, 2, 2, 4, 1, 1, 1, 1])"
+    },
+    {
+      "arg_exprs": [
         "\"*\\u{1cf02}\u1aa3\ud838\udeff\\\\/F>\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"\ud806\udff6<\ud81f\udc2by\u05ef%+&#\ufffd*L\u00a5\ud803\udd17\u1ca2\ud801\udcf6\ud806\udda4:\ud83b\ude272?&\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"/r\ud804\udf8e\u0bd0\u0da0%\ud834\udee7/'`\ud804\udf067 =\u0d5a\ud83d\udd74\u12cbk{\ud807\udee7\ud83e\udfdf&<\ud804\udf37\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"?q=\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"L]\uabf7?$\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"6^\ud804\ude8a'?%ie%\ud83d\udd74\u00f7\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"\u0d10)g&\ud83d\udede.\ud802\udf4e\u0f66-7\u20452V$'\ud83c\udcc7\ud83e\udc55\u0468\ud835\udca2\u00a5:=!`$\ud83d\udd74l.\u085e\u2a69\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"*\\u{1e011}\u00f6,\u06071\u085e\u037d\\\"\ufea7fx&r\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"\ud83d\ude72n\u0e87\u023a\\u{a42}\ud801\udc10l\ud804\udf93\\\"\ud83e\udf04\\u{11073}/\ud835\udcbbD\ud838\udece9E7`\\\"D\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"/k\ud807\udd68e\ud802\udc012,\ud838\udd4eB\u00a5.\ud83c\udf1c\ud83d\udd74\ud83d\udd74\ud81a\udec9-T\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"<\u00d7'\u2dac'\u1c79fK/: \ud83e\ude71\u0468H\u12c5\ud807\udfef*`.@\u1fe0=J\ud804\udc6f\u12d0\uaae0\ud834\udc76u\ud804\ude40\u0b95/*\""
-      ],
-      "expected_expr": "None"
-    },
-    {
-      "arg_exprs": [
-        "\"=.j%\u1047\u1aa0<\u00d2.[\u1f1d:~.<\""
       ],
       "expected_expr": "None"
     }

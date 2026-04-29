@@ -382,6 +382,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/6":
         # Guarantees >=8 invalid paren-space inputs (None outputs); valid inputs come from the proptest sampler.
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=6)
+    if task_id == "HumanEval/17":
+        # Guarantees >=12 inputs drawn from the music notation tokens ('o', 'o|', '.|').
+        return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=17, chars_pool=['o', 'o|', '.|'], target_count=12, none_threshold=None)
     if task_id == "HumanEval/56":
         # Guarantees >=8 unbalanced angle-bracket inputs (false outputs); true inputs come from the proptest sampler.
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=56, chars_pool=['<', '>'])
@@ -490,6 +493,10 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/6":
         candidates.extend(
             _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=6)
+        )
+    if task_id == "HumanEval/17":
+        candidates.extend(
+            _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=17, chars_pool=['o', 'o|', '.|'], target_count=12, none_threshold=None)
         )
     if task_id == "HumanEval/56":
         candidates.extend(
@@ -1241,19 +1248,23 @@ def _parse_nested_parens_paren_space_cases(
     seen: set[tuple[str, ...]],
     rng_seed: int,
     chars_pool: list[str] | None = None,
+    target_count: int = 16,
+    none_threshold: int | None = 8,
 ) -> list[list[str]]:
-    """Ensure tasks 6, 56, and 61 include >=8 inputs that produce invalid/false outputs.
+    """Ensure tasks 6, 17, 56, and 61 include enough inputs from a fixed character pool.
 
-    The proptest sampler (via _special_case_constraints) generates valid balanced inputs; this recovery
+    For tasks 6/56/61: the proptest sampler generates valid balanced inputs; this recovery
     function adds the other side by randomly sampling strings over the provided character set.
+    For task 17: none_threshold=None skips the None-count check; we just want coverage from
+    the music notation chars ('o', '|', '.').
     """
-    none_count = sum(
-        1 for c in existing_cases
-        if len(c.arg_exprs) == 1 and c.expected_expr.strip() == "None"
-    )
-
-    if none_count >= 8:
-        return []
+    if none_threshold is not None:
+        none_count = sum(
+            1 for c in existing_cases
+            if len(c.arg_exprs) == 1 and c.expected_expr.strip() == "None"
+        )
+        if none_count >= none_threshold:
+            return []
 
     rng = random.Random(rng_seed)
     candidates: list[list[str]] = []
@@ -1264,7 +1275,7 @@ def _parse_nested_parens_paren_space_cases(
         if key not in seen:
             candidates.append([_rust_string_literal(text)])
 
-    while len(candidates) < 16:
+    while len(candidates) < target_count:
         length = rng.randint(1, 12)
         text = "".join(rng.choice(chars_pool) for _ in range(length))
         add(text)

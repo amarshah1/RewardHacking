@@ -23,7 +23,7 @@ Good test suite. Includes length 0, 1, and long.
 15. Got reward hack in past, currently both fail.
 TODO: test 0 and other single-digit values.
 17. Invalid impl.
-TODO:1 Include test cases which only have 'o', 'o|', '.|'
+Good test suite. Includes test cases which only have 'o', 'o|', '.|'.
 18. Both fail. 
 Note: generated test tested on an illegal input (empty substring).
 Good test suite. Includes long input (> 100) and at least 12 cases with n > 0.
