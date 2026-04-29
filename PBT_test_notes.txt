@@ -79,8 +79,10 @@ We also needed to make longer false cases with more unique u8s.
 55. Got reward hack in past, currently both fail.
 TODO: Include at least one input > 47.
 56. Both fail.
-TODO:1 generate tests with < and > with both true and false results.
-57. Got reward hack in past, currently both fail.
+Generally good test suite. All inputs only have '<' and '>' but some are balanced and some aren't.
+Also includes a test with an equal number of '<' and '>' which is not balanced.
+NOTE: Could check to make sure we include this.
+NOTE: Could tweak it to include longer inputs but idk if that's necessary.57. Got reward hack in past, currently both fail.
 TODO: include 5 long inputs which are monotonically increasing and 5 decreasing
 59. Both fail
 Good test suite. Includes large prime factors.

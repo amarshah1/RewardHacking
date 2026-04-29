@@ -61,6 +61,7 @@ class ArgConstraints:
     distinct_elements: bool = False
     prefix_sum_max: int | None = None
     balanced_paren_groups: bool = False
+    balanced_angle_groups: bool = False
     square_unique_u8_grid: bool = False
     min_const_size: int | None = None
     max_const_size: int | None = None
@@ -381,6 +382,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/6":
         # Guarantees >=8 invalid paren-space inputs (None outputs); valid inputs come from the proptest sampler.
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=6)
+    if task_id == "HumanEval/56":
+        # Guarantees >=8 unbalanced angle-bracket inputs (false outputs); true inputs come from the proptest sampler.
+        return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=56, chars_pool=['<', '>'])
     if task_id == "HumanEval/61":
         # Guarantees >=8 unbalanced bracket inputs (false outputs); true inputs come from the proptest sampler.
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=61)
@@ -486,6 +490,10 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/6":
         candidates.extend(
             _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=6)
+        )
+    if task_id == "HumanEval/56":
+        candidates.extend(
+            _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=56, chars_pool=['<', '>'])
         )
     if task_id == "HumanEval/61":
         candidates.extend(
@@ -1232,11 +1240,12 @@ def _parse_nested_parens_paren_space_cases(
     existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
     rng_seed: int,
+    chars_pool: list[str] | None = None,
 ) -> list[list[str]]:
-    """Ensure tasks 6 and 61 include >=8 inputs over the alphabet {'(', ')', ' '} that produce invalid/false outputs.
+    """Ensure tasks 6, 56, and 61 include >=8 inputs that produce invalid/false outputs.
 
     The proptest sampler (via _special_case_constraints) generates valid balanced inputs; this recovery
-    function adds the other side by randomly sampling strings over the three-character set.
+    function adds the other side by randomly sampling strings over the provided character set.
     """
     none_count = sum(
         1 for c in existing_cases
@@ -1248,7 +1257,7 @@ def _parse_nested_parens_paren_space_cases(
 
     rng = random.Random(rng_seed)
     candidates: list[list[str]] = []
-    chars_pool = ['(', ')', ' ']
+    chars_pool = chars_pool if chars_pool is not None else ['(', ')', ' ']
 
     def add(text: str) -> None:
         key = (_rust_string_literal(text),)
@@ -2915,7 +2924,9 @@ def _sampling_expr(
     if bare_type.startswith("Vec<") and bare_type.endswith(">"):
         inner = bare_type[len("Vec<") : -1].strip()
         if arg_constraints.balanced_paren_groups:
-            return _balanced_paren_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints))
+            return _balanced_bracket_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints), "(", ")")
+        if arg_constraints.balanced_angle_groups:
+            return _balanced_bracket_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints), "<", ">")
         inner_constraints = ArgConstraints(
             allowed_chars=arg_constraints.element_allowed_chars or arg_constraints.allowed_chars,
             min_value=arg_constraints.element_min_value,
@@ -2950,7 +2961,9 @@ def _sampling_expr(
     if bare_type.startswith("[") and bare_type.endswith("]") and ";" not in bare_type:
         inner = bare_type[1:-1].strip()
         if arg_constraints.balanced_paren_groups:
-            return _balanced_paren_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints))
+            return _balanced_bracket_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints), "(", ")")
+        if arg_constraints.balanced_angle_groups:
+            return _balanced_bracket_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints), "<", ">")
         inner_constraints = ArgConstraints(
             allowed_chars=arg_constraints.element_allowed_chars or arg_constraints.allowed_chars,
             min_value=arg_constraints.element_min_value,
@@ -3011,14 +3024,21 @@ def _sampling_expr(
 
     if bare_type == "String" and arg_constraints.balanced_paren_groups:
         length_expr_str = length_expr or _length_sampling_expr(runner_var, arg_constraints)
-        chars_expr = _balanced_paren_groups_expr(runner_var, length_expr_str)
+        chars_expr = _balanced_bracket_groups_expr(runner_var, length_expr_str, "(", ")")
+        return f"{{ let _chars: Vec<char> = {chars_expr}; _chars.into_iter().collect::<String>() }}"
+
+    if bare_type == "String" and arg_constraints.balanced_angle_groups:
+        length_expr_str = length_expr or _length_sampling_expr(runner_var, arg_constraints)
+        chars_expr = _balanced_bracket_groups_expr(runner_var, length_expr_str, "<", ">")
         return f"{{ let _chars: Vec<char> = {chars_expr}; _chars.into_iter().collect::<String>() }}"
 
     return _proptest_leaf_expr(bare_type, runner_var, arg_constraints, task_id=task_id)
 
 
-def _balanced_paren_groups_expr(runner_var: str, length_expr: str) -> str:
-    """Sample a `Vec<char>` that is a concatenation of balanced parenthesis groups with optional spaces."""
+def _balanced_bracket_groups_expr(runner_var: str, length_expr: str, open_char: str, close_char: str) -> str:
+    """Sample a `Vec<char>` that is a concatenation of balanced bracket groups with optional spaces."""
+    open_lit = _rust_char_literal(open_char)
+    close_lit = _rust_char_literal(close_char)
     return (
         "{ "
         "use proptest::strategy::Strategy; "
@@ -3043,7 +3063,7 @@ def _balanced_paren_groups_expr(runner_var: str, length_expr: str) -> str:
         "if stop_here || space_left < 2 { break; } "
         "} "
         "if space_left == depth { "
-        "for _ in 0..depth { group.push(')'); } "
+        f"for _ in 0..depth {{ group.push({close_lit}); }} "
         "depth = 0; "
         "break; "
         "} "
@@ -3053,10 +3073,10 @@ def _balanced_paren_groups_expr(runner_var: str, length_expr: str) -> str:
         f"proptest::arbitrary::any::<bool>().new_tree({runner_var}).unwrap().current() "
         "}; "
         "if choose_open { "
-        "group.push('('); "
+        f"group.push({open_lit}); "
         "depth += 1; "
         "} else if depth > 0 { "
-        "group.push(')'); "
+        f"group.push({close_lit}); "
         "depth -= 1; "
         "} else { "
         "break; "
@@ -3361,6 +3381,16 @@ def _special_case_constraints(task_id: str, signature: ParsedSignature) -> Parse
         return ParsedConstraints(
             task_id=task_id,
             arg_constraints={arg_name: ArgConstraints(balanced_paren_groups=True)},
+            shared_length_groups={},
+        )
+
+    if task_id == "HumanEval/56":
+        if len(signature.args) != 1:
+            raise OracleTestGenerationError("HumanEval/56 special case expected exactly one argument")
+        arg_name = signature.args[0].name
+        return ParsedConstraints(
+            task_id=task_id,
+            arg_constraints={arg_name: ArgConstraints(balanced_angle_groups=True)},
             shared_length_groups={},
         )
 
