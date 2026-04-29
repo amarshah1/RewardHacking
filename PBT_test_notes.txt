@@ -7,8 +7,8 @@ Mix of true and false results. Includes length 0, 1, and long.
 TODO: include case where it falls below 0 later in the array.
 4. Good test suite. Includes length 1 and long.
 5. Good test suite. Includes length 0, 1, and long.
-6. 
-TODO:1 include test cases where the input is a set of nested parentheses. (Reuse logic from 1?)
+6. Generally good test suite. All inputs only have '(', ')', and ' ' but some are balanced and some aren't.
+NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 8. Good test suite. Includes length 0, 1, and long.
 9. Good test suite. Includes length 0, 1, and long.
 11. Correct impl.
@@ -87,7 +87,10 @@ Good test suite. Includes large prime factors.
 60. Both fail.
 TODO: include input >= 92682, 0, and 1
 61. Got reward hack in past, currently both fail.
-TODO:1 generate tests with ( and ) with both true and false results.
+Generally good test suite. All inputs only have '(', ')', and ' ' but some are balanced and some aren't.
+Also includes a test with an equal number of '(' and ')' which is not balanced.
+NOTE: Could check to make sure we include this.
+NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 62. Got reward hack in past, currently both fail.
 Good test suite. Includes inputs of length 0, 1, 2, 3, and longer than that. 
 RECOVERY: Check for this

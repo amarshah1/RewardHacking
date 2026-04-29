@@ -380,7 +380,10 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
         return _count_upper_recovery_cases(signature, existing, seen)
     if task_id == "HumanEval/6":
         # Guarantees >=8 invalid paren-space inputs (None outputs); valid inputs come from the proptest sampler.
-        return _parse_nested_parens_paren_space_cases(existing, seen)
+        return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=6)
+    if task_id == "HumanEval/61":
+        # Guarantees >=8 unbalanced bracket inputs (false outputs); true inputs come from the proptest sampler.
+        return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=61)
     if task_id == "HumanEval/157":
         # Guarantees large Pythagorean triple cases and large non-right-triangle cases.
         return _right_angle_triangle_recovery_cases(signature, existing, seen)
@@ -482,7 +485,11 @@ def _targeted_recovery_arg_exprs(
         )
     if task_id == "HumanEval/6":
         candidates.extend(
-            _parse_nested_parens_paren_space_cases(existing_cases, seen)
+            _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=6)
+        )
+    if task_id == "HumanEval/61":
+        candidates.extend(
+            _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=61)
         )
     if task_id == "HumanEval/30":
         candidates.extend(
@@ -1224,11 +1231,12 @@ def _get_positive_zero_case(
 def _parse_nested_parens_paren_space_cases(
     existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
+    rng_seed: int,
 ) -> list[list[str]]:
-    """Ensure task-6 includes >=8 inputs over the alphabet {'(', ')', ' '} that are not valid nested-paren strings.
+    """Ensure tasks 6 and 61 include >=8 inputs over the alphabet {'(', ')', ' '} that produce invalid/false outputs.
 
     The proptest sampler (via _special_case_constraints) generates valid balanced inputs; this recovery
-    function adds the invalid side by randomly sampling strings over the three-character set.
+    function adds the other side by randomly sampling strings over the three-character set.
     """
     none_count = sum(
         1 for c in existing_cases
@@ -1238,7 +1246,7 @@ def _parse_nested_parens_paren_space_cases(
     if none_count >= 8:
         return []
 
-    rng = random.Random(6)
+    rng = random.Random(rng_seed)
     candidates: list[list[str]] = []
     chars_pool = ['(', ')', ' ']
 
@@ -3349,6 +3357,16 @@ def _special_case_constraints(task_id: str, signature: ParsedSignature) -> Parse
     if task_id == "HumanEval/6":
         if len(signature.args) != 1:
             raise OracleTestGenerationError("HumanEval/6 special case expected exactly one argument")
+        arg_name = signature.args[0].name
+        return ParsedConstraints(
+            task_id=task_id,
+            arg_constraints={arg_name: ArgConstraints(balanced_paren_groups=True)},
+            shared_length_groups={},
+        )
+
+    if task_id == "HumanEval/61":
+        if len(signature.args) != 1:
+            raise OracleTestGenerationError("HumanEval/61 special case expected exactly one argument")
         arg_name = signature.args[0].name
         return ParsedConstraints(
             task_id=task_id,
