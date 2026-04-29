@@ -385,6 +385,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/17":
         # Guarantees >=12 inputs drawn from the music notation tokens ('o', 'o|', '.|').
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=17, chars_pool=['o', 'o|', '.|'], target_count=12, none_threshold=None)
+    if task_id == "HumanEval/51":
+        # Guarantees >=16 inputs with at least 3 vowels.
+        return _remove_vowels_vowel_rich_cases(signature, existing, seen)
     if task_id == "HumanEval/56":
         # Guarantees >=8 unbalanced angle-bracket inputs (false outputs); true inputs come from the proptest sampler.
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=56, chars_pool=['<', '>'])
@@ -497,6 +500,10 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/17":
         candidates.extend(
             _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=17, chars_pool=['o', 'o|', '.|'], target_count=12, none_threshold=None)
+        )
+    if task_id == "HumanEval/51":
+        candidates.extend(
+            _remove_vowels_vowel_rich_cases(signature, existing_cases, seen)
         )
     if task_id == "HumanEval/56":
         candidates.extend(
@@ -964,6 +971,55 @@ def _digit_sum_uppercase_recovery_cases(
         uppercase_indices = rng.sample(range(length), k=n_upper)
         for idx in uppercase_indices:
             values[idx] = rng.choice(uppercase_values)
+        add([_char_vec_expr("".join(values))])
+
+    return candidates
+
+
+def _remove_vowels_vowel_rich_cases(
+    signature: ParsedSignature,
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-51 includes >=16 inputs with at least 3 vowels.
+
+    For each generated case: start with the proptest-generated Vec<char>, then pick a random
+    number of vowels to insert (1..=len), pick random vowel characters (upper and lower),
+    and replace random indices with them.
+    """
+    if len(signature.args) != 1:
+        raise OracleTestGenerationError("HumanEval/51 recovery expected exactly one argument")
+    if _normalize_type(signature.args[0].rust_type) != "&[char]":
+        raise OracleTestGenerationError("HumanEval/51 recovery expected signature `fn(&[char]) -> Vec<char>`")
+
+    vowels = list("aeiouAEIOU")
+
+    def has_enough_vowels(text: str) -> bool:
+        return sum(1 for ch in text if ch in vowels) >= 3
+
+    vowel_rich_count = sum(
+        1 for c in existing_cases
+        if len(c.arg_exprs) == 1
+        and (parsed := _parse_char_vec_literal(c.arg_exprs[0])) is not None
+        and has_enough_vowels(parsed)
+    )
+    if vowel_rich_count >= 16:
+        return []
+
+    rng = random.Random(51)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    while len(candidates) < 20:
+        length = max(3, 3 + _python_geometric_length(rng))
+        values = [_random_printable_ascii_char(rng) for _ in range(length)]
+        n_vowels = rng.randint(3, length)
+        indices = rng.sample(range(length), k=n_vowels)
+        for idx in indices:
+            values[idx] = rng.choice(vowels)
         add([_char_vec_expr("".join(values))])
 
     return candidates
