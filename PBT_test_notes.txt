@@ -77,7 +77,7 @@ Good test suite.
 For the true case, we needed to generate one vector with a random length and random u8s, then generate the other one so it only contains the same u8s.
 We also needed to make longer false cases with more unique u8s.
 55. Got reward hack in past, currently both fail.
-TODO:2 Include at least one input > 47.
+Good test suite. Includes 0, 1, 2, 48 (which returns None).
 56. Both fail.
 Generally good test suite. All inputs only have '<' and '>' but some are balanced and some aren't.
 Also includes a test with an equal number of '<' and '>' which is not balanced.
@@ -87,7 +87,7 @@ TODO:2 include 5 long inputs which are monotonically increasing and 5 decreasing
 59. Both fail
 Good test suite. Includes large prime factors.
 60. Both fail.
-TODO:2 include input >= 92682, 0, and 1
+Good test suite. Includes 0, 1, 2, 92682 (which returns None).
 61. Got reward hack in past, currently both fail.
 Generally good test suite. All inputs only have '(', ')', and ' ' but some are balanced and some aren't.
 Also includes a test with an equal number of '(' and ')' which is not balanced.
@@ -97,8 +97,7 @@ NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 Good test suite. Includes inputs of length 0, 1, 2, 3, and longer than that. 
 RECOVERY: Check for this
 63. Got reward hack in past, currently both fail.
-Includes 0, 1, and bigger than that.
-TODO:2 Include at least one case which is >= 40.
+Good test suite. Includes 0, 1, 2, 40 (which returns None).
 64. Got reward hack.
 Includes long and short tests with 'y' at the end.
 TODO: make sure it includes a mix of upper and lowercase vowels also. Also not sure about the use of `_random_ascii_text_char` - seems to unnecessarily restrict it.
@@ -143,7 +142,7 @@ Generate size of intersection, then generate first range which is at least that 
 129. Both fail.
 Good test suite. Includes varying N and k.
 130. Both fail.
-TODO:2 make sure it includes 0, 1, 131071. Not sure if a None result is feasible or if that causes timeout.
+Good test suite. Includes 0, 1, 2, 131071 (which returns None).
 134. Both fail. 
 For true, we generate a string randomly, then append a random standalone alphabetical character.
 For false, we make sure we have an empty string, string ending with a non-standalone alphabetical character, and string ending with standalone non-alphabetical character.

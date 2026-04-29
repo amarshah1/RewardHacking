@@ -394,6 +394,18 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/61":
         # Guarantees >=8 unbalanced bracket inputs (false outputs); true inputs come from the proptest sampler.
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=61)
+    if task_id == "HumanEval/55":
+        # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
+        return _required_u32_cases(seen, [0, 1, 2, 48])
+    if task_id == "HumanEval/60":
+        # Guarantees inputs 0, 1, 2 and 92682 (the None threshold).
+        return _required_u32_cases(seen, [0, 1, 2, 92682])
+    if task_id == "HumanEval/63":
+        # Guarantees inputs 0, 1, 2 and 40 (the None threshold).
+        return _required_u32_cases(seen, [0, 1, 2, 40])
+    if task_id == "HumanEval/130":
+        # Guarantees inputs 0, 1, 2 and a large value 131071.
+        return _required_u32_cases(seen, [0, 1, 2, 131071])
     if task_id == "HumanEval/134":
         # Seeds false mix cases so they survive _select_cases even when true recovery cases are prepended.
         # True cases are handled in _targeted_recovery_arg_exprs (they depend on missing_buckets).
@@ -497,6 +509,14 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _unique_sorted_with_duplicates_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/55":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
+    if task_id == "HumanEval/60":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 2, 92682]))
+    if task_id == "HumanEval/63":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 2, 40]))
+    if task_id == "HumanEval/130":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 2, 131071]))
     if task_id == "HumanEval/6":
         candidates.extend(
             _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=6)
@@ -1566,6 +1586,14 @@ def _any_int_recovery_cases(
         add([str(x), str(y), str(z)])
 
     return candidates
+
+
+def _required_u32_cases(
+    seen: set[tuple[str, ...]],
+    required_values: list[int],
+) -> list[list[str]]:
+    """Return single-argument cases for any required u32 values not already in seen."""
+    return [[str(v)] for v in required_values if (str(v),) not in seen]
 
 
 def _below_threshold_wide_range_recovery_cases(
