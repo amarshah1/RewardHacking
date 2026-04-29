@@ -394,6 +394,10 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/61":
         # Guarantees >=8 unbalanced bracket inputs (false outputs); true inputs come from the proptest sampler.
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=61)
+    if task_id == "HumanEval/134":
+        # Seeds false mix cases so they survive _select_cases even when true recovery cases are prepended.
+        # True cases are handled in _targeted_recovery_arg_exprs (they depend on missing_buckets).
+        return [[s] for s in _generate_last_char_letter_false_cases()]
     if task_id == "HumanEval/157":
         # Guarantees large Pythagorean triple cases and large non-right-triangle cases.
         return _right_angle_triangle_recovery_cases(signature, existing, seen)
@@ -890,7 +894,9 @@ def _last_char_letter_recovery_cases(
         raise OracleTestGenerationError("HumanEval/134 recovery expected signature `fn(&str) -> bool`")
 
     needs_true = "true" in missing_buckets or not _has_nontrivial_true_string_case(existing_cases)
-    needs_false = "false" in missing_buckets or not _has_last_char_letter_false_mix(existing_cases)
+    # False mix cases are seeded in _seeded_arg_exprs, so we only need recovery here if proptest
+    # somehow produced zero false outputs (which the seeding makes impossible in practice).
+    needs_false = "false" in missing_buckets
 
     candidates: list[list[str]] = []
 
@@ -2015,30 +2021,6 @@ def _parse_rust_char_literal(token: str) -> str | None:
     return None
 
 
-def _has_last_char_letter_false_mix(cases: list[OracleCase]) -> bool:
-    """Check whether task 134 already has the desired mix of false-string shapes."""
-    seen_kinds: set[str] = set()
-    for case in cases:
-        if case.expected_expr.strip() != "false" or len(case.arg_exprs) != 1:
-            continue
-        kind = _last_char_letter_false_kind(case.arg_exprs[0])
-        if kind is not None:
-            seen_kinds.add(kind)
-    return {"empty", "standalone_non_alpha", "non_standalone_letter"}.issubset(seen_kinds)
-
-
-def _last_char_letter_false_kind(expr: str) -> str | None:
-    """Classify one Rust string literal into the false-case shapes relevant for task 134."""
-    text = _parse_simple_rust_string_literal(expr)
-    if text is None:
-        return None
-    if text == "":
-        return "empty"
-    if len(text) == 1 and not text[-1].isalpha():
-        return "standalone_non_alpha"
-    if len(text) >= 2 and text[-1].isalpha() and not text[-2].isspace():
-        return "non_standalone_letter"
-    return None
 
 
 def _random_ascii_text_char(rng: random.Random) -> str:
