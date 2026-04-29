@@ -394,6 +394,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/61":
         # Guarantees >=8 unbalanced bracket inputs (false outputs); true inputs come from the proptest sampler.
         return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=61)
+    if task_id == "HumanEval/31":
+        # Guarantees u8 inputs that are large primes and large composites (>= 200).
+        return _is_prime_u8_large_prime_composite_cases(existing, seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -403,6 +406,12 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/63":
         # Guarantees inputs 0, 1, 2 and 40 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 40])
+    if task_id == "HumanEval/82":
+        # Guarantees &[char] inputs whose length is a large prime and a large composite (5000-1000000).
+        return _prime_length_large_prime_composite_cases(seen)
+    if task_id == "HumanEval/127":
+        # Guarantees intersection lengths that are a large prime and a large composite (5000-1000000).
+        return _intersection_prime_composite_cases(seen)
     if task_id == "HumanEval/130":
         # Guarantees inputs 0, 1, 2 and a large value 131071.
         return _required_u32_cases(seen, [0, 1, 2, 131071])
@@ -509,12 +518,18 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _unique_sorted_with_duplicates_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/31":
+        candidates.extend(_is_prime_u8_large_prime_composite_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 92682]))
     if task_id == "HumanEval/63":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 40]))
+    if task_id == "HumanEval/82":
+        candidates.extend(_prime_length_large_prime_composite_cases(seen))
+    if task_id == "HumanEval/127":
+        candidates.extend(_intersection_prime_composite_cases(seen))
     if task_id == "HumanEval/130":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 131071]))
     if task_id == "HumanEval/6":
@@ -1668,6 +1683,96 @@ def _below_threshold_wide_range_recovery_cases(
 
         add([_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")])
 
+    return candidates
+
+
+def _is_prime_u8_large_prime_composite_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-31 includes u8 inputs that are large primes and large composites (>= 200)."""
+    def _is_large_prime_u8(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        try:
+            v = int(case.arg_exprs[0])
+            return v >= 200 and _is_prime_by_trial_division(v)
+        except ValueError:
+            return False
+
+    def _is_large_composite_u8(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        try:
+            v = int(case.arg_exprs[0])
+            return v >= 200 and v > 1 and not _is_prime_by_trial_division(v)
+        except ValueError:
+            return False
+
+    has_large_prime = any(_is_large_prime_u8(c) for c in existing_cases)
+    has_large_composite = any(_is_large_composite_u8(c) for c in existing_cases)
+    if has_large_prime and has_large_composite:
+        return []
+
+    candidates: list[list[str]] = []
+
+    def add(v: int) -> None:
+        if (str(v),) not in seen:
+            candidates.append([str(v)])
+
+    if not has_large_prime:
+        for p in [251, 241, 239, 233]:
+            add(p)
+    if not has_large_composite:
+        for c in [255, 254, 253, 252]:
+            add(c)
+
+    return candidates
+
+
+def _prime_length_large_prime_composite_cases(
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-82 includes &[char] inputs whose length is a large prime or large composite.
+
+    Large primes: 5000-1000000. Large composites: > 5000 with at least 2 prime factors > 50.
+    Uses Rust's vec!['a'; N] repeat syntax to keep arg_exprs compact.
+    """
+    large_primes = _find_large_primes_below_limit(4, limit=1_000_000, min_value=5_000)
+    large_composites = _find_large_composites_with_large_prime_factors(4, limit=1_000_000, min_factor=53)
+    candidates: list[list[str]] = []
+    for n in large_primes + large_composites:
+        expr = f"vec!['a'; {n}]"
+        if (expr,) not in seen:
+            candidates.append([expr])
+    return candidates
+
+
+def _intersection_prime_composite_cases(
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-127 includes cases where the intersection length is a large prime or large composite.
+
+    Large primes: 5000-1000000. Large composites: > 5000 with at least 2 prime factors > 50.
+
+    For each N, randomly generates a = (a0, a1) with a1 >= a0 + N - 1, then derives b so that
+    the intersection is exactly [a0, a0+N-1] with length N:
+      b0 = a0 - k  (b starts before a, so max(a0, b0) = a0)
+      b1 = a0 + N - 1  (b ends at intersection right, so min(a1, b1) = a0+N-1)
+    """
+    large_primes = _find_large_primes_below_limit(4, limit=1_000_000, min_value=5_000)
+    large_composites = _find_large_composites_with_large_prime_factors(4, limit=1_000_000, min_factor=53)
+    rng = random.Random(127)
+    candidates: list[list[str]] = []
+    for n in large_primes + large_composites:
+        a0 = rng.randint(-100_000, 100_000)
+        a1 = a0 + n - 1 + rng.randint(0, n // 2)
+        b0 = a0 - rng.randint(1, 1_000)
+        b1 = a0 + n - 1
+        a_expr = f"({a0}, {a1})"
+        b_expr = f"({b0}, {b1})"
+        if (a_expr, b_expr) not in seen:
+            candidates.append([a_expr, b_expr])
     return candidates
 
 

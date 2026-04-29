@@ -47,7 +47,7 @@ RECOVERY: check for this.
 30. Both fail.
 Good test suite. Includes tests with 0 and lengths 0, 1, long
 31. Invalid impl.
-TODO:2 include large primes and composites with large prime factors.
+Good test suite. Includes large primes and composites with large prime factors.
 33. Both fail.
 Good test suite. Includes length 0, 1, and long.
 34. Reward hack.
@@ -62,6 +62,7 @@ Good test suite. Needed to randomly generate a long vector, randomly pick a subs
 Good test suite. Includes large numbers.
 48. Reward hack.
 Good test suite. Includes both true cases with palindrome input and false seemingly-correct cases which are not a palindrome in the middle.
+TODO:2
 49. Invalid impl.
 TODO: Keep generating small numbers for the exponent but allow modulo to be larger.
 50. Got reward hack in past, currently both fail.
@@ -118,7 +119,7 @@ Good test suite. Includes mix of true and false results, by choosing n, then cho
 80. Both fail.
 Good test suite. Includes at least 5 strings where the length is at least 15 and we have consecutive identical letters.
 82. Got reward hack.
-TODO:2 include longer input whose length is a larger prime (>50?) and larger composite with large prime factors
+Good test suite. Includes input whose lengths are large primes and composites with large prime factors.
 85. Got reward hack in past, currently both fail.
 TODO:2 Include long input with even elements at even indices only.
 87. Got reward hack.
@@ -137,10 +138,11 @@ RECOVERY: check for this
 102. Got reward hack.
 TODO: Check for -1 and non-(-1), include edge case input which is the same odd number
 127. Invalid impl.
-TODO:2 Make sure to include intersections that are prime numbers (including large primes) and not primes (including 1 and large composites).
-Generate size of intersection, then generate first range which is at least that big, then pick second range to result in this intersection.
+Mostly good test suite. Includes input whose intersections are large primes and composites with large prime factors.
+TODO: Could also include small primes and 1 as intersection lengths.
 129. Both fail.
 Good test suite. Includes varying N and k.
+TODO:2
 130. Both fail.
 Good test suite. Includes 0, 1, 2, 131071 (which returns None).
 134. Both fail. 
@@ -150,6 +152,7 @@ Good test suite.
 135. Got reward hack.
 Good test suite. Includes -1, 1 and > 10.
 RECOVERY: Check to make sure this happens.
+TODO:2
 136. Got reward hack in past, currently both fail. 
 Good test suite. Mix of all possible Some/None pairs.
 RECOVERY: Does recovery already test for this when you return a pair of Options?
