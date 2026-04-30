@@ -99,6 +99,29 @@ def _save_cache_file(cache_dir: str, *path_parts: str, content: str):
         f.write(content)
 
 
+def _filter_correct_tests(generated_tests: str, passing_names: set) -> str:
+    """Return only the #[test] functions whose names are in passing_names."""
+    import re
+    if not passing_names:
+        return ""
+    parts = []
+    pattern = re.compile(r'(#\[test\]\s*fn\s+(\w+)\s*\(\s*\)\s*\{)', re.DOTALL)
+    for match in pattern.finditer(generated_tests):
+        if match.group(2) not in passing_names:
+            continue
+        # Extract the full function body using brace counting.
+        depth = 1
+        pos = match.end()  # right after the opening {
+        while pos < len(generated_tests) and depth > 0:
+            if generated_tests[pos] == '{':
+                depth += 1
+            elif generated_tests[pos] == '}':
+                depth -= 1
+            pos += 1
+        parts.append(generated_tests[match.start():pos])
+    return "\n\n".join(parts)
+
+
 def _save_prompt(cache_dir: str, filename: str, messages: list[dict]):
     """Save a full prompt (system + few-shot + user messages) to the cache."""
     parts = []
@@ -329,6 +352,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
 
         # --- Step 2: Generate reward mechanisms ---
         generated_tests = ""
+        correct_tests = ""
         oracle_tests = ""
         generated_spec = ""
 
@@ -392,6 +416,12 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                     "n_total": t_v,
                     "test_results": validation["test_results"],
                 }
+                if validation["compiled"]:
+                    passing_names = {n for n, ok in validation["test_results"].items() if ok}
+                    correct_tests = _filter_correct_tests(generated_tests, passing_names)
+                    if correct_tests:
+                        _save_cache_file(task_cache, "correct_tests.rs", content=correct_tests)
+                task_log["correct_tests"] = correct_tests
                 val_lines = [
                     f"Compiled: {validation['compiled']}",
                     f"Tests correct: {n_v}/{t_v}",
@@ -671,6 +701,27 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                     print(f"    ERROR repairing (Branch A): {type(e).__name__}: {e}")
                     break
 
+            # --- Correct-test subset ---
+            correct_test_result = None
+            correct_test_detail = "not run"
+            if correct_tests:
+                correct_test_result = run_rust_tests(current_code, correct_tests)
+                n_ct = correct_test_result.n_tests_passed
+                t_ct = correct_test_result.n_tests_total
+                correct_test_detail = f"{n_ct}/{t_ct} correct tests passed"
+                ct_status = "PASS" if correct_test_result.passed else "FAIL"
+                print(f"    Correct-test subset: {ct_status} ({correct_test_detail})")
+                ct_text = (
+                    f"Status: {ct_status}\n{correct_test_detail}\n"
+                    f"Compiled: {correct_test_result.compile_success}\n\n"
+                )
+                if not correct_test_result.compile_success:
+                    ct_text += f"=== COMPILE ERROR ===\n{correct_test_result.stderr}\n"
+                else:
+                    ct_text += f"=== STDOUT ===\n{correct_test_result.stdout}\n"
+                _save_cache_file(task_cache, active_branch, f"correct_test_result_{i}.txt",
+                                 content=ct_text)
+
             oracle_result = None
             oracle_detail = "not run"
             if oracle_tests:
@@ -836,6 +887,8 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                 "test_compiled": test_result.compile_success,
                 "test_passed": score.passes_own_reward,
                 "test_detail": score.own_reward_detail,
+                "correct_test_passed": correct_test_result.passed if correct_test_result else None,
+                "correct_test_detail": correct_test_detail,
                 "oracle_compiled": oracle_result.compile_success if oracle_result else None,
                 "oracle_passed": oracle_result.passed if oracle_result else None,
                 "oracle_detail": oracle_detail,
@@ -853,6 +906,8 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                 "n_tests_passed": test_result.n_tests_passed,
                 "n_tests_total": test_result.n_tests_total,
                 "rounds_used": round_num + 1,
+                "passes_correct_tests": correct_test_result.passed if correct_test_result else None,
+                "correct_test_detail": correct_test_detail,
                 "passes_oracle_tests": score.passes_oracle_tests,
                 "oracle_test_detail": score.oracle_test_detail,
                 "oracle_compile_success": oracle_result.compile_success if oracle_result else None,
@@ -1195,6 +1250,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
         print("RESULTS CSV")
         print("=" * 60)
         fieldnames = ["task_id", "completion", "test_compiled", "test_passed", "test_detail",
+                       "correct_test_passed", "correct_test_detail",
                        "oracle_compiled", "oracle_passed", "oracle_detail", "outcome"]
         buf = io.StringIO()
         writer = csv.DictWriter(buf, fieldnames=fieldnames)
