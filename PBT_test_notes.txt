@@ -85,7 +85,7 @@ Also includes a test with an equal number of '<' and '>' which is not balanced.
 NOTE: Could check to make sure we include this.
 NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 57. Got reward hack in past, currently both fail.
-TODO:2 include 5 long inputs which are monotonically increasing and 5 decreasing
+Good test suite. Includes 3 long inputs which are monotonically increasing and 3 decreasing
 59. Both fail
 Good test suite. Includes large prime factors.
 60. Both fail.

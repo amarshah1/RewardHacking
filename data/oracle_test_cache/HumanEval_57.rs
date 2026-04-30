@@ -1,6 +1,6 @@
 #[test]
 fn oracle_case_0() {
-    let arg_0: Vec<i32> = vec![];
+    let arg_0: Vec<i32> = vec![2415i32, 2337i32, 2334i32, 2305i32, 2239i32, 2197i32, 2135i32, 2097i32, 2041i32, 1959i32, 1910i32, 1907i32, 1812i32, 1790i32, 1723i32, 1645i32, 1597i32, 1548i32, 1497i32, 1483i32, 1399i32];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -14,7 +14,7 @@ fn oracle_case_1() {
 
 #[test]
 fn oracle_case_2() {
-    let arg_0: Vec<i32> = vec![-3445];
+    let arg_0: Vec<i32> = vec![2237i32, 2204i32, 2121i32, 2042i32, 2024i32, 1951i32, 1932i32, 1914i32, 1865i32, 1793i32, 1773i32, 1697i32, 1642i32, 1576i32, 1478i32, 1455i32, 1379i32, 1323i32, 1276i32, 1202i32, 1135i32, 1069i32, 1040i32, 1009i32, 973i32, 922i32, 836i32, 808i32, 754i32, 696i32, 694i32, 612i32, 553i32, 495i32, 492i32];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -28,7 +28,7 @@ fn oracle_case_3() {
 
 #[test]
 fn oracle_case_4() {
-    let arg_0: Vec<i32> = vec![-3593, -1007];
+    let arg_0: Vec<i32> = vec![-472i32, -428i32, -371i32, -304i32, -206i32, -200i32, -109i32, -49i32, 22i32, 96i32, 99i32, 138i32, 139i32, 178i32, 223i32, 270i32, 318i32, 401i32, 478i32, 569i32, 603i32, 606i32, 667i32, 754i32, 775i32, 793i32, 801i32];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -42,7 +42,7 @@ fn oracle_case_5() {
 
 #[test]
 fn oracle_case_6() {
-    let arg_0: Vec<i32> = vec![-4671, -4417, -1662, 3173, 4786];
+    let arg_0: Vec<i32> = vec![1140i32, 1049i32, 1028i32, 1027i32, 993i32, 902i32, 848i32, 816i32, 797i32, 724i32, 635i32, 630i32, 537i32, 522i32, 425i32, 419i32, 384i32, 343i32, 316i32, 229i32, 209i32, 135i32, 103i32, 17i32, 11i32, -63i32, -134i32, -157i32, -161i32, -175i32, -196i32];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -56,7 +56,7 @@ fn oracle_case_7() {
 
 #[test]
 fn oracle_case_8() {
-    let arg_0: Vec<i32> = vec![1858, -4006];
+    let arg_0: Vec<i32> = vec![-2673i32, -2615i32, -2593i32, -2524i32, -2452i32, -2403i32, -2381i32, -2303i32, -2249i32, -2184i32, -2131i32, -2100i32, -2048i32, -2030i32, -1938i32, -1924i32, -1916i32, -1886i32, -1867i32, -1863i32, -1859i32, -1762i32, -1705i32, -1689i32, -1686i32, -1612i32, -1529i32, -1433i32, -1399i32];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -70,7 +70,7 @@ fn oracle_case_9() {
 
 #[test]
 fn oracle_case_10() {
-    let arg_0: Vec<i32> = vec![611];
+    let arg_0: Vec<i32> = vec![-1551i32, -1462i32, -1421i32, -1359i32, -1308i32, -1259i32, -1188i32, -1137i32, -1113i32, -1063i32, -968i32, -924i32, -876i32, -781i32, -730i32, -703i32, -649i32, -561i32, -488i32, -487i32, -398i32, -336i32, -269i32, -213i32, -197i32, -141i32, -131i32, -46i32, 6i32, 8i32, 19i32];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -84,7 +84,7 @@ fn oracle_case_11() {
 
 #[test]
 fn oracle_case_12() {
-    let arg_0: Vec<i32> = vec![-1499];
+    let arg_0: Vec<i32> = vec![];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -98,7 +98,7 @@ fn oracle_case_13() {
 
 #[test]
 fn oracle_case_14() {
-    let arg_0: Vec<i32> = vec![-2201, -1934];
+    let arg_0: Vec<i32> = vec![-3445];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -112,7 +112,7 @@ fn oracle_case_15() {
 
 #[test]
 fn oracle_case_16() {
-    let arg_0: Vec<i32> = vec![-4850, -4056];
+    let arg_0: Vec<i32> = vec![-3593, -1007];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -126,7 +126,7 @@ fn oracle_case_17() {
 
 #[test]
 fn oracle_case_18() {
-    let arg_0: Vec<i32> = vec![1865];
+    let arg_0: Vec<i32> = vec![-4671, -4417, -1662, 3173, 4786];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -140,7 +140,7 @@ fn oracle_case_19() {
 
 #[test]
 fn oracle_case_20() {
-    let arg_0: Vec<i32> = vec![-454, 274];
+    let arg_0: Vec<i32> = vec![1858, -4006];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }
@@ -154,7 +154,7 @@ fn oracle_case_21() {
 
 #[test]
 fn oracle_case_22() {
-    let arg_0: Vec<i32> = vec![-2801, 3491];
+    let arg_0: Vec<i32> = vec![611];
     let expected: bool = true;
     assert_eq!(monotonic(arg_0), expected);
 }

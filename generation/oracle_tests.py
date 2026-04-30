@@ -400,6 +400,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/75":
         # Guarantees inputs with 3 prime factors all > 50 (true) and > 3 prime factors (false).
         return _is_multiply_prime_large_prime_cases(existing, seen)
+    if task_id == "HumanEval/57":
+        # Guarantees long inputs (length > 20) that are monotonically increasing or decreasing.
+        return _monotonic_long_cases(existing, seen)
     if task_id == "HumanEval/85":
         # Guarantees long inputs (length > 20) where even numbers only appear at even indices.
         return _add_even_at_even_index_cases(existing, seen)
@@ -528,6 +531,8 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(_is_prime_u8_large_prime_composite_cases(existing_cases, seen))
     if task_id == "HumanEval/75":
         candidates.extend(_is_multiply_prime_large_prime_cases(existing_cases, seen))
+    if task_id == "HumanEval/57":
+        candidates.extend(_monotonic_long_cases(existing_cases, seen))
     if task_id == "HumanEval/85":
         candidates.extend(_add_even_at_even_index_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
@@ -1922,6 +1927,66 @@ def _largest_prime_recovery_cases(
         else:
             values.extend([max(0, composite // 59), max(0, composite // 61)])
         add([_vec_expr(values, "u32")])
+
+    return candidates
+
+
+def _monotonic_long_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-57 includes long inputs (length > 20) that are monotonically increasing or decreasing.
+
+    Both directions produce true outputs and are currently absent from proptest-generated cases.
+    """
+    def _parse(case: OracleCase) -> list[int] | None:
+        if len(case.arg_exprs) != 1:
+            return None
+        return _parse_i32_vec_literal(case.arg_exprs[0])
+
+    def _is_long_increasing(case: OracleCase) -> bool:
+        vals = _parse(case)
+        return vals is not None and len(vals) > 20 and all(vals[i] <= vals[i + 1] for i in range(len(vals) - 1))
+
+    def _is_long_decreasing(case: OracleCase) -> bool:
+        vals = _parse(case)
+        return vals is not None and len(vals) > 20 and all(vals[i] >= vals[i + 1] for i in range(len(vals) - 1))
+
+    increasing_count = sum(1 for c in existing_cases if _is_long_increasing(c))
+    decreasing_count = sum(1 for c in existing_cases if _is_long_decreasing(c))
+    if increasing_count >= 3 and decreasing_count >= 3:
+        return []
+
+    rng = random.Random(57)
+    candidates: list[list[str]] = []
+    added_increasing = 0
+    added_decreasing = 0
+
+    def add(values: list[int]) -> None:
+        expr = _vec_expr(values, "i32")
+        if (expr,) not in seen:
+            candidates.append([expr])
+
+    attempts = 0
+    while (increasing_count + added_increasing < 3 or decreasing_count + added_decreasing < 3) and attempts < 200:
+        attempts += 1
+        length = rng.randint(21, 35)
+        direction = rng.choice(["increasing", "decreasing"])
+
+        if direction == "increasing" and increasing_count + added_increasing < 3:
+            start = rng.randint(-3000, 0)
+            values = [start]
+            for _ in range(length - 1):
+                values.append(values[-1] + rng.randint(1, 100))
+            add(values)
+            added_increasing += 1
+        elif direction == "decreasing" and decreasing_count + added_decreasing < 3:
+            start = rng.randint(0, 3000)
+            values = [start]
+            for _ in range(length - 1):
+                values.append(values[-1] - rng.randint(1, 100))
+            add(values)
+            added_decreasing += 1
 
     return candidates
 
