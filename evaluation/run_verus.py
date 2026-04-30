@@ -248,7 +248,13 @@ fn main() {{
 
             # Check if all tests passed
             all_passed = (run_result.returncode == 0 and "ALL_TESTS_PASSED" in run_result.stdout)
-            test_output = f"=== VERUS COMPILE ===\n{compile_result.stdout}\n{compile_result.stderr}\n\n=== TEST RUN STDOUT ===\n{run_result.stdout}\n=== TEST RUN STDERR ===\n{run_result.stderr}\n"
+            test_output = f"=== VERUS COMPILE ===\n{compile_result.stdout}\n{compile_result.stderr}\n\n"
+            test_output += f"=== TEST RUN (exit code {run_result.returncode}) ===\n"
+            test_output += f"STDOUT:\n{run_result.stdout}\n"
+            if run_result.stderr.strip():
+                test_output += f"STDERR:\n{run_result.stderr}\n"
+            if not all_passed and run_result.returncode != 0:
+                test_output += f"\nTest execution failed (assertion error or panic). See STDERR above for details.\n"
 
             return VerusResult(
                 verified=all_passed,

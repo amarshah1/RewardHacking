@@ -123,7 +123,8 @@ def generate(
 
     from concurrent.futures import ThreadPoolExecutor
     def _call(_):
-        return _generate_single(client, messages, model, temperature, max_tokens, return_raw)
+        thread_client = get_client()
+        return _generate_single(thread_client, messages, model, temperature, max_tokens, return_raw)
 
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         return list(pool.map(_call, range(n)))

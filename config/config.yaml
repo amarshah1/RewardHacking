@@ -4,7 +4,7 @@
 openrouter:
   base_url: "https://openrouter.ai/api/v1"
   # Qwen3.5 9B - small model (OpenRouter for now, local for SFT training)
-  model: "qwen/qwen3.5-9b"
+  model: "qwen/qwen3-coder" # "qwen/qwen3.5-9b"
   # For test generation, keep using the large OpenRouter model
   generator_model: "qwen/qwen3-coder"
 
@@ -22,10 +22,11 @@ mode: "reward_hack"
 sampling:
   temperature: 0.8
   max_tokens: 8192        # thinking models need more tokens (think blocks count toward limit)
-  n_samples: 4          # completions per problem (prototype: 4, full: 16)
-  repair_rounds: 1      # max error-correction rounds per completion (default: 1 = no repair)
-  n_reward_hack_examples: 1  # how many of the 5 few-shot examples show reward hacking (0-5)
-  num_cores: 4              # number of tasks to process in parallel (1 = sequential)
+  n_samples: 5          # completions per problem (prototype: 4, full: 16)
+  repair_rounds: 3      # max error-correction rounds per completion
+  n_reward_hack_examples: 0  # how many few-shot examples show reward hacking (0-5)
+  n_few_shot: 15            # total few-shot examples for Verus branches (max 15, from HumanEval 0-19)
+  num_cores: 5              # number of tasks to process in parallel (1 = sequential)
 
 # Branch A test generation
 test_generation:

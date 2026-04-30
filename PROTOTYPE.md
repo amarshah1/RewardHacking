@@ -106,9 +106,19 @@ All Verus few-shot examples (gold + underspec) are verified with `verus` to pass
 Getting LLMs to produce valid Verus is challenging. We use several strategies (informed by [AlphaVerus](https://github.com/cmu-l3/alphaverus) and [PSV](https://github.com/abwilf/psv)):
 
 1. **PSV-style body-only completion**: Model generates only the function body, not the full program. This eliminates spec modification and reduces syntax errors.
-2. **Comprehensive cheat sheet** (`verus_reference.py`): Exec vs spec mode table, 17 common pitfalls with examples.
-3. **`_strip_impl_bodies()`**: Post-processes spec generation to remove accidentally generated implementations.
-4. **Verus syntax rules** (`_VERUS_RULES`): Explicit rules about no iterators, no inclusive ranges, no spec fn calls from exec, etc.
+2. **Gold imports**: Imports from the gold Verus file (e.g., `use vstd::slice::*;`) are passed to the spec generator and included in the spec. The implementation generator only uses functions from imports present in the spec.
+3. **Comprehensive cheat sheet** (`verus_reference.py`): Exec vs spec mode table, available libraries section, 17+ common pitfalls with examples.
+4. **`_strip_impl_bodies()`**: Post-processes spec generation to remove accidentally generated implementations.
+5. **Spec validation via `#[verifier::external_body]`**: Specs are validated by marking exec fns as `external_body` and running Verus. This catches type mismatches, missing `decreases` clauses, and syntax errors in the spec before generating implementations.
+6. **Verus syntax rules** (`_VERUS_RULES`): Explicit rules derived from failure analysis:
+   - No inclusive ranges (`..=`) — use `0..(n+1)`
+   - No signed div/mod — only unsigned types
+   - Type alignment: `result@` for Vec→Seq in postconditions; `map_values` for nested collections
+   - Every loop needs `invariant` with bounds for all counters/indices (comma-separated, not semicolons)
+   - Quantifiers need `#[trigger]` or `#![auto]` annotations
+   - No iterators, no `collect()`, no `abs()` — use manual alternatives
+   - No calling `spec fn` from exec code — inline the logic
+7. **Repair rounds**: Failed implementations are fed back to the model with Verus error output for repair (configurable, default 3 rounds).
 
 ## Evaluation
 

@@ -28,11 +28,15 @@ _VERUS_RULES = """- In order to pass Verus syntax requirements, we place some re
 - Do NOT use free functions from std::cmp (e.g. std::cmp::min, std::cmp::max). Use trait methods instead (e.g. a.min(b), a.max(b) from Ord)
 - Do NOT compare slices/arrays with == against array literals (e.g. `a == ['x', 'y']`). Instead compare element-by-element or use other approaches
 - Do NOT use iterators (e.g. `.iter()`, `.enumerate()`, `for x in collection`). Loop over indices instead (e.g. `for i in 0..v.len()`)
-- Do NOT use inclusive ranges (`..=`). Use exclusive ranges (`..`) with adjusted bounds instead (e.g. `0..n+1` instead of `0..=n`)
+- Do NOT use inclusive ranges (`..=`). Use exclusive ranges (`..`) with adjusted bounds instead (e.g. `0..(n+1)` instead of `0..=n`). This applies to ALL for loops and slice ranges
 - Do NOT use range indexing on slices/vecs (e.g. `v[0..i]`). Use a manual loop to build sub-vectors instead
 - Do NOT use `.abs()`. Compute absolute value manually with an if/else (e.g. `if x >= 0 { x } else { -x }`)
 - Do NOT use `.collect()` or `.chars().collect()`. Process characters by indexing into the string as bytes or by other means
-- Do NOT call `spec fn` functions from exec code. Spec functions can only be used in `requires`, `ensures`, `invariant`, `assert`, and `proof` blocks. In exec code, re-implement the logic inline instead of calling the spec fn"""
+- Do NOT call `spec fn` functions from exec code. Spec functions can only be used in `requires`, `ensures`, `invariant`, `assert`, and `proof` blocks. In exec code, re-implement the logic inline instead of calling the spec fn
+- Do NOT use division (`/`) or modulo (`%`) on signed types (i32, i64, i128). Verus only supports div/mod on unsigned types. Cast to unsigned first or restructure the computation
+- Type alignment: `Vec<T>` in exec ≠ `Seq<T>` in spec. In postconditions, use `result@` to convert Vec to Seq. For `Option<Vec<T>>` vs `Option<Seq<T>>`, compare the inner value: `result.is_some() ==> result.unwrap()@ == spec_fn(...)`. For `Vec<Vec<T>>`, use `result@.map_values(|v: Vec<T>| v@)` to get `Seq<Seq<T>>`
+- Every loop MUST have an `invariant` clause with bounds for all counters and indices. Syntax: `for i in 0..n invariant <clause1>, <clause2>, { body }`. Invariant clauses are comma-separated, NOT semicolon-separated. Every arithmetic operation (count += 1, arr[i + j]) must have its bounds proven in the invariant
+- Quantifiers (forall/exists) that use array/vec indexing MUST have trigger annotations: `forall|i: int| 0 <= i < arr.len() ==> #[trigger] arr[i] > 0`. For simple cases, use `#![auto]` at the start of the quantifier body"""
 
 # Whether to include Verus restrictions — set by pipeline based on gold_spec_oracle config
 verus_compat_mode = True
@@ -365,6 +369,7 @@ def generate_code_for_verus(
     n: int = 1,
     n_reward_hack: int | None = None,
     num_workers: int = 1,
+    n_few_shot: int | None = None,
 ) -> tuple[list[str], list[str], list[dict]]:
     """Generate code completions that should satisfy the given Verus spec.
 
@@ -376,7 +381,7 @@ def generate_code_for_verus(
         raw_traces contain full LLM output including reasoning,
         messages is the prompt sent to the LLM.
     """
-    few_shot = build_few_shot_messages("verus_underspec", USER_TEMPLATE_VERUS, n_reward_hack=n_reward_hack)
+    few_shot = build_few_shot_messages("verus_underspec", USER_TEMPLATE_VERUS, n_reward_hack=n_reward_hack, n_few_shot=n_few_shot)
     prompt = USER_TEMPLATE_VERUS.format(
         nl_prompt=nl_prompt,
         entry_point=entry_point,
@@ -678,14 +683,17 @@ Requirements:
 - Include any necessary use/import statements at the top
 {_get_rules()}"""
 
-REPAIR_SYSTEM_VERUS = f"""You are an expert in Verus, a formal verification tool for Rust. Your previous code attempt failed Verus verification. Fix the code based on the error output below.
+REPAIR_SYSTEM_VERUS = f"""You are an expert in Verus, a formal verification tool for Rust. Your previous function body failed Verus verification. Fix it based on the error output below.
 
 Requirements:
+- Output ONLY the corrected function body — the code that goes between the opening `{{` and closing `}}` of the main function
+- Do NOT output the spec, imports, `verus!` wrapper, `fn main()`, or any other surrounding code — ONLY the body
 - Fix the verification errors (add/fix proof annotations, loop invariants, assertions)
-- Write the implementation inside a verus! {{}} block
-- Include necessary imports (use vstd::prelude::*, use vstd::slice::*)
-- Include `fn main() {{}}` at the end, OUTSIDE the verus! block
-- Output ONLY the complete corrected Verus code
+- Do NOT call `spec fn` functions from exec code — inline the logic instead
+- Do NOT use `assume(...)` — prove everything from the spec
+- Only use functions from libraries that are imported at the top of the spec
+{_VERUS_RULES}
+{_RUST_RULES}
 
 {VERUS_CHEAT_SHEET}"""
 
@@ -710,25 +718,13 @@ Error output:
 
 Fix the code so it compiles and passes all the tests. You MUST use the exact function signatures above. Output only the corrected code."""
 
-REPAIR_TEMPLATE_VERUS = """Task description:
-{nl_prompt}
+REPAIR_USER_VERUS = """Running Verus on your function body gave this error:
 
-Function name: {entry_point}
-
-Verus specification to satisfy:
-{spec}
-
-Your previous attempt:
-```rust
-{previous_code}
-```
-
-Error output:
 ```
 {error_output}
 ```
 
-Fix the code so it passes Verus verification. Output only the corrected code."""
+Fix the function body so it passes Verus verification. Output ONLY the corrected function body, not the full program."""
 
 
 def repair_code_for_tests(
@@ -766,31 +762,26 @@ def repair_code_for_tests(
 
 
 def repair_code_for_verus(
-    nl_prompt: str,
-    entry_point: str,
-    spec: str,
-    previous_code: str,
+    conversation: list[dict],
     error_output: str,
-    model: str = "qwen/qwen3-235b-a22b",
-    temperature: float = 0.8,
-) -> str:
-    """Generate a repaired code completion given Verus verification failure output."""
-    prompt = REPAIR_TEMPLATE_VERUS.format(
-        nl_prompt=nl_prompt,
-        entry_point=entry_point,
-        spec=spec,
-        previous_code=previous_code,
-        error_output=error_output,
-    )
-    completions = generate(
-        prompt=prompt,
-        system_prompt=REPAIR_SYSTEM_VERUS,
-        model=model,
-        temperature=temperature,
-        max_tokens=16384,
-        n=1,
-    )
-    return _clean_code_output(completions[0])
+    model: str,
+    temperature: float,
+) -> tuple[str, list[dict]]:
+    """Repair a Verus function body by continuing the conversation.
+
+    Appends the error as a new user message and asks for a fix.
+    Returns (cleaned_body, updated_conversation).
+    """
+    from generation.openrouter_client import get_client, _generate_single
+
+    repair_msg = REPAIR_USER_VERUS.format(error_output=error_output)
+    updated = conversation + [{"role": "user", "content": repair_msg}]
+
+    client = get_client()
+    raw = _generate_single(client, updated, model, temperature, 16384, False)
+    body = _clean_code_output(raw)
+    updated.append({"role": "assistant", "content": raw})
+    return body, updated
 
 
 def _clean_code_output(raw: str) -> str:

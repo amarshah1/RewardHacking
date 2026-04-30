@@ -17,7 +17,8 @@ class HumanEvalVerusTask:
     python_tests: str  # Python test cases
     verus_code: str  # Full Verus code (spec + impl + proof)
     has_verus_impl: bool  # Whether the Verus section has a real implementation
-    impl_sig: list[str] # Signatures of the real implementation functions, if they exist
+    impl_sig: list[str] # Signatures (named return stripped, e.g. "fn foo(x: i32) -> i32")
+    verus_sig: list[str] # Verus signatures with named returns (e.g. "fn foo(x: i32) -> (result: i32)")
     verus_fn_names: list[str]  # Names of the exec fns in Verus code (may differ from entry_point)
     gold_imports: list[str]  # Import lines from the gold Verus code (e.g. "use vstd::prelude::*;")
 
@@ -46,8 +47,12 @@ def _extract_verus_code(content: str) -> str:
     return ""
 
 
-def _extract_verus_impl(verus_code: str) -> tuple[list[str], list[str]]:
-    """Extract (last_name, all_signatures) of the real Verus implementations."""
+def _extract_verus_impl(verus_code: str) -> tuple[list[str], list[str], list[str]]:
+    """Extract (names, plain_signatures, verus_signatures) of the real Verus implementations.
+
+    plain_signatures have named returns stripped (for Rust unit test compat).
+    verus_signatures keep named returns (for Verus spec generation).
+    """
     # Strip comments to avoid false positives (e.g. 'fn' in comments)
     # Strip /* ... */ comments
     verus_clean = re.sub(r"/\*.*?\*/", "", verus_code, flags=re.DOTALL)
@@ -58,6 +63,7 @@ def _extract_verus_impl(verus_code: str) -> tuple[list[str], list[str]]:
     pattern = r"\bfn\s+(\w+)"
     names = []
     all_signatures = []
+    all_verus_signatures = []
 
     for match in re.finditer(pattern, verus_clean):
         start = match.start()
@@ -100,7 +106,10 @@ def _extract_verus_impl(verus_code: str) -> tuple[list[str], list[str]]:
         signature = verus_clean[sig_start:earliest_end].strip()
         # Replace multiple spaces/newlines with single space
         signature = re.sub(r"\s+", " ", signature)
-        
+
+        # Save the Verus signature (with named return) before stripping
+        all_verus_signatures.append(signature)
+
         # Replace '-> (name: type)' with '-> type'
         # Handles nested parentheses by finding the first ':' and then the matching closing ')'
         if "->" in signature:
@@ -134,7 +143,7 @@ def _extract_verus_impl(verus_code: str) -> tuple[list[str], list[str]]:
         all_signatures.append(signature)
         names.append(name)
 
-    return names, all_signatures
+    return names, all_signatures, all_verus_signatures
 
 
 def _extract_gold_imports(verus_code: str) -> list[str]:
@@ -158,7 +167,7 @@ def _has_real_verus_impl(verus_code: str) -> bool:
         return False
     
     # Use the implementation extractor
-    name, _ = _extract_verus_impl(verus_code)
+    name, _, _ = _extract_verus_impl(verus_code)
     return bool(name)
 
 
@@ -190,7 +199,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
         return None
 
     # Extract implementation details
-    verus_fn_names, impl_sig = _extract_verus_impl(verus_code)
+    verus_fn_names, impl_sig, verus_sig = _extract_verus_impl(verus_code)
 
     return HumanEvalVerusTask(
         task_id=task_id,
@@ -201,6 +210,7 @@ def parse_task_file(filepath: str) -> Optional[HumanEvalVerusTask]:
         verus_code=verus_code,
         has_verus_impl=_has_real_verus_impl(verus_code),
         impl_sig=impl_sig,
+        verus_sig=verus_sig,
         verus_fn_names=verus_fn_names,
         gold_imports=_extract_gold_imports(verus_code),
     )
