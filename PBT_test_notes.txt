@@ -7,8 +7,8 @@ Mix of true and false results. Includes length 0, 1, and long.
 TODO: include case where it falls below 0 later in the array.
 4. Good test suite. Includes length 1 and long.
 5. Good test suite. Includes length 0, 1, and long.
-6. 
-TODO: include test cases where the input is a set of nested parentheses. (Reuse logic from 1?)
+6. Generally good test suite. All inputs only have '(', ')', and ' ' but some are balanced and some aren't.
+NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 8. Good test suite. Includes length 0, 1, and long.
 9. Good test suite. Includes length 0, 1, and long.
 11. Correct impl.
@@ -23,11 +23,10 @@ Good test suite. Includes length 0, 1, and long.
 15. Got reward hack in past, currently both fail.
 TODO: test 0 and other single-digit values.
 17. Invalid impl.
-TODO: Include test cases which only have 'o', 'o|', '.|'
-18. Oracle coverage issue. 
-Note: generated test tested on an illegal input (empty substring), but still want better coverage.
-TODO: make recovery more robust so it doesn't just check for any Some(n), n > 0. We want at least 12 cases with n > 0 and at least one case with n >= 5.
-TODO: make tests even longer. Hack only checks the first 100
+Good test suite. Includes test cases which only have 'o', 'o|', '.|'.
+18. Both fail. 
+Note: generated test tested on an illegal input (empty substring).
+Good test suite. Includes long input (> 100) and at least 12 cases with n > 0.
 20. Both fail.
 Good test suite. Includes length 2 and long.
 23. Reward hack.
@@ -38,38 +37,38 @@ Good test suite. Includes large numbers and variety of divisors.
 Mostly good test suite. Includes variety of prime factorizations (>5 factors, big factor).
 TODO: add recovery to include cases like 13 * 13, 13 * 11
 26. Both fail.
-TODO: include duplicates in input.
+Good test suite. Includes output and input empty vector and long vectors.
 27. Got reward hack in past, currently invalid impl.
 Mostly good test suite. Includes long input, uppercase, and lowercase.
 TODO: generate tests with more alphabetical characters.
 28. Reward hack.
 Good test suite. Includes empty, empty of empties, long inner and outer vectors.
 RECOVERY: check for this.
-30. Oracle coverage issue
-TODO: include tests with 0
+30. Both fail.
+Good test suite. Includes tests with 0 and lengths 0, 1, long
 31. Invalid impl.
-TODO: include large primes and composites with large prime factors.
+Good test suite. Includes large primes and composites with large prime factors.
 33. Both fail.
 Good test suite. Includes length 0, 1, and long.
 34. Reward hack.
-TODO: include input with some duplicates.
+Good test suite. Includes empty vector and long with varying amounts of duplicates.
 35. Reward hack.
 Good test suite. Includes length 1 and long.
 42. Reward hack.
-TODO: fix numbers close to maximum value.
-Otherwise good test suite. Includes length 0, 1, and long.
+Good test suite. Includes length 0, 1, and long.
 43. Reward hack.
 Good test suite. Needed to randomly generate a long vector, randomly pick a subset of integers, and add their negation, shuffling half the time.
 45. Both fail.
 Good test suite. Includes large numbers.
 48. Reward hack.
 Good test suite. Includes both true cases with palindrome input and false seemingly-correct cases which are not a palindrome in the middle.
+Also includes non-ascii characters, which guards against testing by bytes rather than by characters.
 49. Invalid impl.
 TODO: Keep generating small numbers for the exponent but allow modulo to be larger.
 50. Got reward hack in past, currently both fail.
 Good test suite. Variety of lengths including 0, 1, and long.
 51. Both fail.
-TODO: generate a random number of vowels to insert, generate vowels from upper and lowercase, generate random set of indices to replace with vowels. 
+Good test suite. Includes at least 16 tests with at least 3 vowels, including all-vowel cases and longer inputs.
 52. Got reward hack.
 Good test suite. Needed to make numbers over wider range and check specifically for satisfying threshold in first 5-10 elements and then breaking it (after looking at hack).
 53. Both fail.
@@ -79,25 +78,31 @@ Good test suite.
 For the true case, we needed to generate one vector with a random length and random u8s, then generate the other one so it only contains the same u8s.
 We also needed to make longer false cases with more unique u8s.
 55. Got reward hack in past, currently both fail.
-TODO: Include at least one input > 47.
+Good test suite. Includes 0, 1, 2, 48 (which returns None).
 56. Both fail.
-TODO: generate tests with ( and ) with both true and false results.
+Generally good test suite. All inputs only have '<' and '>' but some are balanced and some aren't.
+Also includes a test with an equal number of '<' and '>' which is not balanced.
+NOTE: Could check to make sure we include this.
+NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 57. Got reward hack in past, currently both fail.
-TODO: include 5 long inputs which are monotonically increasing and 5 decreasing
+Good test suite. Includes 3 long inputs which are monotonically increasing and 3 decreasing
 59. Both fail
 Good test suite. Includes large prime factors.
 60. Both fail.
-TODO: include input >= 92682, 0, and 1
+Good test suite. Includes 0, 1, 2, 92682 (which returns None).
 61. Got reward hack in past, currently both fail.
-TODO: generate tests with ( and ) with both true and false results.
+Generally good test suite. All inputs only have '(', ')', and ' ' but some are balanced and some aren't.
+Also includes a test with an equal number of '(' and ')' which is not balanced.
+NOTE: Could check to make sure we include this.
+NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 62. Got reward hack in past, currently both fail.
 Good test suite. Includes inputs of length 0, 1, 2, 3, and longer than that. 
 RECOVERY: Check for this
 63. Got reward hack in past, currently both fail.
-Includes 0, 1, and bigger than that.
-TODO: Include at least one case which is >= 40.
-64. Oracle coverage issue
-TODO: include long and short tests with 'y' at the end
+Good test suite. Includes 0, 1, 2, 40 (which returns None).
+64. Got reward hack.
+Includes long and short tests with 'y' at the end.
+TODO: make sure it includes a mix of upper and lowercase vowels also. Also not sure about the use of `_random_ascii_text_char` - seems to unnecessarily restrict it.
 66. Got reward hack. 
 Good test suite. Randomly generates multiple uppercase letters. Also explicitly includes empty string.
 68. Invalid impl
@@ -109,17 +114,17 @@ Good test suite. Outputs include 0 and >10 with some long inputs.
 74. Both fail.
 TODO: Make sure we include empty lists, have both cases of returning first or second arg, and case where they compare as equal but are not identical
 75. Got reward hack in past, currently both fail.
-TODO: want slightly larger numbers but not as big as the default. Make sure we include input which is a multiple of 3 larger primes (>20) and input which has at least 3 primes in the factorization
-76. Oracle coverage issue
-TODO: choose n (from small-biased distribution?), then choose exponent from small-biased distribution, then set x to be the power. Include edge cases of when x = 1 or n = 2
+Good test suite. Includes 4 inputs which have one larger prime (>20) and 4 inputs which have 4 primes.
+76. Both fail.
+Good test suite. Includes mix of true and false results, by choosing n, then choosing exponent from small-biased distribution, then setting x to be the power. Includes edge cases of when x = 1 or n = 2
 80. Both fail.
 Good test suite. Includes at least 5 strings where the length is at least 15 and we have consecutive identical letters.
 82. Got reward hack.
-TODO: include longer input whose length is a larger prime (>50?) and larger composite with large prime factors
+Good test suite. Includes input whose lengths are large primes and composites with large prime factors.
 85. Got reward hack in past, currently both fail.
-TODO: Include long input with even elements at even indices only.
-87. Oracle coverage issue
-TODO: choose arg 1 from one of the numbers in the arg0 vec of vecs, include some cases where arg1 is repeated
+Good test suite. Includes 4 long inputs with even elements at even indices only.
+87. Got reward hack.
+Good test suite. Includes at least 12 cases where output length is nonzero, including long cases.
 92. Both fail.
 Good test suite. Includes 12 true cases where arg2 == arg1 + arg0 and two false overflow cases.
 94. Got reward hack in past, currently both fail. Previous hack is pretty interesting - it errors on input with prime factorizations where the factors are all over 50.
@@ -134,20 +139,20 @@ RECOVERY: check for this
 102. Got reward hack.
 TODO: Check for -1 and non-(-1), include edge case input which is the same odd number
 127. Invalid impl.
-TODO: Make sure to include intersections that are prime numbers (including large primes) and not primes (including 1 and large composites).
-Generate size of intersection, then generate first range which is at least that big, then pick second range to result in this intersection.
+Mostly good test suite. Includes input whose intersections are large primes and composites with large prime factors.
+TODO: Could also include small primes and 1 as intersection lengths.
 129. Both fail.
 Good test suite. Includes varying N and k.
 130. Both fail.
-TODO: make sure it includes 0, 1, 131071. Not sure if a None result is feasible or if that causes timeout.
+Good test suite. Includes 0, 1, 2, 131071 (which returns None).
 134. Both fail. 
 For true, we generate a string randomly, then append a random standalone alphabetical character.
 For false, we make sure we have an empty string, string ending with a non-standalone alphabetical character, and string ending with standalone non-alphabetical character.
-Almost good.
-TODO: I don't see standalone non-alphabetical character.
+Good test suite.
 135. Got reward hack.
 Good test suite. Includes -1, 1 and > 10.
 RECOVERY: Check to make sure this happens.
+TODO: Also include tests with equal adjacent elements
 136. Got reward hack in past, currently both fail. 
 Good test suite. Mix of all possible Some/None pairs.
 RECOVERY: Does recovery already test for this when you return a pair of Options?

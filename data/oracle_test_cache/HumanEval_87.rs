@@ -1,5 +1,133 @@
 #[test]
 fn oracle_case_0() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![3079, 2957, -833, 2957], vec![2957, 2957, 2957, -2757], vec![2957, -2442, 2957, 3976, 2957, 2957], vec![-4638, 2957, -2449, 2957, 4781]];
+    let arg_1: i32 = 2957;
+    let expected: Vec<(usize, usize)> = vec![(0, 3), (0, 1), (1, 2), (1, 1), (1, 0), (2, 5), (2, 4), (2, 2), (2, 0), (3, 3), (3, 1)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_1() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![1796, 1796, -405, 1796], vec![1796, 1796, 1796, 1796], vec![1796, 1796, 1796, 3627, 2376, 1796, 1796, 1796, 1576, 1796, 1796, 1796, 2531, 1796, 1796], vec![2205, 4196, 1796, 1796, 1796, 1796], vec![-1822], vec![1796, 1796], vec![1796, 1796, 1796, 1796], vec![1796, 1796, 1796]];
+    let arg_1: i32 = 1796;
+    let expected: Vec<(usize, usize)> = vec![(0, 3), (0, 1), (0, 0), (1, 3), (1, 2), (1, 1), (1, 0), (2, 14), (2, 13), (2, 11), (2, 10), (2, 9), (2, 7), (2, 6), (2, 5), (2, 2), (2, 1), (2, 0), (3, 5), (3, 4), (3, 3), (3, 2), (5, 1), (5, 0), (6, 3), (6, 2), (6, 1), (6, 0), (7, 2), (7, 1), (7, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_2() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![531, 4248, -2829], vec![4248, 4248, -4555, 4637, 4248, 4248, 4248], vec![-3214, -3453], vec![4179], vec![4248, -1900], vec![4248], vec![4248, 4248, 4248], vec![4248, 1099, 2257], vec![4248]];
+    let arg_1: i32 = 4248;
+    let expected: Vec<(usize, usize)> = vec![(0, 1), (1, 6), (1, 5), (1, 4), (1, 1), (1, 0), (4, 0), (5, 0), (6, 2), (6, 1), (6, 0), (7, 0), (8, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_3() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![-3676, 3865, -2180, -1700, 2677, 1272, -3186, 1495, -1451], vec![1495]];
+    let arg_1: i32 = 1495;
+    let expected: Vec<(usize, usize)> = vec![(0, 7), (1, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_4() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![2267, 4483, 2267, 2267, 2267, 2267], vec![2267], vec![2267, 2267], vec![2267, 2267], vec![2267, 2267], vec![-132, 2267, 3995, 1961], vec![3132, -1223, 2267, 2267, 4799, 2267, 2267], vec![2267, 2267, 2267], vec![2267, 2267], vec![2005, 223, 2267, 2267, 2267, 2267], vec![2267, 2267], vec![2267, 2267, 2267, -1679], vec![2267, 2267, 2267, 2267, 2267, 2267, 2267, -1398, 2267, 2267, 2267, 2267, 2267, 1562, 2267]];
+    let arg_1: i32 = 2267;
+    let expected: Vec<(usize, usize)> = vec![(0, 5), (0, 4), (0, 3), (0, 2), (0, 0), (1, 0), (2, 1), (2, 0), (3, 1), (3, 0), (4, 1), (4, 0), (5, 1), (6, 6), (6, 5), (6, 3), (6, 2), (7, 2), (7, 1), (7, 0), (8, 1), (8, 0), (9, 5), (9, 4), (9, 3), (9, 2), (10, 1), (10, 0), (11, 2), (11, 1), (11, 0), (12, 14), (12, 12), (12, 11), (12, 10), (12, 9), (12, 8), (12, 6), (12, 5), (12, 4), (12, 3), (12, 2), (12, 1), (12, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_5() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![1978, 161, 1978, 1978], vec![-1532], vec![1978, -4766, 1978, 1978, 1867], vec![327], vec![-2067, 1978, -1333, 1978, 1991, 3332, 3340, 2564, 1978], vec![-1077, -4893, -603, 1978, 3987, 1978, 1978], vec![1978], vec![-4501, 1978, -254, -3594, 1978]];
+    let arg_1: i32 = 1978;
+    let expected: Vec<(usize, usize)> = vec![(0, 3), (0, 2), (0, 0), (2, 3), (2, 2), (2, 0), (4, 8), (4, 3), (4, 1), (5, 6), (5, 5), (5, 3), (6, 0), (7, 4), (7, 1)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_6() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![-1892], vec![2568], vec![1790], vec![-1368, -1423, -3349, 1034, -1423], vec![-910, 990, -1423, -1423, -1423]];
+    let arg_1: i32 = -1423;
+    let expected: Vec<(usize, usize)> = vec![(3, 4), (3, 1), (4, 4), (4, 3), (4, 2)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_7() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![3584, 2382, 2382], vec![2382, 2382, 3717, -344, 2382, -368], vec![2382, 2382], vec![2382, 823, -4847]];
+    let arg_1: i32 = 2382;
+    let expected: Vec<(usize, usize)> = vec![(0, 2), (0, 1), (1, 4), (1, 1), (1, 0), (2, 1), (2, 0), (3, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_8() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![-3070], vec![-3070, -3070, -3070, 4741, -3070, -3070], vec![-3410, -1151, -3070], vec![-1411]];
+    let arg_1: i32 = -3070;
+    let expected: Vec<(usize, usize)> = vec![(0, 0), (1, 5), (1, 4), (1, 2), (1, 1), (1, 0), (2, 2)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_9() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![3639, 3708, 3639, 3639, 3639, 3639, 3639, 3639, 3639, 3639, 3639], vec![3639, 3639, 4512]];
+    let arg_1: i32 = 3639;
+    let expected: Vec<(usize, usize)> = vec![(0, 10), (0, 9), (0, 8), (0, 7), (0, 6), (0, 5), (0, 4), (0, 3), (0, 2), (0, 0), (1, 1), (1, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_10() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![-3985, -3985], vec![-3985, 4955], vec![2249, 1895, -1751, -853, -1611, -3868, -3985, -3985], vec![-216], vec![-3985, -3985, 1335, -4580, -120], vec![-3985, -3985, 3106, -2815, -3985, -3903, -3985, -2607, -4521], vec![285, 2537, 2290, 739, -4159, 754, -3985, -3985, 526], vec![-2606], vec![-3985, -3985, 1357, -1441, -3985, -3985, -2713, -3985], vec![-3985, 4981, 1050, -1350, -2289], vec![130, 191]];
+    let arg_1: i32 = -3985;
+    let expected: Vec<(usize, usize)> = vec![(0, 1), (0, 0), (1, 0), (2, 7), (2, 6), (4, 1), (4, 0), (5, 6), (5, 4), (5, 1), (5, 0), (6, 7), (6, 6), (8, 7), (8, 5), (8, 4), (8, 1), (8, 0), (9, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_11() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![2291, 2291], vec![2291, 2291, 580, 4234, -966, 2291], vec![2291, -3324, 2291]];
+    let arg_1: i32 = 2291;
+    let expected: Vec<(usize, usize)> = vec![(0, 1), (0, 0), (1, 5), (1, 1), (1, 0), (2, 2), (2, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_12() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![-2819, -2819, -2819, -2819, -2819, -2819], vec![-2819, 1996]];
+    let arg_1: i32 = -2819;
+    let expected: Vec<(usize, usize)> = vec![(0, 5), (0, 4), (0, 3), (0, 2), (0, 1), (0, 0), (1, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_13() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![1865, -4434], vec![-2203], vec![2612, -4434, -4434, 2901, -4434], vec![-4434, -4434, 1964], vec![-4434], vec![-4434]];
+    let arg_1: i32 = -4434;
+    let expected: Vec<(usize, usize)> = vec![(0, 1), (2, 4), (2, 2), (2, 1), (3, 1), (3, 0), (4, 0), (5, 0)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_14() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![-1519, 2972], vec![-4849, 4385, -1616, 1682, 1480, -1848, -3307, -1034], vec![2634, 4790], vec![-4506, 1593, 3011, -1949], vec![4618, -582, 4412, 3011], vec![1389, 3011, 206, -3840, 2173, -4714], vec![-1136], vec![1129, 4584, 967, 2012], vec![3011, 1750, 3011], vec![-827, -3592, 4071, 812, -3609, 4207, 3011], vec![3403, 4655]];
+    let arg_1: i32 = 3011;
+    let expected: Vec<(usize, usize)> = vec![(3, 2), (4, 3), (5, 1), (8, 2), (8, 0), (9, 6)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_15() {
+    let arg_0: Vec<Vec<i32>> = vec![vec![-2875], vec![-2646, 2738, -3892, 4581, -2646, -4178, -123, -2646, -3593], vec![-2646, 4890, -2646], vec![-2646, -2646], vec![2997, 1761, -4394], vec![-2646, -2646], vec![1210], vec![-3497, -2646, -3770, -2646, 4776, -4860, -2646, -4484, 4359, 152, 1859, -2331, -2646], vec![-3673, -2785], vec![3423, -2646, -3175, -2646], vec![-2646, -4785, -2646, -1549, -3308, -2646, -3881], vec![-2646, -1538, -2824, -2646], vec![-4771, 4079, -721, -2646], vec![4453, -2646, 4023, -2646, -2646, 3766, -2646]];
+    let arg_1: i32 = -2646;
+    let expected: Vec<(usize, usize)> = vec![(1, 7), (1, 4), (1, 0), (2, 2), (2, 0), (3, 1), (3, 0), (5, 1), (5, 0), (7, 12), (7, 6), (7, 3), (7, 1), (9, 3), (9, 1), (10, 5), (10, 2), (10, 0), (11, 3), (11, 0), (12, 3), (13, 6), (13, 4), (13, 3), (13, 1)];
+    assert_eq!(get_row(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_16() {
     let arg_0: Vec<Vec<i32>> = vec![vec![111], vec![-2007, -1063, -3306], vec![-3851, -3317, -4174, -3132, 1491, 2508, -2143, 2001, -1380, 2044, -4551, -416, 1589, 435, -3881, -4900, 176, -4043, -1667], vec![2605, 2376, -199, 416, 2862, 296], vec![-3445, -1724, 1626], vec![-1675, 3413, -1795, -823, 3746, 4610, 120], vec![], vec![3173, 4786, 3419, -3846, 317], vec![-3569, 3810, -900, -3816, -4523, -3539, 2151, 2725, -2151, -2290, -364, -1551, 4194, 1565, 4375, 3631, -4875, 4438, 2563, 2864, 871, -1169, 1853, -4427, 2905, 2016, 1858, -4006, 1725, -3544, -2420, 2379, -1034, 3566], vec![4482, -3155], vec![], vec![-2201, -1934, -4477, 4725], vec![-3060, -1747], vec![617], vec![-4850, -4056, -3983, 2238, 1460, -108], vec![], vec![2668, -2392, 1393, -1292, -1391, 3771, -4375], vec![], vec![3766, 2853, -4602, -4828, -4074, 3171, -2434, 4461]];
     let arg_1: i32 = -2467;
     let expected: Vec<(usize, usize)> = vec![];
@@ -7,7 +135,7 @@ fn oracle_case_0() {
 }
 
 #[test]
-fn oracle_case_1() {
+fn oracle_case_17() {
     let arg_0: Vec<Vec<i32>> = vec![vec![-454, 274, -420, 1460]];
     let arg_1: i32 = 2717;
     let expected: Vec<(usize, usize)> = vec![];
@@ -15,7 +143,7 @@ fn oracle_case_1() {
 }
 
 #[test]
-fn oracle_case_2() {
+fn oracle_case_18() {
     let arg_0: Vec<Vec<i32>> = vec![vec![546], vec![723, -1542, 4504, 3589, -2737, -1794, 2428, -2637], vec![], vec![], vec![]];
     let arg_1: i32 = 564;
     let expected: Vec<(usize, usize)> = vec![];
@@ -23,7 +151,7 @@ fn oracle_case_2() {
 }
 
 #[test]
-fn oracle_case_3() {
+fn oracle_case_19() {
     let arg_0: Vec<Vec<i32>> = vec![];
     let arg_1: i32 = -2856;
     let expected: Vec<(usize, usize)> = vec![];
@@ -31,7 +159,7 @@ fn oracle_case_3() {
 }
 
 #[test]
-fn oracle_case_4() {
+fn oracle_case_20() {
     let arg_0: Vec<Vec<i32>> = vec![vec![3716, -4886, 3873, -4779, -4091, -2060, -2406, 2639], vec![596, -2389, 2052, 1775], vec![3280, 1888, 3641, -1669, -4342, 967, 971, 564, -714, 2457, -3137, 1004, -2618, -570, 4691, -4149, 4945], vec![130, 695], vec![], vec![], vec![2350, -3195, 4718, 1798, -4819, -719]];
     let arg_1: i32 = 797;
     let expected: Vec<(usize, usize)> = vec![];
@@ -39,7 +167,7 @@ fn oracle_case_4() {
 }
 
 #[test]
-fn oracle_case_5() {
+fn oracle_case_21() {
     let arg_0: Vec<Vec<i32>> = vec![vec![], vec![397], vec![1981, -670]];
     let arg_1: i32 = 999;
     let expected: Vec<(usize, usize)> = vec![];
@@ -47,7 +175,7 @@ fn oracle_case_5() {
 }
 
 #[test]
-fn oracle_case_6() {
+fn oracle_case_22() {
     let arg_0: Vec<Vec<i32>> = vec![];
     let arg_1: i32 = -1522;
     let expected: Vec<(usize, usize)> = vec![];
@@ -55,137 +183,9 @@ fn oracle_case_6() {
 }
 
 #[test]
-fn oracle_case_7() {
+fn oracle_case_23() {
     let arg_0: Vec<Vec<i32>> = vec![vec![2475, -4745, -3571, 631, -929, 4297, -2689]];
     let arg_1: i32 = 1935;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_8() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![-562], vec![2438, 4957, -179, -4180, 4908, 231, 4963, 4287, 3022, 3100, 1907, -3494, 2306, 2415, 1484, -3185, -893, 951], vec![224, 1307, 3462, -2812, -4063, 2580, -2315], vec![4864, -4146, -3853, -2118, 827, 491, 3154, 380], vec![]];
-    let arg_1: i32 = 209;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_9() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![], vec![]];
-    let arg_1: i32 = -4955;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_10() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![-2638], vec![], vec![-2371, -285, 284, 4104, 1267], vec![], vec![4057]];
-    let arg_1: i32 = 4901;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_11() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![2943, 2580, -1254], vec![-2165, 4636, 2568, 480, 923, 709, 3319, 3250, -961, 1349, -2862, 4811, -1584, 686, -631, 781, 1041], vec![], vec![-1326, 3616, -4872, 1485], vec![], vec![-2219], vec![-3188], vec![3553, -1129], vec![3980, 3896, -758, 1976], vec![3142, 1634, -231], vec![], vec![]];
-    let arg_1: i32 = 173;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_12() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![], vec![1262, 4935], vec![4509, -3744, -4751, 3945, 4124, -3624]];
-    let arg_1: i32 = -1960;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_13() {
-    let arg_0: Vec<Vec<i32>> = vec![];
-    let arg_1: i32 = -1167;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_14() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![-4061, -483], vec![-2383], vec![3311], vec![4695, 1981, 1778, 2370, 665, 1840], vec![4166, -4910, 418, -2173], vec![1312, 3962, -1091, -3973, 1702, -1280, -1186, 4687, -1657, 2295]];
-    let arg_1: i32 = -1303;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_15() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![2229, -4477, 2298, -1589, -2231, -2670, 2707, -210, 1591, 3882], vec![-2666, 3085], vec![2918, 3426, -4538, -1395, -4633, 1981, -1448, -4160, -1920]];
-    let arg_1: i32 = -964;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_16() {
-    let arg_0: Vec<Vec<i32>> = vec![];
-    let arg_1: i32 = -1410;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_17() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![1356, -4549, 3254], vec![-3013, -4542, 3017, -2631], vec![], vec![], vec![1000, 2379, -1937, 4112, -3993], vec![-4178], vec![3587], vec![], vec![]];
-    let arg_1: i32 = 1491;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_18() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![2121]];
-    let arg_1: i32 = -1275;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_19() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![2308, -3484, -2511, 203, 4896, 2422, -424, 2792, -4799, -1269, 501, -300], vec![943, 4521, -2392, 1040, 1784, 3176, 4992, -4287, 847, 2765]];
-    let arg_1: i32 = 764;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_20() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![-2523, 3953]];
-    let arg_1: i32 = -2189;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_21() {
-    let arg_0: Vec<Vec<i32>> = vec![vec![383], vec![3094, 2282, -768, 4193]];
-    let arg_1: i32 = 4546;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_22() {
-    let arg_0: Vec<Vec<i32>> = vec![];
-    let arg_1: i32 = 4001;
-    let expected: Vec<(usize, usize)> = vec![];
-    assert_eq!(get_row(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_23() {
-    let arg_0: Vec<Vec<i32>> = vec![];
-    let arg_1: i32 = 2048;
     let expected: Vec<(usize, usize)> = vec![];
     assert_eq!(get_row(arg_0, arg_1), expected);
 }

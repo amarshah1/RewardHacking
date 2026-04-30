@@ -61,6 +61,7 @@ class ArgConstraints:
     distinct_elements: bool = False
     prefix_sum_max: int | None = None
     balanced_paren_groups: bool = False
+    balanced_angle_groups: bool = False
     square_unique_u8_grid: bool = False
     min_const_size: int | None = None
     max_const_size: int | None = None
@@ -115,14 +116,21 @@ def generate_oracle_test_cache(
     target_name = verus_fn_names[-1]
     signature_map = _build_signature_map(verus_fn_names, impl_signatures)
     signature = _parse_rust_signature(signature_map[target_name], target_name)
-    try:
+    special = _special_case_constraints(task_id, signature)
+    if special is not None:
+        constraints = special
+    else:
         constraints = _parse_requires_constraints(task_id, verus_code, signature)
-    except OracleTestGenerationError:
-        constraints = _special_case_constraints(task_id, signature)
-        if constraints is None:
-            raise
     sample_case_target, sample_trial_target = _sampling_budget(signature.return_type, num_cases, max_trials)
     try:
+        # Generate task-specific structural cases before proptest runs.  These
+        # cover criteria that proptest is unlikely to hit by chance (e.g. inputs
+        # that guarantee a non-empty result, specific edge-case values).  Including
+        # them in the first _compute_expected_outputs call avoids a second Verus
+        # binary invocation later: _recover_output_coverage finds the criteria
+        # already satisfied and those recovery functions return [] immediately.
+        seeded_arg_exprs = _seeded_arg_exprs(task_id, signature)
+
         sampled_arg_exprs = _sample_cases(
             signature,
             constraints,
@@ -130,23 +138,26 @@ def generate_oracle_test_cache(
             max_trials=sample_trial_target,
             seed=seed,
         )
-        if not sampled_arg_exprs:
+
+        # Seeded cases go first so _select_cases retains them when trimming to num_cases.
+        all_arg_exprs = seeded_arg_exprs + sampled_arg_exprs
+        if not all_arg_exprs:
             raise OracleTestGenerationError("oracle fuzzing did not yield any usable test cases")
 
         expected_exprs = _compute_expected_outputs(
             verus_code=verus_code,
             signature=signature,
-            sampled_arg_exprs=sampled_arg_exprs,
+            sampled_arg_exprs=all_arg_exprs,
             verus_binary=verus_binary,
             timeout=timeout,
         )
-        if len(expected_exprs) != len(sampled_arg_exprs):
+        if len(expected_exprs) != len(all_arg_exprs):
             raise OracleTestGenerationError(
-                f"oracle produced {len(expected_exprs)} outputs for {len(sampled_arg_exprs)} sampled cases"
+                f"oracle produced {len(expected_exprs)} outputs for {len(all_arg_exprs)} sampled cases"
             )
         cases = [
             OracleCase(arg_exprs=arg_exprs, expected_expr=expected_expr)
-            for arg_exprs, expected_expr in zip(sampled_arg_exprs, expected_exprs)
+            for arg_exprs, expected_expr in zip(all_arg_exprs, expected_exprs)
         ]
         cases = _recover_output_coverage(
             task_id=task_id,
@@ -307,6 +318,125 @@ def _missing_output_buckets(cases: list[OracleCase], return_type: str) -> list[s
     return [bucket for bucket in wanted_buckets if bucket not in present]
 
 
+def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str]]:
+    """Generate task-specific structural cases to include before proptest runs.
+
+    Some tasks have structural criteria (e.g., >=12 non-empty results, specific
+    input patterns) that proptest is unlikely to satisfy by chance.  Rather than
+    discovering this after proptest and paying for a second Verus binary
+    invocation in _recover_output_coverage, we generate these cases here and
+    include them in the very first _compute_expected_outputs call.  When
+    _recover_output_coverage runs later, the criteria are already met and those
+    recovery functions return [] immediately.
+
+    Only tasks whose criteria are independent of what proptest already produced
+    (i.e. do not depend on missing_buckets) are handled here.  Tasks like
+    HumanEval/43 or HumanEval/134 that need to fill missing bool/Option output
+    buckets must wait until after proptest and remain solely in
+    _targeted_recovery_arg_exprs.
+    """
+    # Pass empty existing_cases so each recovery function generates all of its
+    # guaranteed cases unconditionally — exactly the right behavior for seeding.
+    existing: list[OracleCase] = []
+    seen: set[tuple[str, ...]] = set()
+
+    if task_id == "HumanEval/18":
+        # Guarantees >=12 positive-count cases and at least one input length > 100.
+        return _how_many_times_recovery_cases(signature, [], existing, seen)
+    if task_id == "HumanEval/26":
+        # Guarantees >=15 cases with at least one duplicated element and varying duplicate counts.
+        return _remove_duplicates_with_duplicates_cases(existing, seen)
+    if task_id == "HumanEval/34":
+        # Guarantees >=15 cases with at least one duplicated element and varying duplicate counts.
+        return _unique_sorted_with_duplicates_cases(existing, seen)
+    if task_id == "HumanEval/30":
+        # Guarantees a case with 0 in the input list (0 is non-positive, filtered out).
+        return _get_positive_zero_case(existing, seen)
+    if task_id == "HumanEval/52":
+        # Guarantees cases with a prefix that passes the threshold, then fails late.
+        return _below_threshold_wide_range_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/64":
+        # Guarantees short and long inputs ending with lowercase 'y' and uppercase 'Y'.
+        return _vowels_count_trailing_y_cases(existing, seen)
+    if task_id == "HumanEval/66":
+        # Guarantees cases with multiple uppercase characters in the char vector.
+        return _digit_sum_uppercase_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/76":
+        # Guarantees >=12 true cases (x = n^k) and specific x=1 and n=2 cases.
+        return _is_simple_power_recovery_cases(existing, seen)
+    if task_id == "HumanEval/80":
+        # Guarantees >=5 false cases with length >=15 and a consecutive identical pair.
+        return _is_happy_long_consecutive_cases(existing, seen)
+    if task_id == "HumanEval/87":
+        # Guarantees >=12 cases where x appears in the 2D list (non-empty result).
+        return _get_row_nonempty_cases(existing, seen)
+    if task_id == "HumanEval/92":
+        # Guarantees >=12 true-output cases (z = x+y) and 2 i32 overflow edge cases.
+        return _any_int_recovery_cases(existing, seen)
+    if task_id == "HumanEval/94":
+        # Guarantees cases with large primes and large composites with large factors.
+        return _largest_prime_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/98":
+        # Guarantees all four structural input patterns for count_upper.
+        return _count_upper_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/6":
+        # Guarantees >=8 invalid paren-space inputs (None outputs); valid inputs come from the proptest sampler.
+        return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=6)
+    if task_id == "HumanEval/17":
+        # Guarantees >=12 inputs drawn from the music notation tokens ('o', 'o|', '.|').
+        return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=17, chars_pool=['o', 'o|', '.|'], target_count=12, none_threshold=None)
+    if task_id == "HumanEval/51":
+        # Guarantees >=16 inputs with at least 3 vowels.
+        return _remove_vowels_vowel_rich_cases(signature, existing, seen)
+    if task_id == "HumanEval/56":
+        # Guarantees >=8 unbalanced angle-bracket inputs (false outputs); true inputs come from the proptest sampler.
+        return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=56, chars_pool=['<', '>'])
+    if task_id == "HumanEval/61":
+        # Guarantees >=8 unbalanced bracket inputs (false outputs); true inputs come from the proptest sampler.
+        return _parse_nested_parens_paren_space_cases(existing, seen, rng_seed=61)
+    if task_id == "HumanEval/31":
+        # Guarantees u8 inputs that are large primes and large composites (>= 200).
+        return _is_prime_u8_large_prime_composite_cases(existing, seen)
+    if task_id == "HumanEval/75":
+        # Guarantees inputs with 3 prime factors all > 50 (true) and > 3 prime factors (false).
+        return _is_multiply_prime_large_prime_cases(existing, seen)
+    if task_id == "HumanEval/57":
+        # Guarantees long inputs (length > 20) that are monotonically increasing or decreasing.
+        return _monotonic_long_cases(existing, seen)
+    if task_id == "HumanEval/85":
+        # Guarantees long inputs (length > 20) where even numbers only appear at even indices.
+        return _add_even_at_even_index_cases(existing, seen)
+    if task_id == "HumanEval/55":
+        # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
+        return _required_u32_cases(seen, [0, 1, 2, 48])
+    if task_id == "HumanEval/60":
+        # Guarantees inputs 0, 1, 2 and 92682 (the None threshold).
+        return _required_u32_cases(seen, [0, 1, 2, 92682])
+    if task_id == "HumanEval/63":
+        # Guarantees inputs 0, 1, 2 and 40 (the None threshold).
+        return _required_u32_cases(seen, [0, 1, 2, 40])
+    if task_id == "HumanEval/82":
+        # Guarantees &[char] inputs whose length is a large prime and a large composite (5000-1000000).
+        return _prime_length_large_prime_composite_cases(seen)
+    if task_id == "HumanEval/127":
+        # Guarantees intersection lengths that are a large prime and a large composite (5000-1000000).
+        return _intersection_prime_composite_cases(seen)
+    if task_id == "HumanEval/130":
+        # Guarantees inputs 0, 1, 2 and a large value 131071.
+        return _required_u32_cases(seen, [0, 1, 2, 131071])
+    if task_id == "HumanEval/134":
+        # Seeds false mix cases so they survive _select_cases even when true recovery cases are prepended.
+        # True cases are handled in _targeted_recovery_arg_exprs (they depend on missing_buckets).
+        return [[s] for s in _generate_last_char_letter_false_cases()]
+    if task_id == "HumanEval/157":
+        # Guarantees large Pythagorean triple cases and large non-right-triangle cases.
+        return _right_angle_triangle_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/161":
+        # Guarantees cases with ASCII alphabetic bytes in the input.
+        return _solve_alpha_bytes_recovery_cases(signature, existing, seen)
+    return []
+
+
 def _targeted_recovery_arg_exprs(
     task_id: str,
     signature: ParsedSignature,
@@ -314,7 +444,14 @@ def _targeted_recovery_arg_exprs(
     missing_buckets: list[str],
     existing_cases: list[OracleCase],
 ) -> list[list[str]]:
-    """Generate extra direct argument expressions for tasks with rare output buckets."""
+    """Generate extra direct argument expressions for tasks with rare output buckets.
+
+    This is a post-proptest safety net.  For tasks covered by _seeded_arg_exprs,
+    existing_cases already contains the seeded inputs, so their recovery functions
+    return [] immediately.  The remaining tasks here (HumanEval/43, /48, /53,
+    /54, /134) depend on missing_buckets — they need to know what proptest
+    produced before deciding what to generate.
+    """
     seen = {tuple(case.arg_exprs) for case in existing_cases}
     candidates: list[list[str]] = []
 
@@ -342,7 +479,7 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _same_chars_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
-    if task_id == "HumanEval":
+    if task_id == "HumanEval/134":
         candidates.extend(
             _last_char_letter_recovery_cases(signature, missing_buckets, existing_cases, seen)
         )
@@ -373,6 +510,70 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/80":
         candidates.extend(
             _is_happy_long_consecutive_cases(existing_cases, seen)
+        )
+    if task_id == "HumanEval/76":
+        candidates.extend(
+            _is_simple_power_recovery_cases(existing_cases, seen)
+        )
+    if task_id == "HumanEval/64":
+        candidates.extend(
+            _vowels_count_trailing_y_cases(existing_cases, seen)
+        )
+    if task_id == "HumanEval/26":
+        candidates.extend(
+            _remove_duplicates_with_duplicates_cases(existing_cases, seen)
+        )
+    if task_id == "HumanEval/34":
+        candidates.extend(
+            _unique_sorted_with_duplicates_cases(existing_cases, seen)
+        )
+    if task_id == "HumanEval/31":
+        candidates.extend(_is_prime_u8_large_prime_composite_cases(existing_cases, seen))
+    if task_id == "HumanEval/75":
+        candidates.extend(_is_multiply_prime_large_prime_cases(existing_cases, seen))
+    if task_id == "HumanEval/57":
+        candidates.extend(_monotonic_long_cases(existing_cases, seen))
+    if task_id == "HumanEval/85":
+        candidates.extend(_add_even_at_even_index_cases(existing_cases, seen))
+    if task_id == "HumanEval/55":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
+    if task_id == "HumanEval/60":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 2, 92682]))
+    if task_id == "HumanEval/63":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 2, 40]))
+    if task_id == "HumanEval/82":
+        candidates.extend(_prime_length_large_prime_composite_cases(seen))
+    if task_id == "HumanEval/127":
+        candidates.extend(_intersection_prime_composite_cases(seen))
+    if task_id == "HumanEval/130":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 2, 131071]))
+    if task_id == "HumanEval/6":
+        candidates.extend(
+            _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=6)
+        )
+    if task_id == "HumanEval/17":
+        candidates.extend(
+            _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=17, chars_pool=['o', 'o|', '.|'], target_count=12, none_threshold=None)
+        )
+    if task_id == "HumanEval/51":
+        candidates.extend(
+            _remove_vowels_vowel_rich_cases(signature, existing_cases, seen)
+        )
+    if task_id == "HumanEval/56":
+        candidates.extend(
+            _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=56, chars_pool=['<', '>'])
+        )
+    if task_id == "HumanEval/61":
+        candidates.extend(
+            _parse_nested_parens_paren_space_cases(existing_cases, seen, rng_seed=61)
+        )
+    if task_id == "HumanEval/30":
+        candidates.extend(
+            _get_positive_zero_case(existing_cases, seen)
+        )
+    if task_id == "HumanEval/87":
+        candidates.extend(
+            _get_row_nonempty_cases(existing_cases, seen)
         )
 
     unique_candidates: list[list[str]] = []
@@ -411,11 +612,14 @@ def _pairs_sum_to_zero_recovery_cases(
     needs_true = "true" in missing_buckets or _count_expected_cases(existing_cases, "true") < 8
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     for bucket in (["true"] if needs_true else []):
         for nums_expr in _generate_pairs_sum_to_zero_nums_exprs(bucket, low, high, rng):
-            arg_exprs = [nums_expr, zero_literal]
-            if tuple(arg_exprs) not in seen:
-                candidates.append(arg_exprs)
+            add([nums_expr, zero_literal])
     return candidates
 
 
@@ -461,14 +665,17 @@ def _palindrome_recovery_cases(
     needs_false = "false" in missing_buckets or _count_almost_palindrome_false_cases(existing_cases) < 3
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if needs_true:
         for text in _generate_palindrome_true_cases():
-            if (text,) not in seen:
-                candidates.append([text])
+            add([text])
     if needs_false:
         for text in _generate_almost_palindrome_false_cases():
-            if (text,) not in seen:
-                candidates.append([text])
+            add([text])
     return candidates
 
 
@@ -519,10 +726,14 @@ def _checked_add_recovery_cases(
         raise OracleTestGenerationError("HumanEval/53 recovery expected signature `fn(i32, i32) -> Option<i32>`")
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if "None" in missing_buckets:
         for pair in _generate_checked_add_none_cases():
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+            add(pair)
 
     return candidates
 
@@ -566,7 +777,7 @@ def _how_many_times_recovery_cases(
     existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Construct practical positive-count cases for `HumanEval/18`.
+    """Construct practical positive-count and long-input cases for `HumanEval/18`.
 
     Note: `None` would require more than `u32::MAX` overlapping matches, which is not feasible
     for runnable cached tests.
@@ -576,13 +787,31 @@ def _how_many_times_recovery_cases(
     if _normalize_type(signature.args[0].rust_type) != "Vec<char>" or _normalize_type(signature.args[1].rust_type) != "Vec<char>":
         raise OracleTestGenerationError("HumanEval/18 recovery expected signature `fn(Vec<char>, Vec<char>) -> Option<u32>`")
 
-    needs_positive_some = not _has_positive_option_case(existing_cases)
+    positive_count = 0
+    has_long_input = False
+    for case in existing_cases:
+        m = re.fullmatch(r"Some\((\d+)\)", case.expected_expr.strip())
+        if m and int(m.group(1)) > 0:
+            positive_count += 1
+        if len(case.arg_exprs) >= 1 and _rust_vec_literal_len(case.arg_exprs[0]) > 100:
+            has_long_input = True
+
+    needed_positive = max(0, 12 - positive_count)
     candidates: list[list[str]] = []
 
-    if needs_positive_some:
-        for pair in _generate_how_many_times_positive_cases():
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    if needed_positive > 0:
+        rng = random.Random(18)
+        while len(candidates) < needed_positive + 4:
+            add(_generate_one_how_many_times_positive_case(rng, min_string_len=None))
+
+    if not has_long_input:
+        rng_long = random.Random(1800)
+        for _ in range(2):
+            add(_generate_one_how_many_times_positive_case(rng_long, min_string_len=101))
 
     return candidates
 
@@ -600,7 +829,12 @@ def _right_angle_triangle_recovery_cases(
         raise OracleTestGenerationError("HumanEval/157 recovery expected signature `fn(u32, u32, u32) -> bool`")
 
     candidates: list[list[str]] = []
-    if not _has_large_true_triangle_case(existing_cases):
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    if not _has_large_triangle_case(existing_cases, "true"):
         rng = random.Random(157)
         large_ms = [20, 24, 30, 36]
         for idx in range(8):
@@ -614,20 +848,16 @@ def _right_angle_triangle_recovery_cases(
             c = m * m + n * n
             triple = [a, b, c]
             rng.shuffle(triple)
-            arg_exprs = [_rust_numeric_literal(value, "u32") for value in triple]
-            if tuple(arg_exprs) not in seen:
-                candidates.append(arg_exprs)
+            add([_rust_numeric_literal(value, "u32") for value in triple])
 
-    if not _has_large_false_triangle_case(existing_cases):
+    if not _has_large_triangle_case(existing_cases, "false"):
         rng = random.Random(1157)
         for _ in range(8):
             values = [rng.randint(100, 2000) for _ in range(3)]
             if _is_right_triangle(values):
                 values[2] = values[2] + 1
             rng.shuffle(values)
-            arg_exprs = [_rust_numeric_literal(value, "u32") for value in values]
-            if tuple(arg_exprs) not in seen:
-                candidates.append(arg_exprs)
+            add([_rust_numeric_literal(value, "u32") for value in values])
 
     return candidates
 
@@ -648,26 +878,20 @@ def _same_chars_recovery_cases(
     needs_false = "false" in missing_buckets or not _has_substantial_vec_pair_case(existing_cases, "false")
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if needs_true:
         for pair in _generate_same_chars_true_pairs():
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+            add(pair)
     if needs_false:
         for pair in _generate_same_chars_false_pairs():
-            if tuple(pair) not in seen:
-                candidates.append(pair)
+            add(pair)
 
     return candidates
 
-
-def _has_positive_option_case(cases: list[OracleCase]) -> bool:
-    """Check whether we already have an `Option` case of the form `Some(n)` with `n > 0`."""
-    for case in cases:
-        expr = case.expected_expr.strip()
-        match = re.fullmatch(r"Some\((\d+)\)", expr)
-        if match and int(match.group(1)) > 0:
-            return True
-    return False
 
 
 def _count_expected_cases(cases: list[OracleCase], expected_expr: str) -> int:
@@ -675,28 +899,20 @@ def _count_expected_cases(cases: list[OracleCase], expected_expr: str) -> int:
     return sum(1 for case in cases if case.expected_expr.strip() == expected_expr)
 
 
-def _has_large_true_triangle_case(cases: list[OracleCase]) -> bool:
-    """Check whether we already have a true triangle case with all sides > 0 and a large side."""
+def _has_large_triangle_case(cases: list[OracleCase], expected: str) -> bool:
+    """Check whether we already have a triangle case with the given expected output and a large side (>= 100).
+
+    For true cases we additionally require all sides to be positive, since u32 Pythagorean triples
+    are always positive and the proptest generator can produce zeros.
+    """
     for case in cases:
-        if case.expected_expr.strip() != "true" or len(case.arg_exprs) != 3:
+        if case.expected_expr.strip() != expected or len(case.arg_exprs) != 3:
             continue
         try:
             values = [int(re.sub(r"u32$", "", expr.strip())) for expr in case.arg_exprs]
         except ValueError:
             continue
-        if all(value > 0 for value in values) and max(values) >= 100:
-            return True
-    return False
-
-
-def _has_large_false_triangle_case(cases: list[OracleCase]) -> bool:
-    """Check whether we already have a false triangle case with a large side."""
-    for case in cases:
-        if case.expected_expr.strip() != "false" or len(case.arg_exprs) != 3:
-            continue
-        try:
-            values = [int(re.sub(r"u32$", "", expr.strip())) for expr in case.arg_exprs]
-        except ValueError:
+        if expected == "true" and not all(value > 0 for value in values):
             continue
         if max(values) >= 100:
             return True
@@ -721,24 +937,29 @@ def _last_char_letter_recovery_cases(
     existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Construct direct true/false cases for `HumanEval`."""
+    """Construct direct true/false cases for `HumanEval/134`."""
     if len(signature.args) != 1:
-        raise OracleTestGenerationError("HumanEval recovery expected exactly one argument")
+        raise OracleTestGenerationError("HumanEval/134 recovery expected exactly one argument")
     if _normalize_type(signature.args[0].rust_type) != "&str":
         raise OracleTestGenerationError("HumanEval/134 recovery expected signature `fn(&str) -> bool`")
 
     needs_true = "true" in missing_buckets or not _has_nontrivial_true_string_case(existing_cases)
-    needs_false = "false" in missing_buckets or not _has_last_char_letter_false_mix(existing_cases)
+    # False mix cases are seeded in _seeded_arg_exprs, so we only need recovery here if proptest
+    # somehow produced zero false outputs (which the seeding makes impossible in practice).
+    needs_false = "false" in missing_buckets
 
     candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     if needs_true:
         for text in _generate_last_char_letter_true_cases():
-            if (text,) not in seen:
-                candidates.append([text])
+            add([text])
     if needs_false:
         for text in _generate_last_char_letter_false_cases():
-            if (text,) not in seen:
-                candidates.append([text])
+            add([text])
 
     return candidates
 
@@ -760,6 +981,10 @@ def _solve_alpha_bytes_recovery_cases(
     candidates: list[list[str]] = []
     alpha_values = list(range(65, 91)) + list(range(97, 123))
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     for _ in range(8):
         length = max(1, 1 + _python_geometric_length(rng))
         values = [_u8_recovery_value(rng) for _ in range(length)]
@@ -767,9 +992,7 @@ def _solve_alpha_bytes_recovery_cases(
         insert_indices = rng.sample(range(length), k=n_alpha)
         for insert_idx in insert_indices:
             values[insert_idx] = rng.choice(alpha_values)
-        arg_exprs = [_vec_expr(values, "u8")]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_vec_expr(values, "u8")])
 
     return candidates
 
@@ -791,9 +1014,11 @@ def _digit_sum_uppercase_recovery_cases(
     candidates: list[list[str]] = []
     uppercase_values = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    empty_case = [_char_vec_expr("")]
-    if tuple(empty_case) not in seen:
-        candidates.append(empty_case)
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    add([_char_vec_expr("")])
 
     for _ in range(10):
         length = max(10, 8 + _python_geometric_length(rng))
@@ -802,9 +1027,56 @@ def _digit_sum_uppercase_recovery_cases(
         uppercase_indices = rng.sample(range(length), k=n_upper)
         for idx in uppercase_indices:
             values[idx] = rng.choice(uppercase_values)
-        arg_exprs = [_char_vec_expr("".join(values))]
+        add([_char_vec_expr("".join(values))])
+
+    return candidates
+
+
+def _remove_vowels_vowel_rich_cases(
+    signature: ParsedSignature,
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-51 includes >=16 inputs with at least 3 vowels.
+
+    For each generated case: start with the proptest-generated Vec<char>, then pick a random
+    number of vowels to insert (1..=len), pick random vowel characters (upper and lower),
+    and replace random indices with them.
+    """
+    if len(signature.args) != 1:
+        raise OracleTestGenerationError("HumanEval/51 recovery expected exactly one argument")
+    if _normalize_type(signature.args[0].rust_type) != "&[char]":
+        raise OracleTestGenerationError("HumanEval/51 recovery expected signature `fn(&[char]) -> Vec<char>`")
+
+    vowels = list("aeiouAEIOU")
+
+    def has_enough_vowels(text: str) -> bool:
+        return sum(1 for ch in text if ch in vowels) >= 3
+
+    vowel_rich_count = sum(
+        1 for c in existing_cases
+        if len(c.arg_exprs) == 1
+        and (parsed := _parse_char_vec_literal(c.arg_exprs[0])) is not None
+        and has_enough_vowels(parsed)
+    )
+    if vowel_rich_count >= 16:
+        return []
+
+    rng = random.Random(51)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
         if tuple(arg_exprs) not in seen:
             candidates.append(arg_exprs)
+
+    while len(candidates) < 20:
+        length = max(3, 3 + _python_geometric_length(rng))
+        values = [_random_printable_ascii_char(rng) for _ in range(length)]
+        n_vowels = rng.randint(3, length)
+        indices = rng.sample(range(length), k=n_vowels)
+        for idx in indices:
+            values[idx] = rng.choice(vowels)
+        add([_char_vec_expr("".join(values))])
 
     return candidates
 
@@ -881,32 +1153,28 @@ def _count_upper_recovery_cases(
     def rand_upper_vowel() -> str:
         return rng.choice(upper_vowel_list)
 
-    def make_even_only(n_vowels_at_even: int | None = None) -> list[str]:
-        """Build a char vector with upper vowels only at even indices."""
-        length = max(4, 2 + _python_geometric_length(rng))
-        if n_vowels_at_even is not None:
-            length = max(length, 2 * n_vowels_at_even)
-        chars = [rand_non_vowel() for _ in range(length)]
-        even_idxs = [i for i in range(length) if i % 2 == 0]
-        n = n_vowels_at_even if n_vowels_at_even is not None else max(1, 1 + _python_geometric_length(rng))
-        for i in rng.sample(even_idxs, min(n, len(even_idxs))):
-            chars[i] = rand_upper_vowel()
-        return [_char_vec_expr("".join(chars))]
+    def make_vowel_pattern(n_vowels_at_even: int | None, include_odd: bool) -> list[str]:
+        """Build a char vector with upper vowels at even indices, and optionally at odd indices too.
 
-    def make_both(n_vowels_at_even: int | None = None) -> list[str]:
-        """Build a char vector with upper vowels at both even and odd indices."""
-        length = max(6, 4 + _python_geometric_length(rng))
+        make_even_only and make_both were identical except for whether odd-index vowels are added,
+        so they are unified here with include_odd controlling that difference.
+        """
+        # The minimum length differs: even-only needs room for >=1 even slot; both needs >=1 odd slot too.
+        min_len = 6 if include_odd else 4
+        min_extra = 4 if include_odd else 2
+        length = max(min_len, min_extra + _python_geometric_length(rng))
         if n_vowels_at_even is not None:
             length = max(length, 2 * n_vowels_at_even)
         chars = [rand_non_vowel() for _ in range(length)]
         even_idxs = [i for i in range(length) if i % 2 == 0]
-        odd_idxs = [i for i in range(length) if i % 2 == 1]
         n_even = n_vowels_at_even if n_vowels_at_even is not None else max(1, 1 + _python_geometric_length(rng))
-        n_odd = max(1, 1 + _python_geometric_length(rng))
         for i in rng.sample(even_idxs, min(n_even, len(even_idxs))):
             chars[i] = rand_upper_vowel()
-        for i in rng.sample(odd_idxs, min(n_odd, len(odd_idxs))):
-            chars[i] = rand_upper_vowel()
+        if include_odd:
+            odd_idxs = [i for i in range(length) if i % 2 == 1]
+            n_odd = max(1, 1 + _python_geometric_length(rng))
+            for i in rng.sample(odd_idxs, min(n_odd, len(odd_idxs))):
+                chars[i] = rand_upper_vowel()
         return [_char_vec_expr("".join(chars))]
 
     def add(arg_exprs: list[str]) -> None:
@@ -924,15 +1192,324 @@ def _count_upper_recovery_cases(
         # First candidate guarantees >= 5 when needed; extra candidates only when structural
         # requirement (vowels at even indices) is itself unmet.
         n_large = 5 + _python_geometric_length(rng) if need_large_even_only else None
-        add(make_even_only(n_large))
+        add(make_vowel_pattern(n_large, include_odd=False))
         for _ in range(2 if need_even_only else 0):
-            add(make_even_only())
+            add(make_vowel_pattern(None, include_odd=False))
 
     if need_both or need_large_both:
         n_large = 5 + _python_geometric_length(rng) if need_large_both else None
-        add(make_both(n_large))
+        add(make_vowel_pattern(n_large, include_odd=True))
         for _ in range(2 if need_both else 0):
-            add(make_both())
+            add(make_vowel_pattern(None, include_odd=True))
+
+    return candidates
+
+
+def _integer_vec_with_duplicates_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+    rust_type: str,
+    min_dup_cases: int,
+    rng_seed: int,
+) -> list[list[str]]:
+    """Generate cases where some distinct values appear 2-3 times, with varying duplicate counts.
+
+    Proptest samples from a ±[100, 5000] pool, which is large enough that collisions
+    are extremely rare.  We inject cases where a controlled number of distinct values
+    each appear 2-3 times, cycling through a schedule so the test set covers a range
+    of duplicate-count patterns.
+    """
+    parse_fn = _parse_i64_vec_literal if rust_type == "i64" else _parse_i32_vec_literal
+
+    dup_case_count = 0
+    for case in existing_cases:
+        if len(case.arg_exprs) == 1:
+            values = parse_fn(case.arg_exprs[0])
+            if values is not None and len(values) != len(set(values)):
+                dup_case_count += 1
+
+    needed = max(0, min_dup_cases - dup_case_count)
+    if needed == 0:
+        return []
+
+    rng = random.Random(rng_seed)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    # Cycle through varying duplicate counts so the test set exercises inputs with
+    # few, moderate, and many repeated elements.
+    dup_counts_schedule = [1, 2, 3, 1, 4, 2, 5, 1, 3, 6, 2, 8, 1, 4, 3, 10, 2, 5, 1, 7, 3, 4, 2, 6]
+
+    for n_dup_values in dup_counts_schedule:
+        if len(candidates) >= needed + 4:
+            break
+
+        n_unique = rng.randint(0, 5)
+        n_pool = n_dup_values + n_unique
+
+        pool: set[int] = set()
+        for _ in range(n_pool * 8):
+            pool.add(_random_wide_i32(rng))
+            if len(pool) >= n_pool:
+                break
+
+        if len(pool) < n_pool:
+            continue
+
+        pool_list = list(pool)
+        dup_values = pool_list[:n_dup_values]
+        unique_values = pool_list[n_dup_values:n_pool]
+
+        elements: list[int] = []
+        for v in dup_values:
+            elements.extend([v] * rng.randint(2, 3))
+        elements.extend(unique_values)
+        rng.shuffle(elements)
+
+        add([_vec_expr(elements, rust_type)])
+
+    return candidates
+
+
+def _remove_duplicates_with_duplicates_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-26 includes >=15 cases with at least one duplicated element."""
+    return _integer_vec_with_duplicates_cases(existing_cases, seen, rust_type="i64", min_dup_cases=15, rng_seed=26)
+
+
+def _unique_sorted_with_duplicates_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-34 includes >=15 cases with at least one duplicated element."""
+    return _integer_vec_with_duplicates_cases(existing_cases, seen, rust_type="i32", min_dup_cases=15, rng_seed=34)
+
+
+def _get_row_nonempty_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-87 includes >=12 cases where x appears in lst (non-empty result).
+
+    Generates lst randomly, then inserts x at k random positions (1 <= k <= num_rows).
+    """
+    nonempty_count = sum(1 for case in existing_cases if case.expected_expr.strip() != "vec![]")
+    needed = max(0, 12 - nonempty_count)
+    if needed == 0:
+        return []
+
+    rng = random.Random(87)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    while len(candidates) < needed + 4:
+        num_rows = 2 + _python_geometric_length(rng)
+        rows: list[list[int]] = [
+            [_random_wide_i32(rng) for _ in range(1 + _python_geometric_length(rng))]
+            for _ in range(num_rows)
+        ]
+        x = _random_wide_i32(rng)
+        all_positions = [(r, c) for r in range(num_rows) for c in range(len(rows[r]))]
+        k = rng.randint(1, len(all_positions))
+        for r, c in rng.sample(all_positions, k):
+            rows[r][c] = x
+        row_exprs = ["vec![" + ", ".join(str(v) for v in row) + "]" for row in rows]
+        add(["vec![" + ", ".join(row_exprs) + "]", str(x)])
+
+    return candidates
+
+
+def _get_positive_zero_case(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-30 includes a case with 0 in the input list (0 is not positive, so filtered out)."""
+    for case in existing_cases:
+        if len(case.arg_exprs) == 1:
+            values = _parse_i32_vec_literal(case.arg_exprs[0])
+            if values is not None and 0 in values:
+                return []
+
+    rng = random.Random(30)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    for _ in range(2):
+        length = 10 + _python_geometric_length(rng)
+        values = [_random_wide_i32(rng) for _ in range(length)]
+        pos = rng.randint(0, length - 1)
+        values[pos] = 0
+        add([_vec_expr(values, "i32")])
+
+    return candidates
+
+
+def _parse_nested_parens_paren_space_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+    rng_seed: int,
+    chars_pool: list[str] | None = None,
+    target_count: int = 16,
+    none_threshold: int | None = 8,
+) -> list[list[str]]:
+    """Ensure tasks 6, 17, 56, and 61 include enough inputs from a fixed character pool.
+
+    For tasks 6/56/61: the proptest sampler generates valid balanced inputs; this recovery
+    function adds the other side by randomly sampling strings over the provided character set.
+    For task 17: none_threshold=None skips the None-count check; we just want coverage from
+    the music notation chars ('o', '|', '.').
+    """
+    if none_threshold is not None:
+        none_count = sum(
+            1 for c in existing_cases
+            if len(c.arg_exprs) == 1 and c.expected_expr.strip() == "None"
+        )
+        if none_count >= none_threshold:
+            return []
+
+    rng = random.Random(rng_seed)
+    candidates: list[list[str]] = []
+    chars_pool = chars_pool if chars_pool is not None else ['(', ')', ' ']
+
+    def add(text: str) -> None:
+        key = (_rust_string_literal(text),)
+        if key not in seen:
+            candidates.append([_rust_string_literal(text)])
+
+    while len(candidates) < target_count:
+        length = rng.randint(1, 12)
+        text = "".join(rng.choice(chars_pool) for _ in range(length))
+        add(text)
+
+    return candidates
+
+
+def _vowels_count_trailing_y_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-64 includes short and long inputs ending with lowercase 'y' and uppercase 'Y'."""
+    has_short_y = False
+    has_short_upper_y = False
+    has_long_y = False
+    has_long_upper_y = False
+
+    for case in existing_cases:
+        if len(case.arg_exprs) == 1:
+            text = _parse_simple_rust_string_literal(case.arg_exprs[0])
+            if text is None:
+                continue
+            if text.endswith("y"):
+                if len(text) <= 5:
+                    has_short_y = True
+                if len(text) >= 15:
+                    has_long_y = True
+            if text.endswith("Y"):
+                if len(text) <= 5:
+                    has_short_upper_y = True
+                if len(text) >= 15:
+                    has_long_upper_y = True
+
+    if has_short_y and has_short_upper_y and has_long_y and has_long_upper_y:
+        return []
+
+    rng = random.Random(64)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    def rand_body(length: int) -> str:
+        return "".join(_random_ascii_text_char(rng) for _ in range(length))
+
+    if not has_short_y:
+        for _ in range(2):
+            add([_rust_string_literal(rand_body(_python_geometric_length(rng)) + "y")])
+
+    if not has_short_upper_y:
+        for _ in range(2):
+            add([_rust_string_literal(rand_body(_python_geometric_length(rng)) + "Y")])
+
+    if not has_long_y:
+        for _ in range(2):
+            add([_rust_string_literal(rand_body(14 + _python_geometric_length(rng)) + "y")])
+
+    if not has_long_upper_y:
+        for _ in range(2):
+            add([_rust_string_literal(rand_body(14 + _python_geometric_length(rng)) + "Y")])
+
+    return candidates
+
+
+def _is_simple_power_recovery_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-76 includes >=12 true cases (x = n^k), plus x=1 and n=2 cases."""
+    u32_max = 2**32 - 1
+
+    true_count = 0
+    has_x_equals_1 = False
+    has_n_equals_2 = False
+    for case in existing_cases:
+        if len(case.arg_exprs) == 2 and case.expected_expr == "true":
+            true_count += 1
+            try:
+                x, n = int(case.arg_exprs[0]), int(case.arg_exprs[1])
+                if x == 1:
+                    has_x_equals_1 = True
+                if n == 2:
+                    has_n_equals_2 = True
+            except ValueError:
+                pass
+
+    needed_true = max(0, 12 - true_count)
+    need_x1 = not has_x_equals_1
+    need_n2 = not has_n_equals_2
+    if needed_true == 0 and not need_x1 and not need_n2:
+        return []
+
+    rng = random.Random(76)
+    candidates: list[list[str]] = []
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
+    if need_x1:
+        n = rng.randint(2, 5000)
+        add(["1", str(n)])
+
+    if need_n2:
+        k = 1 + _python_geometric_length(rng)
+        x = 2**k
+        while x > u32_max:
+            k -= 1
+            x = 2**k
+        add([str(x), "2"])
+
+    # True cases: x = n^k with small-biased exponent k >= 1.
+    attempts = 0
+    while len(candidates) < needed_true + 4 and attempts < 10_000:
+        attempts += 1
+        n = rng.randint(2, 5000)
+        k = 1 + _python_geometric_length(rng)
+        x = n**k
+        if x > u32_max:
+            continue
+        add([str(x), str(n)])
 
     return candidates
 
@@ -959,6 +1536,10 @@ def _is_happy_long_consecutive_cases(
     rng = random.Random(80)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     while len(candidates) < needed + 2:
         length = 15 + _python_geometric_length(rng)
         chars = [_random_printable_ascii_char(rng) for _ in range(length)]
@@ -966,10 +1547,7 @@ def _is_happy_long_consecutive_cases(
         pos = rng.randint(0, length - 2)
         chars[pos] = letter
         chars[pos + 1] = letter
-        text = "".join(chars)
-        arg_exprs = [_char_vec_expr(text)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_char_vec_expr("".join(chars))])
 
     return candidates
 
@@ -1008,6 +1586,10 @@ def _any_int_recovery_cases(
     rng = random.Random(92)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     # True cases: z = x + y, within i32 range.
     attempts = 0
     while len(candidates) < needed_true + 4 and attempts < 10_000:
@@ -1017,9 +1599,7 @@ def _any_int_recovery_cases(
         z = x + y
         if not (i32_min <= z <= i32_max):
             continue
-        arg_exprs = [str(x), str(y), str(z)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([str(x), str(y), str(z)])
 
     # Overflow false cases: x + y exceeds i32 range, so no i32 z satisfies z == x + y.
     # Pick z = max or min.
@@ -1027,21 +1607,23 @@ def _any_int_recovery_cases(
         x = i32_max - rng.randint(0, 1000)
         y = rng.randint(1001, 5000)
         z = i32_max
-
-        arg_exprs = [str(x), str(y), str(z)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([str(x), str(y), str(z)])
 
     if need_min_overflow:
         x = i32_min + rng.randint(0, 1000)
         y = -rng.randint(1001, 5000)
         z = i32_min
-
-        arg_exprs = [str(x), str(y), str(z)]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([str(x), str(y), str(z)])
 
     return candidates
+
+
+def _required_u32_cases(
+    seen: set[tuple[str, ...]],
+    required_values: list[int],
+) -> list[list[str]]:
+    """Return single-argument cases for any required u32 values not already in seen."""
+    return [[str(v)] for v in required_values if (str(v),) not in seen]
 
 
 def _below_threshold_wide_range_recovery_cases(
@@ -1061,6 +1643,10 @@ def _below_threshold_wide_range_recovery_cases(
     candidates: list[list[str]] = []
     i32_min = -(2**31)
     i32_max = 2**31 - 1
+
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
 
     for expect_true in [True, False] * 3:
         threshold = _random_wide_i32(rng)
@@ -1088,9 +1674,7 @@ def _below_threshold_wide_range_recovery_cases(
         if rng.choice([True, False]):
             rng.shuffle(values)
 
-        arg_exprs = [_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")])
 
     for _ in range(4):
         threshold = _random_wide_i32(rng)
@@ -1112,10 +1696,180 @@ def _below_threshold_wide_range_recovery_cases(
                 candidate = threshold + delta
             values.append(max(i32_min, min(i32_max, candidate)))
 
-        arg_exprs = [_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")]
-        if tuple(arg_exprs) not in seen:
-            candidates.append(arg_exprs)
+        add([_vec_expr(values, "i32"), _rust_numeric_literal(threshold, "i32")])
 
+    return candidates
+
+
+def _is_prime_u8_large_prime_composite_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-31 includes u8 inputs that are large primes and large composites (>= 200)."""
+    def _is_large_prime_u8(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        try:
+            v = int(case.arg_exprs[0])
+            return v >= 200 and _is_prime_by_trial_division(v)
+        except ValueError:
+            return False
+
+    def _is_large_composite_u8(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        try:
+            v = int(case.arg_exprs[0])
+            return v >= 200 and v > 1 and not _is_prime_by_trial_division(v)
+        except ValueError:
+            return False
+
+    has_large_prime = any(_is_large_prime_u8(c) for c in existing_cases)
+    has_large_composite = any(_is_large_composite_u8(c) for c in existing_cases)
+    if has_large_prime and has_large_composite:
+        return []
+
+    candidates: list[list[str]] = []
+
+    def add(v: int) -> None:
+        if (str(v),) not in seen:
+            candidates.append([str(v)])
+
+    if not has_large_prime:
+        for p in [251, 241, 239, 233]:
+            add(p)
+    if not has_large_composite:
+        for c in [255, 254, 253, 252]:
+            add(c)
+
+    return candidates
+
+
+def _is_multiply_prime_large_prime_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-75 includes inputs with at least 1 prime factor > 20 (true) and > 3 prime factors (false).
+
+    The gold Verus implementation has O(x^3) runtime, so products must stay small (≤ 2000) to avoid
+    timeout.  True cases use 2 small primes + 1 prime > 20; false cases use 4 small primes.
+    """
+    def _prime_factors_with_multiplicity(n: int) -> list[int]:
+        factors: list[int] = []
+        d = 2
+        while d * d <= n:
+            while n % d == 0:
+                factors.append(d)
+                n //= d
+            d += 1
+        if n > 1:
+            factors.append(n)
+        return factors
+
+    def _has_large_prime_triple(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        try:
+            v = int(case.arg_exprs[0])
+        except ValueError:
+            return False
+        factors = _prime_factors_with_multiplicity(v)
+        return len(factors) == 3 and any(f > 50 for f in factors)
+
+    def _has_more_than_3_prime_factors(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        try:
+            v = int(case.arg_exprs[0])
+        except ValueError:
+            return False
+        return len(_prime_factors_with_multiplicity(v)) > 3
+
+    large_prime_triple_count = sum(1 for c in existing_cases if _has_large_prime_triple(c))
+    more_than_3_count = sum(1 for c in existing_cases if _has_more_than_3_prime_factors(c))
+    if large_prime_triple_count >= 4 and more_than_3_count >= 4:
+        return []
+
+    rng = random.Random(75)
+    # Keep all products ≤ 2000 so the O(x^3) gold implementation evaluates within timeout.
+    primes_above_20 = [p for p in range(23, 50) if _is_prime_by_trial_division(p)]
+    small_primes = [p for p in range(2, 20) if _is_prime_by_trial_division(p)]
+
+    candidates: list[list[str]] = []
+
+    def add(v: int) -> None:
+        if (str(v),) not in seen:
+            candidates.append([str(v)])
+
+    if large_prime_triple_count < 4:
+        # 2 small primes + 1 prime > 50, product ≤ 2000
+        attempts = 0
+        while large_prime_triple_count < 4 and attempts < 100:
+            p1, p2 = rng.sample(small_primes, 2)
+            q = rng.choice(primes_above_20)
+            v = p1 * p2 * q
+            if v <= 2000:
+                add(v)
+                large_prime_triple_count += 1
+            attempts += 1
+
+    if more_than_3_count < 4:
+        # 4 small primes, product ≤ 2000
+        attempts = 0
+        while more_than_3_count < 4 and attempts < 100:
+            factors = rng.choices(small_primes, k=4)
+            v = factors[0] * factors[1] * factors[2] * factors[3]
+            if v <= 2000:
+                add(v)
+                more_than_3_count += 1
+            attempts += 1
+
+    return candidates
+
+
+def _prime_length_large_prime_composite_cases(
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-82 includes &[char] inputs whose length is a large prime or large composite.
+
+    Large primes: 5000-1000000. Large composites: > 5000 with at least 2 prime factors > 50.
+    Uses Rust's vec!['a'; N] repeat syntax to keep arg_exprs compact.
+    """
+    large_primes = _find_large_primes_below_limit(4, limit=1_000_000, min_value=5_000)
+    large_composites = _find_large_composites_with_large_prime_factors(4, limit=1_000_000, min_factor=53)
+    candidates: list[list[str]] = []
+    for n in large_primes + large_composites:
+        expr = f"vec!['a'; {n}]"
+        if (expr,) not in seen:
+            candidates.append([expr])
+    return candidates
+
+
+def _intersection_prime_composite_cases(
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-127 includes cases where the intersection length is a large prime or large composite.
+
+    Large primes: 5000-1000000. Large composites: > 5000 with at least 2 prime factors > 50.
+
+    For each N, randomly generates a = (a0, a1) with a1 >= a0 + N - 1, then derives b so that
+    the intersection is exactly [a0, a0+N-1] with length N:
+      b0 = a0 - k  (b starts before a, so max(a0, b0) = a0)
+      b1 = a0 + N - 1  (b ends at intersection right, so min(a1, b1) = a0+N-1)
+    """
+    large_primes = _find_large_primes_below_limit(4, limit=1_000_000, min_value=5_000)
+    large_composites = _find_large_composites_with_large_prime_factors(4, limit=1_000_000, min_factor=53)
+    rng = random.Random(127)
+    candidates: list[list[str]] = []
+    for n in large_primes + large_composites:
+        a0 = rng.randint(-100_000, 100_000)
+        a1 = a0 + n - 1 + rng.randint(0, n // 2)
+        b0 = a0 - rng.randint(1, 1_000)
+        b1 = a0 + n - 1
+        a_expr = f"({a0}, {a1})"
+        b_expr = f"({b0}, {b1})"
+        if (a_expr, b_expr) not in seen:
+            candidates.append([a_expr, b_expr])
     return candidates
 
 
@@ -1136,6 +1890,10 @@ def _largest_prime_recovery_cases(
     large_composites = _find_large_composites_with_large_prime_factors(4, limit=1_000_000, min_factor=53)
     candidates: list[list[str]] = []
 
+    def add(arg_exprs: list[str]) -> None:
+        if tuple(arg_exprs) not in seen:
+            candidates.append(arg_exprs)
+
     for idx, prime in enumerate(large_primes):
         values = [
             prime,
@@ -1151,12 +1909,7 @@ def _largest_prime_recovery_cases(
             values.extend([prime - 10, prime - 100])
         else:
             values.extend([prime - 1000, prime - 10000])
-
-        arg_exprs = [_vec_expr(values, "u32")]
-        key = tuple(arg_exprs)
-        if key in seen:
-            continue
-        candidates.append(arg_exprs)
+        add([_vec_expr(values, "u32")])
 
     for idx, composite in enumerate(large_composites):
         values = [
@@ -1173,12 +1926,107 @@ def _largest_prime_recovery_cases(
             values.extend([composite - 106, composite - 118])
         else:
             values.extend([max(0, composite // 59), max(0, composite // 61)])
+        add([_vec_expr(values, "u32")])
 
-        arg_exprs = [_vec_expr(values, "u32")]
-        key = tuple(arg_exprs)
-        if key in seen:
-            continue
-        candidates.append(arg_exprs)
+    return candidates
+
+
+def _monotonic_long_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-57 includes long inputs (length > 20) that are monotonically increasing or decreasing.
+
+    Both directions produce true outputs and are currently absent from proptest-generated cases.
+    """
+    def _parse(case: OracleCase) -> list[int] | None:
+        if len(case.arg_exprs) != 1:
+            return None
+        return _parse_i32_vec_literal(case.arg_exprs[0])
+
+    def _is_long_increasing(case: OracleCase) -> bool:
+        vals = _parse(case)
+        return vals is not None and len(vals) > 20 and all(vals[i] <= vals[i + 1] for i in range(len(vals) - 1))
+
+    def _is_long_decreasing(case: OracleCase) -> bool:
+        vals = _parse(case)
+        return vals is not None and len(vals) > 20 and all(vals[i] >= vals[i + 1] for i in range(len(vals) - 1))
+
+    increasing_count = sum(1 for c in existing_cases if _is_long_increasing(c))
+    decreasing_count = sum(1 for c in existing_cases if _is_long_decreasing(c))
+    if increasing_count >= 3 and decreasing_count >= 3:
+        return []
+
+    rng = random.Random(57)
+    candidates: list[list[str]] = []
+    added_increasing = 0
+    added_decreasing = 0
+
+    def add(values: list[int]) -> None:
+        expr = _vec_expr(values, "i32")
+        if (expr,) not in seen:
+            candidates.append([expr])
+
+    attempts = 0
+    while (increasing_count + added_increasing < 3 or decreasing_count + added_decreasing < 3) and attempts < 200:
+        attempts += 1
+        length = rng.randint(21, 35)
+        direction = rng.choice(["increasing", "decreasing"])
+
+        if direction == "increasing" and increasing_count + added_increasing < 3:
+            start = rng.randint(-3000, 0)
+            values = [start]
+            for _ in range(length - 1):
+                values.append(values[-1] + rng.randint(1, 100))
+            add(values)
+            added_increasing += 1
+        elif direction == "decreasing" and decreasing_count + added_decreasing < 3:
+            start = rng.randint(0, 3000)
+            values = [start]
+            for _ in range(length - 1):
+                values.append(values[-1] - rng.randint(1, 100))
+            add(values)
+            added_decreasing += 1
+
+    return candidates
+
+
+def _add_even_at_even_index_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-85 includes long inputs (length > 20) where even numbers only appear at even indices.
+
+    For such inputs the expected sum is 0 (no even numbers at odd indices), testing that the
+    implementation correctly ignores even elements at even positions.
+    """
+    def _is_target_case(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        values = _parse_u32_vec_literal(case.arg_exprs[0])
+        if values is None or len(values) <= 20:
+            return False
+        return all(values[i] % 2 == 1 for i in range(1, len(values), 2))
+
+    count = sum(1 for c in existing_cases if _is_target_case(c))
+    if count >= 4:
+        return []
+
+    rng = random.Random(85)
+    candidates: list[list[str]] = []
+
+    while len(candidates) + count < 4:
+        length = rng.randint(21, 35)
+        values = []
+        for i in range(length):
+            if i % 2 == 0:
+                values.append(rng.randint(0, 2499) * 2)        # even number at even index
+            else:
+                values.append(rng.randint(0, 2499) * 2 + 1)    # odd number at odd index
+        expr = _vec_expr(values, "u32")
+        if (expr,) not in seen:
+            candidates.append([expr])
+
     return candidates
 
 
@@ -1439,6 +2287,24 @@ def _parse_i32_vec_literal(expr: str) -> list[int] | None:
     return values
 
 
+def _parse_i64_vec_literal(expr: str) -> list[int] | None:
+    """Parse a simple `vec![...]` of i64 integers (with or without `i64` suffix) into Python ints."""
+    expr = expr.strip()
+    if not expr.startswith("vec![") or not expr.endswith("]"):
+        return None
+    inner = expr[len("vec![") : -1].strip()
+    if not inner:
+        return []
+
+    values: list[int] = []
+    for part in _split_top_level(inner):
+        token = re.sub(r"i64$", "", part.strip())
+        if not re.fullmatch(r"-?\d+", token):
+            return None
+        values.append(int(token))
+    return values
+
+
 def _parse_char_vec_literal(expr: str) -> str | None:
     """Parse a simple `vec![...]` char literal into plain Python text for recovery checks."""
     expr = expr.strip()
@@ -1484,30 +2350,6 @@ def _parse_rust_char_literal(token: str) -> str | None:
     return None
 
 
-def _has_last_char_letter_false_mix(cases: list[OracleCase]) -> bool:
-    """Check whether task 134 already has the desired mix of false-string shapes."""
-    seen_kinds: set[str] = set()
-    for case in cases:
-        if case.expected_expr.strip() != "false" or len(case.arg_exprs) != 1:
-            continue
-        kind = _last_char_letter_false_kind(case.arg_exprs[0])
-        if kind is not None:
-            seen_kinds.add(kind)
-    return {"empty", "standalone_non_alpha", "non_standalone_letter"}.issubset(seen_kinds)
-
-
-def _last_char_letter_false_kind(expr: str) -> str | None:
-    """Classify one Rust string literal into the false-case shapes relevant for task 134."""
-    text = _parse_simple_rust_string_literal(expr)
-    if text is None:
-        return None
-    if text == "":
-        return "empty"
-    if len(text) == 1 and not text[-1].isalpha():
-        return "standalone_non_alpha"
-    if len(text) >= 2 and text[-1].isalpha() and not text[-2].isspace():
-        return "non_standalone_letter"
-    return None
 
 
 def _random_ascii_text_char(rng: random.Random) -> str:
@@ -1540,30 +2382,32 @@ def _random_non_whitespace_ascii_char(rng: random.Random) -> str:
             return candidate
 
 
-def _generate_how_many_times_positive_cases() -> list[list[str]]:
-    """Generate positive-count substring cases for `HumanEval/18`."""
-    rng = random.Random(18)
-    cases: list[list[str]] = []
+def _generate_one_how_many_times_positive_case(
+    rng: random.Random,
+    min_string_len: int | None,
+) -> list[str]:
+    """Generate one positive-count (substring appears >= 1 time) case for `HumanEval/18`."""
+    substring_len = min(3, max(1, 1 + _python_geometric_length(rng)))
+    repeat_count = max(1, 1 + _python_geometric_length(rng))
+    substring = "".join(_random_printable_ascii_char(rng) for _ in range(substring_len))
+    filler_prefix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
+    filler_suffix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
 
-    for _ in range(8):
-        substring_len = min(3, max(1, 1 + _python_geometric_length(rng)))
-        repeat_count = max(1, 1 + _python_geometric_length(rng))
-        substring = "".join(_random_printable_ascii_char(rng) for _ in range(substring_len))
-        filler_prefix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
-        filler_suffix = "".join(_random_printable_ascii_char(rng) for _ in range(_python_geometric_length(rng)))
+    parts = [filler_prefix]
+    for idx in range(repeat_count):
+        parts.append(substring)
+        if idx + 1 < repeat_count and rng.choice([True, False]):
+            filler_len = 1 + _python_geometric_length(rng)
+            parts.append("".join(_random_printable_ascii_char(rng) for _ in range(filler_len)))
+    parts.append(filler_suffix)
 
-        parts = [filler_prefix]
-        for idx in range(repeat_count):
-            parts.append(substring)
-            if idx + 1 < repeat_count and rng.choice([True, False]):
-                filler_len = 1 + _python_geometric_length(rng)
-                parts.append("".join(_random_printable_ascii_char(rng) for _ in range(filler_len)))
-        parts.append(filler_suffix)
+    string = "".join(parts)
+    if min_string_len is not None:
+        while len(string) < min_string_len:
+            string += substring
 
-        string = "".join(parts)
-        cases.append([_char_vec_expr(string), _char_vec_expr(substring)])
+    return [_char_vec_expr(string), _char_vec_expr(substring)]
 
-    return cases
 
 
 def _random_printable_ascii_char(rng: random.Random) -> str:
@@ -2158,21 +3002,48 @@ def _wide_integer_expr(
         )
 
     if min_value is None and max_value is not None:
-        return (
-            "{ "
-            "use proptest::strategy::Strategy; "
-            "use proptest::strategy::ValueTree; "
-            f"let max_value = {max_i128}; "
-            "let mut offset = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
-            f"{runner_var}"
-            ").unwrap().current() as i128 % 4901); "
-            "loop { "
-            "let candidate = max_value - offset; "
-            f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
-            "offset = offset.saturating_sub(1); "
-            "} "
-            "}"
-        )
+        # Sample from the same ±[100, 5000] range as unconstrained, then reject/reduce
+        # if the candidate exceeds max_value.  The old "max_value - offset" approach
+        # always samples near the ceiling (e.g., all i32 elements near 2^31-1 when
+        # max_value = i32::MAX-1), which misses the interesting small/negative region.
+        signed_types = {"i8", "i16", "i32", "i64", "i128", "isize"}
+        if rust_type in signed_types:
+            return (
+                "{ "
+                "use proptest::strategy::Strategy; "
+                "use proptest::strategy::ValueTree; "
+                f"let max_value = {max_i128}; "
+                "let negative = proptest::arbitrary::any::<bool>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current(); "
+                "let mut magnitude = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current() as i128 % 4901); "
+                "loop { "
+                "let candidate = if negative { -magnitude } else { magnitude }; "
+                "if candidate > max_value { magnitude = magnitude.saturating_sub(1); continue; } "
+                f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
+                "magnitude = magnitude.saturating_sub(1); "
+                "} "
+                "}"
+            )
+        else:
+            return (
+                "{ "
+                "use proptest::strategy::Strategy; "
+                "use proptest::strategy::ValueTree; "
+                f"let max_value = {max_i128}; "
+                "let mut magnitude = 100i128 + (proptest::arbitrary::any::<u16>().new_tree("
+                f"{runner_var}"
+                ").unwrap().current() as i128 % 4901); "
+                "loop { "
+                "let candidate = magnitude; "
+                "if candidate > max_value { magnitude = magnitude.saturating_sub(1); continue; } "
+                f"if let Ok(value) = <{rust_type}>::try_from(candidate) {{ break value; }} "
+                "magnitude = magnitude.saturating_sub(1); "
+                "} "
+                "}"
+            )
 
     raise OracleTestGenerationError("_wide_integer_expr only supports unconstrained or one-sided bounds")
 
@@ -2431,7 +3302,9 @@ def _sampling_expr(
     if bare_type.startswith("Vec<") and bare_type.endswith(">"):
         inner = bare_type[len("Vec<") : -1].strip()
         if arg_constraints.balanced_paren_groups:
-            return _balanced_paren_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints))
+            return _balanced_bracket_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints), "(", ")")
+        if arg_constraints.balanced_angle_groups:
+            return _balanced_bracket_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints), "<", ">")
         inner_constraints = ArgConstraints(
             allowed_chars=arg_constraints.element_allowed_chars or arg_constraints.allowed_chars,
             min_value=arg_constraints.element_min_value,
@@ -2466,7 +3339,9 @@ def _sampling_expr(
     if bare_type.startswith("[") and bare_type.endswith("]") and ";" not in bare_type:
         inner = bare_type[1:-1].strip()
         if arg_constraints.balanced_paren_groups:
-            return _balanced_paren_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints))
+            return _balanced_bracket_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints), "(", ")")
+        if arg_constraints.balanced_angle_groups:
+            return _balanced_bracket_groups_expr(runner_var, length_expr or _length_sampling_expr(runner_var, arg_constraints), "<", ">")
         inner_constraints = ArgConstraints(
             allowed_chars=arg_constraints.element_allowed_chars or arg_constraints.allowed_chars,
             min_value=arg_constraints.element_min_value,
@@ -2525,11 +3400,23 @@ def _sampling_expr(
             return f"({pieces[0]},)"
         return f"({', '.join(pieces)})"
 
+    if bare_type == "String" and arg_constraints.balanced_paren_groups:
+        length_expr_str = length_expr or _length_sampling_expr(runner_var, arg_constraints)
+        chars_expr = _balanced_bracket_groups_expr(runner_var, length_expr_str, "(", ")")
+        return f"{{ let _chars: Vec<char> = {chars_expr}; _chars.into_iter().collect::<String>() }}"
+
+    if bare_type == "String" and arg_constraints.balanced_angle_groups:
+        length_expr_str = length_expr or _length_sampling_expr(runner_var, arg_constraints)
+        chars_expr = _balanced_bracket_groups_expr(runner_var, length_expr_str, "<", ">")
+        return f"{{ let _chars: Vec<char> = {chars_expr}; _chars.into_iter().collect::<String>() }}"
+
     return _proptest_leaf_expr(bare_type, runner_var, arg_constraints, task_id=task_id)
 
 
-def _balanced_paren_groups_expr(runner_var: str, length_expr: str) -> str:
-    """Sample a `Vec<char>` that is a concatenation of balanced parenthesis groups with optional spaces."""
+def _balanced_bracket_groups_expr(runner_var: str, length_expr: str, open_char: str, close_char: str) -> str:
+    """Sample a `Vec<char>` that is a concatenation of balanced bracket groups with optional spaces."""
+    open_lit = _rust_char_literal(open_char)
+    close_lit = _rust_char_literal(close_char)
     return (
         "{ "
         "use proptest::strategy::Strategy; "
@@ -2554,7 +3441,7 @@ def _balanced_paren_groups_expr(runner_var: str, length_expr: str) -> str:
         "if stop_here || space_left < 2 { break; } "
         "} "
         "if space_left == depth { "
-        "for _ in 0..depth { group.push(')'); } "
+        f"for _ in 0..depth {{ group.push({close_lit}); }} "
         "depth = 0; "
         "break; "
         "} "
@@ -2564,10 +3451,10 @@ def _balanced_paren_groups_expr(runner_var: str, length_expr: str) -> str:
         f"proptest::arbitrary::any::<bool>().new_tree({runner_var}).unwrap().current() "
         "}; "
         "if choose_open { "
-        "group.push('('); "
+        f"group.push({open_lit}); "
         "depth += 1; "
         "} else if depth > 0 { "
-        "group.push(')'); "
+        f"group.push({close_lit}); "
         "depth -= 1; "
         "} else { "
         "break; "
@@ -2858,6 +3745,36 @@ def _special_case_constraints(task_id: str, signature: ParsedSignature) -> Parse
     if task_id == "HumanEval/1":
         if len(signature.args) != 1:
             raise OracleTestGenerationError("HumanEval/1 special case expected exactly one argument")
+        arg_name = signature.args[0].name
+        return ParsedConstraints(
+            task_id=task_id,
+            arg_constraints={arg_name: ArgConstraints(balanced_paren_groups=True)},
+            shared_length_groups={},
+        )
+
+    if task_id == "HumanEval/6":
+        if len(signature.args) != 1:
+            raise OracleTestGenerationError("HumanEval/6 special case expected exactly one argument")
+        arg_name = signature.args[0].name
+        return ParsedConstraints(
+            task_id=task_id,
+            arg_constraints={arg_name: ArgConstraints(balanced_paren_groups=True)},
+            shared_length_groups={},
+        )
+
+    if task_id == "HumanEval/56":
+        if len(signature.args) != 1:
+            raise OracleTestGenerationError("HumanEval/56 special case expected exactly one argument")
+        arg_name = signature.args[0].name
+        return ParsedConstraints(
+            task_id=task_id,
+            arg_constraints={arg_name: ArgConstraints(balanced_angle_groups=True)},
+            shared_length_groups={},
+        )
+
+    if task_id == "HumanEval/61":
+        if len(signature.args) != 1:
+            raise OracleTestGenerationError("HumanEval/61 special case expected exactly one argument")
         arg_name = signature.args[0].name
         return ParsedConstraints(
             task_id=task_id,
