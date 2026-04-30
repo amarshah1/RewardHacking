@@ -34,7 +34,7 @@ from generation.generate_code import (
     _clean_code_output,
 )
 from evaluation.run_tests import run_rust_tests
-from evaluation.run_verus import run_verus, run_verus_with_tests, check_spec_preserved
+from evaluation.run_verus import run_verus, run_verus_with_tests, check_spec_preserved, validate_tests_against_gold
 from evaluation.annotate_proofs import annotate_with_proofs, splice_body_into_gold_spec
 from evaluation.llm_judge import find_counterexample, format_judge_result, save_judge_result
 from evaluation.evaluate import (
@@ -214,6 +214,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     gold_spec_check = config.get("evaluation", {}).get("gold_spec_check", True)
     llm_judge_enabled = config.get("evaluation", {}).get("llm_judge", False)
     llm_judge_model = config.get("evaluation", {}).get("llm_judge_model", "anthropic/claude-sonnet-4")
+    validate_tests = config.get("evaluation", {}).get("validate_generated_tests", True)
     oracle_followup = config.get("test_generation", {}).get("oracle_followup", False)
     oracle_cache_dir = config.get("test_generation", {}).get("oracle_cache_dir", "data/oracle_test_cache")
 
@@ -277,6 +278,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     print(f"Property-test oracle: {'ON' if property_test_oracle else 'OFF'}")
     print(f"Gold spec oracle (splice+compile): {'ON' if gold_spec_oracle else 'OFF'}")
     print(f"Gold spec check (Claude oracle): {'ON' if gold_spec_check else 'OFF'}")
+    print(f"Validate generated tests vs gold impl: {'ON' if validate_tests else 'OFF'}")
     print(f"LLM judge (counter-example search): {'ON' if llm_judge_enabled else 'OFF'}")
     if llm_judge_enabled:
         print(f"LLM judge model: {llm_judge_model}")
@@ -357,6 +359,49 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
         _save_cache_file(task_cache, "generated_tests.rs", content=generated_tests)
         task_log["oracle_tests"] = oracle_tests
         _save_cache_file(task_cache, "oracle_tests.rs", content=oracle_tests)
+
+        # --- Step 2c: Validate generated tests against gold implementation ---
+        if validate_tests and generated_tests and task.has_verus_impl:
+            print("\n--- Step 2c: Validating generated tests against gold implementation ---")
+            try:
+                validation = validate_tests_against_gold(
+                    gold_verus_code=task.verus_code,
+                    generated_tests=generated_tests,
+                    verus_binary=verus_binary,
+                    timeout=config["evaluation"]["timeout_seconds"],
+                )
+                n_v = validation["n_passed"]
+                t_v = validation["n_total"]
+                if validation["compiled"]:
+                    print(f"  Tests correct: {n_v}/{t_v} pass on gold implementation")
+                    for fn_name, passed in validation["test_results"].items():
+                        status = "PASS" if passed else "FAIL"
+                        print(f"    {status}: {fn_name}")
+                else:
+                    print(f"  Tests could not be compiled against gold implementation")
+                    if validation["stderr"]:
+                        print(f"  Stderr: {validation['stderr'][:300]}")
+                task_log["test_validation"] = {
+                    "compiled": validation["compiled"],
+                    "n_passed": n_v,
+                    "n_total": t_v,
+                    "test_results": validation["test_results"],
+                }
+                val_lines = [
+                    f"Compiled: {validation['compiled']}",
+                    f"Tests correct: {n_v}/{t_v}",
+                    "",
+                ]
+                if validation["compiled"]:
+                    for fn_name, passed in validation["test_results"].items():
+                        val_lines.append(f"{'PASS' if passed else 'FAIL'}: {fn_name}")
+                val_lines += ["", "=== STDOUT ===", validation["stdout"]]
+                if validation["stderr"]:
+                    val_lines += ["", "=== STDERR ===", validation["stderr"]]
+                _save_cache_file(task_cache, "generated_tests_validation.txt",
+                                 content="\n".join(val_lines))
+            except Exception as e:
+                print(f"  ERROR validating generated tests: {type(e).__name__}: {e}")
 
         if branch_b_enabled:
             print("\n--- Step 2b: Generating Verus spec (Branch B) ---")

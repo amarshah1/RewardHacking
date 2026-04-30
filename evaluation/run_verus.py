@@ -301,6 +301,129 @@ def check_spec_preserved(original_spec: str, generated_code: str) -> tuple[bool,
     return True, "spec preserved"
 
 
+def validate_tests_against_gold(
+    gold_verus_code: str,
+    generated_tests: str,
+    verus_binary: str = "verus",
+    timeout: int = 60,
+) -> dict:
+    """Run generated unit tests against the gold-standard Verus implementation.
+
+    Each test is invoked via std::panic::catch_unwind so a panicking test is
+    recorded as incorrect without aborting the remaining tests.
+
+    Returns a dict with keys:
+        compiled:       bool
+        test_results:   dict[str, bool]  (fn_name -> passed)
+        n_passed:       int
+        n_total:        int
+        stdout:         str
+        stderr:         str
+    """
+    import re
+
+    test_fn_names = re.findall(r'#\[test\]\s*fn\s+(\w+)\s*\(\s*\)', generated_tests)
+    if not test_fn_names:
+        return {
+            "compiled": False,
+            "test_results": {},
+            "n_passed": 0,
+            "n_total": 0,
+            "stdout": "",
+            "stderr": "no #[test] functions found in generated tests",
+        }
+
+    tests_body = re.sub(r'#\[test\]\s*', '', generated_tests)
+
+    # Remove the stub fn main() {} from gold Verus code; we supply our own.
+    stripped = re.sub(r'fn\s+main\s*\(\s*\)\s*\{\s*\}', '', gold_verus_code)
+
+    # Build main() that runs each test with catch_unwind so all tests are attempted.
+    calls = []
+    for name in test_fn_names:
+        calls.append(
+            f'    match ::std::panic::catch_unwind(|| {{ {name}(); }}) {{\n'
+            f'        Ok(_) => println!("PASS:{name}"),\n'
+            f'        Err(_) => println!("FAIL:{name}"),\n'
+            f'    }};'
+        )
+
+    full_source = f"""{stripped}
+
+{tests_body}
+
+fn main() {{
+{chr(10).join(calls)}
+}}
+"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        src_path = os.path.join(tmpdir, "solution.rs")
+        with open(src_path, 'w') as f:
+            f.write(full_source)
+
+        cwd = os.getcwd()
+        try:
+            os.chdir(tmpdir)
+            try:
+                comp = subprocess.run(
+                    [verus_binary, "--compile", "solution.rs"],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                )
+            except subprocess.TimeoutExpired:
+                return {"compiled": False, "test_results": {}, "n_passed": 0,
+                        "n_total": len(test_fn_names), "stdout": "",
+                        "stderr": "verus --compile timed out"}
+            except FileNotFoundError:
+                return {"compiled": False, "test_results": {}, "n_passed": 0,
+                        "n_total": len(test_fn_names), "stdout": "",
+                        "stderr": f"verus binary not found: {verus_binary}"}
+
+            binary = os.path.join(tmpdir, "solution")
+            if not os.path.exists(binary):
+                return {
+                    "compiled": False, "test_results": {}, "n_passed": 0,
+                    "n_total": len(test_fn_names),
+                    "stdout": comp.stdout, "stderr": comp.stderr,
+                }
+
+            try:
+                run = subprocess.run([binary], capture_output=True, text=True, timeout=30)
+            except subprocess.TimeoutExpired:
+                return {"compiled": True, "test_results": {}, "n_passed": 0,
+                        "n_total": len(test_fn_names),
+                        "stdout": comp.stdout, "stderr": "test execution timed out"}
+
+            test_results = {}
+            for line in run.stdout.splitlines():
+                if line.startswith("PASS:"):
+                    test_results[line[5:]] = True
+                elif line.startswith("FAIL:"):
+                    test_results[line[5:]] = False
+            # Any test not mentioned (e.g. binary crashed mid-run) counts as failed.
+            for name in test_fn_names:
+                if name not in test_results:
+                    test_results[name] = False
+
+            n_passed = sum(1 for v in test_results.values() if v)
+            stdout = (
+                f"=== COMPILE ===\n{comp.stdout}\n{comp.stderr}\n\n"
+                f"=== RUN ===\n{run.stdout}"
+            )
+            return {
+                "compiled": True,
+                "test_results": test_results,
+                "n_passed": n_passed,
+                "n_total": len(test_fn_names),
+                "stdout": stdout,
+                "stderr": run.stderr,
+            }
+        finally:
+            os.chdir(cwd)
+
+
 if __name__ == "__main__":
     # Smoke test with a simple Verus file
     code = """use vstd::prelude::*;
