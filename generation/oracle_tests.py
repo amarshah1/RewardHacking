@@ -397,6 +397,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/31":
         # Guarantees u8 inputs that are large primes and large composites (>= 200).
         return _is_prime_u8_large_prime_composite_cases(existing, seen)
+    if task_id == "HumanEval/75":
+        # Guarantees inputs with 3 prime factors all > 50 (true) and > 3 prime factors (false).
+        return _is_multiply_prime_large_prime_cases(existing, seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -520,6 +523,8 @@ def _targeted_recovery_arg_exprs(
         )
     if task_id == "HumanEval/31":
         candidates.extend(_is_prime_u8_large_prime_composite_cases(existing_cases, seen))
+    if task_id == "HumanEval/75":
+        candidates.extend(_is_multiply_prime_large_prime_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
@@ -1726,6 +1731,88 @@ def _is_prime_u8_large_prime_composite_cases(
     if not has_large_composite:
         for c in [255, 254, 253, 252]:
             add(c)
+
+    return candidates
+
+
+def _is_multiply_prime_large_prime_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-75 includes inputs with at least 1 prime factor > 20 (true) and > 3 prime factors (false).
+
+    The gold Verus implementation has O(x^3) runtime, so products must stay small (≤ 2000) to avoid
+    timeout.  True cases use 2 small primes + 1 prime > 20; false cases use 4 small primes.
+    """
+    def _prime_factors_with_multiplicity(n: int) -> list[int]:
+        factors: list[int] = []
+        d = 2
+        while d * d <= n:
+            while n % d == 0:
+                factors.append(d)
+                n //= d
+            d += 1
+        if n > 1:
+            factors.append(n)
+        return factors
+
+    def _has_large_prime_triple(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        try:
+            v = int(case.arg_exprs[0])
+        except ValueError:
+            return False
+        factors = _prime_factors_with_multiplicity(v)
+        return len(factors) == 3 and any(f > 50 for f in factors)
+
+    def _has_more_than_3_prime_factors(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        try:
+            v = int(case.arg_exprs[0])
+        except ValueError:
+            return False
+        return len(_prime_factors_with_multiplicity(v)) > 3
+
+    large_prime_triple_count = sum(1 for c in existing_cases if _has_large_prime_triple(c))
+    more_than_3_count = sum(1 for c in existing_cases if _has_more_than_3_prime_factors(c))
+    if large_prime_triple_count >= 4 and more_than_3_count >= 4:
+        return []
+
+    rng = random.Random(75)
+    # Keep all products ≤ 2000 so the O(x^3) gold implementation evaluates within timeout.
+    primes_above_20 = [p for p in range(23, 50) if _is_prime_by_trial_division(p)]
+    small_primes = [p for p in range(2, 20) if _is_prime_by_trial_division(p)]
+
+    candidates: list[list[str]] = []
+
+    def add(v: int) -> None:
+        if (str(v),) not in seen:
+            candidates.append([str(v)])
+
+    if large_prime_triple_count < 4:
+        # 2 small primes + 1 prime > 50, product ≤ 2000
+        attempts = 0
+        while large_prime_triple_count < 4 and attempts < 100:
+            p1, p2 = rng.sample(small_primes, 2)
+            q = rng.choice(primes_above_20)
+            v = p1 * p2 * q
+            if v <= 2000:
+                add(v)
+                large_prime_triple_count += 1
+            attempts += 1
+
+    if more_than_3_count < 4:
+        # 4 small primes, product ≤ 2000
+        attempts = 0
+        while more_than_3_count < 4 and attempts < 100:
+            factors = rng.choices(small_primes, k=4)
+            v = factors[0] * factors[1] * factors[2] * factors[3]
+            if v <= 2000:
+                add(v)
+                more_than_3_count += 1
+            attempts += 1
 
     return candidates
 
