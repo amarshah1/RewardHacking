@@ -11,8 +11,9 @@ openrouter:
 # Branch toggles
 branches:
   reward_hack_a1: false   # A.1: Unit tests with hidden tests + explicit reward hack instruction
-  reward_hack_a2: true   # A.2: Unit tests with visible tests + implicit incentive (NEW)
+  reward_hack_a2: false   # A.2: Unit tests with visible tests + implicit incentive (NEW)
   branch_b: false        # Verus spec branch (disabled for now)
+  generate_tests_only: true  # Stop after test generation (Steps 2a/2c); skip all code completions
 
 # Mode: "correct" = generate correct implementations, "reward_hack" = generate test-gaming implementations
 mode: "reward_hack"

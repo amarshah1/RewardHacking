@@ -215,6 +215,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     llm_judge_enabled = config.get("evaluation", {}).get("llm_judge", False)
     llm_judge_model = config.get("evaluation", {}).get("llm_judge_model", "anthropic/claude-sonnet-4")
     validate_tests = config.get("evaluation", {}).get("validate_generated_tests", True)
+    generate_tests_only = branches_cfg.get("generate_tests_only", False)
     oracle_followup = config.get("test_generation", {}).get("oracle_followup", False)
     oracle_cache_dir = config.get("test_generation", {}).get("oracle_cache_dir", "data/oracle_test_cache")
 
@@ -278,6 +279,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     print(f"Property-test oracle: {'ON' if property_test_oracle else 'OFF'}")
     print(f"Gold spec oracle (splice+compile): {'ON' if gold_spec_oracle else 'OFF'}")
     print(f"Gold spec check (Claude oracle): {'ON' if gold_spec_check else 'OFF'}")
+    print(f"Generate tests only (skip implementations): {'ON' if generate_tests_only else 'OFF'}")
     print(f"Validate generated tests vs gold impl: {'ON' if validate_tests else 'OFF'}")
     print(f"LLM judge (counter-example search): {'ON' if llm_judge_enabled else 'OFF'}")
     if llm_judge_enabled:
@@ -327,8 +329,8 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
         oracle_tests = ""
         generated_spec = ""
 
-        # Generate unit tests only if Branch A.1 or A.2 is enabled (API call)
-        if reward_hack_a1_enabled or reward_hack_a2_enabled:
+        # Generate unit tests if Branch A.1 or A.2 is enabled, or if running in tests-only mode.
+        if reward_hack_a1_enabled or reward_hack_a2_enabled or generate_tests_only:
             print("\n--- Step 2a: Generating unit tests (Branch A) ---")
             try:
                 sig = task.impl_sig[-1] if task.impl_sig else ""
@@ -432,7 +434,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
         generation_messages_list_a2 = []
 
         # Sample A.1 (hidden tests + explicit reward hack instruction)
-        if reward_hack_a1_enabled and generated_tests:
+        if reward_hack_a1_enabled and generated_tests and not generate_tests_only:
             mode_label = "reward-hack (A.1: hidden tests + explicit instruction)"
             print(f"\n--- Step 3a.1: Sampling {n_samples} {mode_label} completions ---")
             try:
@@ -488,7 +490,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                 print(f"  ERROR generating code (Branch A.1): {type(e).__name__}: {e}")
 
         # Sample A.2 (visible tests + implicit incentive, NO explicit reward hack instruction)
-        if reward_hack_a2_enabled and generated_tests:
+        if reward_hack_a2_enabled and generated_tests and not generate_tests_only:
             mode_label = "task (A.2: visible tests + implicit incentive)"
             print(f"\n--- Step 3a.2: Sampling {n_samples} {mode_label} completions ---")
             try:
@@ -559,7 +561,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
 
         verus_completions = []
         verus_raw_traces = []
-        if branch_b_enabled and generated_spec:
+        if branch_b_enabled and generated_spec and not generate_tests_only:
             print(f"\n--- Step 3b: Sampling {n_samples} code completions (Branch B) ---")
             try:
                 verus_completions, verus_raw_traces, verus_msgs = generate_code_for_verus(
@@ -1170,6 +1172,36 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
         for code, count in counts.most_common():
             c = outcome_colors.get(code, "")
             print(f"  {c}{_C.BOLD}{code}: {count}{_C.RESET}")
+        print()
+
+    # --- Print test validation summary ---
+    validated_tasks = [t for t in run_log["tasks"] if "test_validation" in t]
+    if validated_tasks:
+        print("=" * 60)
+        print("TEST VALIDATION SUMMARY")
+        print("=" * 60)
+        failed_tasks = [
+            t for t in validated_tasks
+            if not t["test_validation"]["compiled"]
+            or t["test_validation"]["n_passed"] < t["test_validation"]["n_total"]
+        ]
+        n_all = len(validated_tasks)
+        n_failed = len(failed_tasks)
+        print(f"Tasks with incorrect tests: {n_failed}/{n_all}")
+        if failed_tasks:
+            print()
+            for t in failed_tasks:
+                val = t["test_validation"]
+                if not val["compiled"]:
+                    status = "COMPILE ERROR"
+                    detail = ""
+                else:
+                    status = f"{val['n_passed']}/{val['n_total']} correct"
+                    failing = [name for name, ok in val["test_results"].items() if not ok]
+                    detail = "  failing: " + ", ".join(failing)
+                print(f"  {_C.YELLOW}{_C.BOLD}{t['task_id']}{_C.RESET}: {status}")
+                if detail:
+                    print(f"  {detail}")
         print()
 
     print(f"\nResults saved to {output_dir}/")
