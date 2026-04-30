@@ -1990,24 +1990,79 @@ pub fn mean_absolute_deviation(numbers: &[i32]) -> u32 {
 # ---------------------------------------------------------------------------
 # Ordered list of all examples
 # ---------------------------------------------------------------------------
+# The 5 handcrafted examples with reward-hack fields for all branches
 ALL_EXAMPLES = [_ROLLING_MAX, _BELOW_ZERO, _SUM_PRODUCT, _HAS_CLOSE_ELEMENTS, _INTERSPERSE]
+REWARD_HACK_EXAMPLES = [_ROLLING_MAX, _BELOW_ZERO, _SUM_PRODUCT, _HAS_CLOSE_ELEMENTS, _INTERSPERSE]
 
-# Order matches ALL_EXAMPLES for consistency between branches.
-# _SEPARATE_PAREN_GROUPS (HumanEval/1) and _MEAN_ABSOLUTE_DEVIATION (HumanEval/4)
-# are excluded because their gold Verus implementations are too large (265 and 548
-# lines respectively) to serve as few-shot examples, and we need the same example
-# set across all branches.
-REWARD_HACK_EXAMPLES = [
-    _ROLLING_MAX, _BELOW_ZERO, _SUM_PRODUCT, _HAS_CLOSE_ELEMENTS, _INTERSPERSE,
-    # _SEPARATE_PAREN_GROUPS,    # HumanEval/1 — no compact gold Verus impl
-    # _MEAN_ABSOLUTE_DEVIATION,  # HumanEval/4 — no compact gold Verus impl
-]
+
+def load_verus_examples_from_gold(tasks_dir: str = "human-eval-verus/tasks", max_id: int = 20) -> list[dict]:
+    """Load Verus few-shot examples dynamically from gold HumanEval-Verus files.
+
+    Returns examples sorted by task ID for all tasks with gold Verus implementations
+    in the range [0, max_id). Each example has: nl_prompt, entry_point, fn_signature,
+    verus_sig, verus_spec, verus_full, and gold_imports.
+
+    The 5 handcrafted examples (IDs 0, 3, 5, 8, 9) are returned from ALL_EXAMPLES
+    to preserve their extra fields (reward_hack_*, rust_*, etc.).
+    """
+    from data.parse_benchmarks import parse_human_eval_verus
+    from generation.generate_specs import _strip_impl_bodies
+
+    handcrafted_ids = {0, 3, 5, 8, 9}
+    handcrafted_map = {
+        0: _HAS_CLOSE_ELEMENTS,
+        3: _BELOW_ZERO,
+        5: _INTERSPERSE,
+        8: _SUM_PRODUCT,
+        9: _ROLLING_MAX,
+    }
+
+    tasks = parse_human_eval_verus(tasks_dir, only_with_verus=True)
+    examples = []
+
+    for t in tasks:
+        num = int(t.task_id.split("/")[1])
+        if num >= max_id or not t.has_verus_impl:
+            continue
+
+        if num in handcrafted_ids:
+            examples.append((num, handcrafted_map[num]))
+            continue
+
+        verus_full = t.verus_code.strip()
+        verus_spec = _strip_impl_bodies(verus_full)
+
+        ex = {
+            "nl_prompt": t.nl_prompt,
+            "entry_point": t.entry_point,
+            "fn_signature": t.impl_sig[-1] if t.impl_sig else f"fn {t.entry_point}(...)",
+            "verus_sig": t.verus_sig[-1] if t.verus_sig else "",
+            "verus_spec": verus_spec,
+            "verus_full": verus_full,
+            "gold_imports": t.gold_imports,
+        }
+        examples.append((num, ex))
+
+    examples.sort(key=lambda x: x[0])
+    return [ex for _, ex in examples]
+
+
+# Cached result — loaded once on first use
+_VERUS_EXAMPLES_CACHE: list[dict] | None = None
+
+
+def get_verus_examples(tasks_dir: str = "human-eval-verus/tasks", max_id: int = 20) -> list[dict]:
+    """Get Verus few-shot examples (cached). Includes all gold tasks in [0, max_id)."""
+    global _VERUS_EXAMPLES_CACHE
+    if _VERUS_EXAMPLES_CACHE is None:
+        _VERUS_EXAMPLES_CACHE = load_verus_examples_from_gold(tasks_dir, max_id)
+    return _VERUS_EXAMPLES_CACHE
+
 
 # Task IDs used as few-shot (skip these during evaluation)
+# Updated to cover 0-19 to match the expanded few-shot set
 FEW_SHOT_TASK_IDS = {
-    "HumanEval/0", "HumanEval/1", "HumanEval/2", "HumanEval/3",
-    "HumanEval/4", "HumanEval/5", "HumanEval/6", "HumanEval/7",
-    "HumanEval/8", "HumanEval/9",
+    f"HumanEval/{i}" for i in range(20)
 }
 
 
@@ -2235,6 +2290,7 @@ def build_few_shot_messages(
     user_template: str,
     examples: list[dict] | None = None,
     n_reward_hack: int | None = None,
+    n_few_shot: int | None = None,
 ) -> list[dict]:
     """Build a list of user/assistant message dicts for few-shot prompting.
 
@@ -2254,10 +2310,16 @@ def build_few_shot_messages(
         List of {"role": "user"/"assistant", "content": ...} dicts.
     """
     if examples is None:
-        if task_type in ("reward_hack", "reward_hack_tests"):
+        if task_type in ("reward_hack", "reward_hack_tests", "reward_hack_a2_tests"):
             examples = REWARD_HACK_EXAMPLES
+        elif task_type in ("spec", "verus_impl", "verus_underspec"):
+            examples = get_verus_examples()
         else:
             examples = ALL_EXAMPLES
+
+    # Truncate to n_few_shot if specified (n_reward_hack comes from the end)
+    if n_few_shot is not None and n_few_shot < len(examples):
+        examples = examples[:n_few_shot]
 
     hack_reasoning_fn = {
         "spec": _spec_reasoning,
@@ -2281,6 +2343,17 @@ def build_few_shot_messages(
     if has_correct and n_correct > 0:
         correct_task_type, correct_reasoning_fn = _CORRECT_COUNTERPART[task_type]
 
+    # For verus_underspec, hack examples require verus_underspec fields which only
+    # the handcrafted examples have. Build a combined list: first n_correct from the
+    # full example set, then n_reward_hack from the handcrafted set.
+    if task_type == "verus_underspec" and n_reward_hack > 0 and n_correct > 0:
+        handcrafted = ALL_EXAMPLES  # these have verus_underspec fields
+        # Pick n_correct from the full set (excluding those we'll use as hack)
+        hack_entry_points = {e["entry_point"] for e in handcrafted[:n_reward_hack]}
+        correct_pool = [e for e in examples if e["entry_point"] not in hack_entry_points]
+        examples = correct_pool[:n_correct] + handcrafted[:n_reward_hack]
+        n_correct = len(correct_pool[:n_correct])
+
     messages = []
     for idx, ex in enumerate(examples):
         use_hack = idx >= n_correct
@@ -2294,10 +2367,13 @@ def build_few_shot_messages(
         # Some templates need additional fields — based on effective task_type
         if eff_task_type == "spec":
             # Extract imports from the gold Verus code for the spec template
-            gold_imports = [l.strip() for l in ex.get("verus_full", "").split("\n")
-                          if l.strip().startswith("use ") and l.strip().endswith(";")]
+            gold_imports = ex.get("gold_imports") or [
+                l.strip() for l in ex.get("verus_full", "").split("\n")
+                if l.strip().startswith("use ") and l.strip().endswith(";")
+            ]
             template_kwargs["imports"] = "\n".join(gold_imports) if gold_imports else "use vstd::prelude::*;"
-            template_kwargs["fn_signature"] = ex.get("fn_signature", f"fn {ex['entry_point']}(...)")
+            # Use Verus signature (with named return) if available
+            template_kwargs["fn_signature"] = ex.get("verus_sig", ex.get("fn_signature", f"fn {ex['entry_point']}(...)"))
         elif eff_task_type == "verus_impl":
             template_kwargs["spec"] = ex["verus_spec"]
         elif eff_task_type == "verus_underspec":

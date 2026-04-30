@@ -369,6 +369,7 @@ def generate_code_for_verus(
     n: int = 1,
     n_reward_hack: int | None = None,
     num_workers: int = 1,
+    n_few_shot: int | None = None,
 ) -> tuple[list[str], list[str], list[dict]]:
     """Generate code completions that should satisfy the given Verus spec.
 
@@ -380,7 +381,7 @@ def generate_code_for_verus(
         raw_traces contain full LLM output including reasoning,
         messages is the prompt sent to the LLM.
     """
-    few_shot = build_few_shot_messages("verus_underspec", USER_TEMPLATE_VERUS, n_reward_hack=n_reward_hack)
+    few_shot = build_few_shot_messages("verus_underspec", USER_TEMPLATE_VERUS, n_reward_hack=n_reward_hack, n_few_shot=n_few_shot)
     prompt = USER_TEMPLATE_VERUS.format(
         nl_prompt=nl_prompt,
         entry_point=entry_point,

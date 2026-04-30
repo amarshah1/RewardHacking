@@ -204,6 +204,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
     verus_binary = config["evaluation"]["verus_binary"]
     repair_rounds = config["sampling"].get("repair_rounds", 1)
     n_reward_hack_examples = config["sampling"].get("n_reward_hack_examples", None)
+    n_few_shot = config["sampling"].get("n_few_shot", None)
     # Support both old (branch_a) and new (reward_hack_a1/a2) naming
     branches_cfg = config.get("branches", {})
     reward_hack_a1_enabled = branches_cfg.get("reward_hack_a1", branches_cfg.get("branch_a", True))
@@ -365,6 +366,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                     repair_rounds=repair_rounds,
                     gold_imports=task.gold_imports,
                     fn_signature=task.verus_sig,
+                    n_few_shot=n_few_shot,
                 )
                 print(f"  Generated spec ({len(generated_spec)} chars)")
                 if spec_repair_history:
@@ -531,6 +533,7 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
                     n=n_samples,
                     n_reward_hack=n_reward_hack_examples,
                     num_workers=num_cores,
+                    n_few_shot=n_few_shot,
                 )
                 _save_prompt(task_cache, "branch_b/prompt.txt", verus_msgs)
                 print(f"  Generated {len(verus_completions)} completions")

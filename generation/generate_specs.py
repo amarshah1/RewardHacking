@@ -84,6 +84,7 @@ def generate_verus_spec(
     repair_rounds: int = 1,
     gold_imports: list[str] | None = None,
     fn_signature: str = "",
+    n_few_shot: int | None = None,
 ) -> tuple[str, list[dict], str]:
     """Generate Verus specification from a natural language description.
 
@@ -96,6 +97,7 @@ def generate_verus_spec(
         repair_rounds: Max repair attempts for syntax errors
         gold_imports: Import lines from the gold Verus file (e.g. ["use vstd::prelude::*;"])
         fn_signature: Gold function signature(s) to use (ensures correct types)
+        n_few_shot: Number of few-shot examples to use (None = all available)
 
     Returns:
         (spec, repair_history, raw_trace) — spec is the final Verus code, repair_history
@@ -107,7 +109,7 @@ def generate_verus_spec(
         fn_signature = "\n".join(fn_signature)
     if not fn_signature:
         fn_signature = f"fn {entry_point}(...)"
-    few_shot = build_few_shot_messages("spec", USER_TEMPLATE)
+    few_shot = build_few_shot_messages("spec", USER_TEMPLATE, n_few_shot=n_few_shot)
     prompt = USER_TEMPLATE.format(nl_prompt=nl_prompt, entry_point=entry_point, imports=imports_str, fn_signature=fn_signature)
     completions = generate(
         prompt=prompt,
