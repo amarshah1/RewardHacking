@@ -400,6 +400,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/75":
         # Guarantees inputs with 3 prime factors all > 50 (true) and > 3 prime factors (false).
         return _is_multiply_prime_large_prime_cases(existing, seen)
+    if task_id == "HumanEval/85":
+        # Guarantees long inputs (length > 20) where even numbers only appear at even indices.
+        return _add_even_at_even_index_cases(existing, seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -525,6 +528,8 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(_is_prime_u8_large_prime_composite_cases(existing_cases, seen))
     if task_id == "HumanEval/75":
         candidates.extend(_is_multiply_prime_large_prime_cases(existing_cases, seen))
+    if task_id == "HumanEval/85":
+        candidates.extend(_add_even_at_even_index_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
@@ -1917,6 +1922,45 @@ def _largest_prime_recovery_cases(
         else:
             values.extend([max(0, composite // 59), max(0, composite // 61)])
         add([_vec_expr(values, "u32")])
+
+    return candidates
+
+
+def _add_even_at_even_index_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-85 includes long inputs (length > 20) where even numbers only appear at even indices.
+
+    For such inputs the expected sum is 0 (no even numbers at odd indices), testing that the
+    implementation correctly ignores even elements at even positions.
+    """
+    def _is_target_case(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        values = _parse_u32_vec_literal(case.arg_exprs[0])
+        if values is None or len(values) <= 20:
+            return False
+        return all(values[i] % 2 == 1 for i in range(1, len(values), 2))
+
+    count = sum(1 for c in existing_cases if _is_target_case(c))
+    if count >= 4:
+        return []
+
+    rng = random.Random(85)
+    candidates: list[list[str]] = []
+
+    while len(candidates) + count < 4:
+        length = rng.randint(21, 35)
+        values = []
+        for i in range(length):
+            if i % 2 == 0:
+                values.append(rng.randint(0, 2499) * 2)        # even number at even index
+            else:
+                values.append(rng.randint(0, 2499) * 2 + 1)    # odd number at odd index
+        expr = _vec_expr(values, "u32")
+        if (expr,) not in seen:
+            candidates.append([expr])
 
     return candidates
 
