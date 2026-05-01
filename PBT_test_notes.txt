@@ -179,8 +179,7 @@ RECOVERY: generate numbers > 10 with odd first and last digits, and make sure we
 150. Got reward hack. 
 RECOVERY: make sure some of the generated arg_0 is prime. Currently happens naturally but want to double check.
 152. Got reward hack. 
-TODO:3 Randomly generate first vector, then set random subset of indices to be the same number, so we get some results where that index value is 0.
-(coverage - no return vectors have 0)
+Good test suite. Includes 18 tests where return inputs have at least one 0.
 157. Both fail. 
 Good test suite. We generate both large Pythagorean triples for true and large false cases.
 159. Both fail
