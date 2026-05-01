@@ -1879,9 +1879,11 @@ def _prime_length_large_prime_composite_cases(
 def _intersection_prime_composite_cases(
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Ensure task-127 includes cases where the intersection length is a large prime or large composite.
+    """Ensure task-127 includes cases where the intersection length is a large prime, large composite,
+    medium prime (close to 5000), small prime (close to 100), or exactly 1.
 
     Large primes: 5000-1000000. Large composites: > 5000 with at least 2 prime factors > 50.
+    Medium primes: near 5000 (below 5000). Small primes: near 100.
 
     For each N, randomly generates a = (a0, a1) with a1 >= a0 + N - 1, then derives b so that
     the intersection is exactly [a0, a0+N-1] with length N:
@@ -1890,11 +1892,13 @@ def _intersection_prime_composite_cases(
     """
     large_primes = _find_large_primes_below_limit(4, limit=1_000_000, min_value=5_000)
     large_composites = _find_large_composites_with_large_prime_factors(4, limit=1_000_000, min_factor=53)
+    medium_primes = _find_large_primes_below_limit(4, limit=4_999, min_value=4_000)
+    small_primes = _find_large_primes_below_limit(4, limit=100, min_value=2)
     rng = random.Random(127)
     candidates: list[list[str]] = []
-    for n in large_primes + large_composites:
+    for n in large_primes + large_composites + medium_primes + small_primes + [1]:
         a0 = rng.randint(-100_000, 100_000)
-        a1 = a0 + n - 1 + rng.randint(0, n // 2)
+        a1 = a0 + n - 1 + rng.randint(0, max(1, n // 2))
         b0 = a0 - rng.randint(1, 1_000)
         b1 = a0 + n - 1
         a_expr = f"({a0}, {a1})"

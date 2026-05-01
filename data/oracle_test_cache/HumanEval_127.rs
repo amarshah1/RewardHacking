@@ -64,6 +64,78 @@ fn oracle_case_7() {
 
 #[test]
 fn oracle_case_8() {
+    let arg_0: (i32, i32) = (-873, 4565);
+    let arg_1: (i32, i32) = (-1699, 4125);
+    let expected: &str = "YES";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_9() {
+    let arg_0: (i32, i32) = (-76435, -69018);
+    let arg_1: (i32, i32) = (-76815, -71443);
+    let expected: &str = "YES";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_10() {
+    let arg_0: (i32, i32) = (-8357, -3283);
+    let arg_1: (i32, i32) = (-8842, -3371);
+    let expected: &str = "YES";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_11() {
+    let arg_0: (i32, i32) = (-53611, -46153);
+    let arg_1: (i32, i32) = (-54340, -48639);
+    let expected: &str = "YES";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_12() {
+    let arg_0: (i32, i32) = (-2332, -2212);
+    let arg_1: (i32, i32) = (-3039, -2236);
+    let expected: &str = "YES";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_13() {
+    let arg_0: (i32, i32) = (-25838, -25743);
+    let arg_1: (i32, i32) = (-26356, -25750);
+    let expected: &str = "YES";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_14() {
+    let arg_0: (i32, i32) = (-68069, -67971);
+    let arg_1: (i32, i32) = (-68702, -67987);
+    let expected: &str = "YES";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_15() {
+    let arg_0: (i32, i32) = (-74640, -74546);
+    let arg_1: (i32, i32) = (-75020, -74562);
+    let expected: &str = "YES";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_16() {
+    let arg_0: (i32, i32) = (37432, 37432);
+    let arg_1: (i32, i32) = (37164, 37432);
+    let expected: &str = "NO";
+    assert_eq!(intersection(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_17() {
     let arg_0: (i32, i32) = (1212, 4516);
     let arg_1: (i32, i32) = (-4004, -3492);
     let expected: &str = "NO";
@@ -71,7 +143,7 @@ fn oracle_case_8() {
 }
 
 #[test]
-fn oracle_case_9() {
+fn oracle_case_18() {
     let arg_0: (i32, i32) = (-4202, 3747);
     let arg_1: (i32, i32) = (476, 4011);
     let expected: &str = "NO";
@@ -79,7 +151,7 @@ fn oracle_case_9() {
 }
 
 #[test]
-fn oracle_case_10() {
+fn oracle_case_19() {
     let arg_0: (i32, i32) = (-3119, 446);
     let arg_1: (i32, i32) = (111, 1551);
     let expected: &str = "NO";
@@ -87,7 +159,7 @@ fn oracle_case_10() {
 }
 
 #[test]
-fn oracle_case_11() {
+fn oracle_case_20() {
     let arg_0: (i32, i32) = (2262, 3875);
     let arg_1: (i32, i32) = (-2007, -1063);
     let expected: &str = "NO";
@@ -95,7 +167,7 @@ fn oracle_case_11() {
 }
 
 #[test]
-fn oracle_case_12() {
+fn oracle_case_21() {
     let arg_0: (i32, i32) = (-3306, 3752);
     let arg_1: (i32, i32) = (-4255, -3776);
     let expected: &str = "NO";
@@ -103,7 +175,7 @@ fn oracle_case_12() {
 }
 
 #[test]
-fn oracle_case_13() {
+fn oracle_case_22() {
     let arg_0: (i32, i32) = (3718, 4032);
     let arg_1: (i32, i32) = (-623, 3952);
     let expected: &str = "NO";
@@ -111,81 +183,9 @@ fn oracle_case_13() {
 }
 
 #[test]
-fn oracle_case_14() {
+fn oracle_case_23() {
     let arg_0: (i32, i32) = (-4881, 4899);
     let arg_1: (i32, i32) = (-4629, -3851);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_15() {
-    let arg_0: (i32, i32) = (-4174, -3317);
-    let arg_1: (i32, i32) = (-3132, 1491);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_16() {
-    let arg_0: (i32, i32) = (-2143, 2508);
-    let arg_1: (i32, i32) = (-1380, 2001);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_17() {
-    let arg_0: (i32, i32) = (-4551, 2044);
-    let arg_1: (i32, i32) = (-416, 1589);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_18() {
-    let arg_0: (i32, i32) = (-3881, 435);
-    let arg_1: (i32, i32) = (-4900, 176);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_19() {
-    let arg_0: (i32, i32) = (-4043, -1667);
-    let arg_1: (i32, i32) = (-1758, 2153);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_20() {
-    let arg_0: (i32, i32) = (2877, 3543);
-    let arg_1: (i32, i32) = (-921, 1176);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_21() {
-    let arg_0: (i32, i32) = (2793, 4382);
-    let arg_1: (i32, i32) = (-2794, 1580);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_22() {
-    let arg_0: (i32, i32) = (-3322, 3048);
-    let arg_1: (i32, i32) = (-3837, -3742);
-    let expected: &str = "NO";
-    assert_eq!(intersection(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_23() {
-    let arg_0: (i32, i32) = (-3593, -1007);
-    let arg_1: (i32, i32) = (-4636, 3022);
     let expected: &str = "NO";
     assert_eq!(intersection(arg_0, arg_1), expected);
 }

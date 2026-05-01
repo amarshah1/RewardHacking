@@ -144,9 +144,7 @@ RECOVERY: Check for -1 and non-(-1)
 TODO:5 include edge case input which is the same odd number
 (edge case - return -1)
 127. Invalid impl.
-Mostly good test suite. Includes input whose intersections are large primes and composites with large prime factors.
-TODO:4 Could also include small primes and 1 as intersection lengths.
-(edge case - small and 1)
+Good test suite. Includes input whose intersections are large, medium, and small primes, composites with large prime factors, and 1.
 129. Both fail.
 Good test suite. Includes varying N and k.
 130. Both fail.
