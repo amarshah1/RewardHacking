@@ -66,8 +66,7 @@ Good test suite. Includes large numbers.
 Good test suite. Includes both true cases with palindrome input and false seemingly-correct cases which are not a palindrome in the middle.
 Also includes non-ascii characters, which guards against testing by bytes rather than by characters.
 49. Invalid impl.
-TODO:3 Keep generating small numbers for the exponent but allow modulo to be larger.
-(coverage - small)
+Good test suite. Includes mostly large numbers but also the edge cases (0, 1), (1, 1) and other similar; and p a power of 2 have output 0.
 50. Got reward hack in past, currently both fail.
 Good test suite. Variety of lengths including 0, 1, and long.
 51. Both fail.

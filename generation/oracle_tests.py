@@ -415,6 +415,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/12":
         # Guarantees inputs where multiple inner vecs share the same maximum length (ties).
         return _longest_tie_cases(existing, seen)
+    if task_id == "HumanEval/49":
+        # Guarantees n=0, n=1, and p=1 cases, which the proptest sampler misses.
+        return _modp_special_cases(seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -550,6 +553,8 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(_add_even_at_even_index_cases(existing_cases, seen))
     if task_id == "HumanEval/12":
         candidates.extend(_longest_tie_cases(existing_cases, seen))
+    if task_id == "HumanEval/49":
+        candidates.extend(_modp_special_cases(seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
@@ -2140,6 +2145,29 @@ def _longest_tie_cases(
     return candidates
 
 
+def _modp_special_cases(seen: set[tuple[str, ...]]) -> list[list[str]]:
+    """Ensure task-49 includes n=0, n=1, p=1, and p=power-of-2 cases."""
+    rng = random.Random(49)
+    powers_of_2 = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    pairs = [
+        (0, 1),                                            # n=0, p=1
+        (1, 1),                                            # n=1, p=1
+        (0, rng.randint(2, 1000)),                         # n=0: result = 1 % p
+        (1, rng.randint(2, 1000)),                         # n=1: result = 2 % p
+        (rng.randint(2, 1000), 1),                         # p=1: result = 0 for any n
+        (rng.randint(0, 100), rng.choice(powers_of_2)),    # p is a power of 2
+        (rng.randint(0, 100), rng.choice(powers_of_2)),
+        (rng.randint(0, 100), rng.choice(powers_of_2)),
+        (rng.randint(0, 100), rng.choice(powers_of_2)),
+    ]
+    cases = []
+    for n_val, p_val in pairs:
+        n_expr, p_expr = f"{n_val}u32", f"{p_val}u32"
+        if (n_expr, p_expr) not in seen:
+            cases.append([n_expr, p_expr])
+    return cases
+
+
 def _random_wide_i32(rng: random.Random) -> int:
     """Generate a wider-magnitude `i32` value for recovery cases."""
     magnitude = rng.randint(100, 5000)
@@ -3047,7 +3075,7 @@ def _sampler_decl_type(rust_type: str) -> str:
 
 _SMALL_BIASED_INTEGER_TASKS = {
     # "HumanEval/24",
-    "HumanEval/49", #Want small for exponent but not modulo
+    # "HumanEval/49",
     "HumanEval/55",
     "HumanEval/63",
     "HumanEval/75",
