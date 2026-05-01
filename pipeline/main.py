@@ -16,7 +16,7 @@ import time
 import yaml
 
 from data.parse_benchmarks import parse_human_eval_verus, HumanEvalVerusTask
-from generation.few_shot_examples import FEW_SHOT_TASK_IDS
+from generation.few_shot_examples import FEW_SHOT_TASK_IDS, get_few_shot_task_ids
 from generation.generate_tests import generate_unit_tests
 from generation.oracle_tests import (
     load_oracle_test_cache,
@@ -183,11 +183,14 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
 
     all_tasks = parse_human_eval_verus(tasks_dir, only_with_verus=True)
 
-    # Skip tasks used as few-shot examples (first 10 HumanEval IDs)
+    # Skip tasks used as few-shot examples
     skip_few_shot = config["benchmark"].get("skip_few_shot", True)
+    n_few_shot = config["sampling"].get("n_few_shot", None)
     if skip_few_shot:
-        tasks = [t for t in all_tasks if t.task_id not in FEW_SHOT_TASK_IDS]
-        print(f"Skipping {len(all_tasks) - len(tasks)} tasks used as few-shot examples")
+        few_shot_ids = get_few_shot_task_ids(n_few_shot)
+        tasks = [t for t in all_tasks if t.task_id not in few_shot_ids]
+        print(f"Skipping {len(all_tasks) - len(tasks)} tasks (few-shot + no gold impl in 0-19)")
+        print(f"  Few-shot IDs: {sorted(few_shot_ids, key=lambda x: int(x.split('/')[1]))}")
     else:
         tasks = all_tasks
     tasks = tasks[:max_problems]
@@ -363,6 +366,18 @@ def run_pipeline(config: dict, verbose: bool = False, local: bool = False):
 
         if branch_b_enabled:
             print("\n--- Step 2b: Generating Verus spec (Branch B) ---")
+            # Save the spec prompt for inspection
+            from generation.few_shot_examples import build_few_shot_messages as _bfsm
+            from generation.generate_specs import USER_TEMPLATE as _SPEC_UT, SYSTEM_PROMPT as _SPEC_SP
+            _spec_fs = _bfsm("spec", _SPEC_UT, n_few_shot=n_few_shot)
+            _spec_sig = "\n".join(task.verus_sig) if isinstance(task.verus_sig, list) else (task.verus_sig or "")
+            _spec_imports = "\n".join(task.gold_imports) if task.gold_imports else "use vstd::prelude::*;"
+            _spec_prompt_msgs = [{"role": "system", "content": _SPEC_SP}] + _spec_fs + [
+                {"role": "user", "content": _SPEC_UT.format(
+                    nl_prompt=nl_prompt, entry_point=task.entry_point,
+                    fn_signature=_spec_sig, imports=_spec_imports)}
+            ]
+            _save_prompt(task_cache, "spec_prompt.txt", _spec_prompt_msgs)
             try:
                 generated_spec, spec_repair_history, spec_raw_trace = generate_verus_spec(
                     nl_prompt=nl_prompt,
