@@ -175,5 +175,5 @@ Includes short test with no letters. Includes long test with multiple upper and 
 TODO:6 Include long test with no letters.
 (long test)
 163. Got reward hack. Needed to make number generation small-biased.
-TODO:5 include test with same odd digit and test with both numbers > 10
-(edge case - empty)
+Good test suite. Includes mix of outputs, tests with one element >= 10, tests with one element == 0; and
+edge cases of same odd digit, both > 10, and (0, 1)

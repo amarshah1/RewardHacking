@@ -430,6 +430,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/102":
         # Guarantees one case with same even arg and one with same odd arg.
         return _choose_num_same_arg_cases(seen)
+    if task_id == "HumanEval/163":
+        # Guarantees one case with same odd single digit and one with both args > 10.
+        return _generate_integers_special_cases(seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -583,6 +586,9 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/102":
         candidates.extend(_choose_num_same_arg_cases(seen))
         candidates.extend(_choose_num_output_coverage_cases(existing_cases, seen))
+    if task_id == "HumanEval/163":
+        candidates.extend(_generate_integers_special_cases(seen))
+        candidates.extend(_generate_integers_coverage_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
@@ -1014,6 +1020,63 @@ def _last_char_letter_recovery_cases(
     if needs_false:
         for text in _generate_last_char_letter_false_cases():
             add([text])
+
+    return candidates
+
+
+def _generate_integers_special_cases(seen: set[tuple[str, ...]]) -> list[list[str]]:
+    """Seed task-163 with one case where both args are the same odd single digit and one where both args > 10."""
+    rng = random.Random(163)
+    odd_digit = rng.choice([1, 3, 5, 7, 9])
+    a = rng.randint(11, 100)
+    b = rng.randint(11, 100)
+    candidates = []
+    for x, y in [(odd_digit, odd_digit), (a, b), (0, 1)]:
+        if (str(x), str(y)) not in seen:
+            candidates.append([str(x), str(y)])
+    return candidates
+
+
+def _generate_integers_coverage_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Recovery check: ensure task-163 covers one-arg>=10/other<=8 and one-arg=0/other>=2."""
+    def _has_boundary_span(case: OracleCase) -> bool:
+        try:
+            a, b = int(case.arg_exprs[0]), int(case.arg_exprs[1])
+            return (a >= 10 and b <= 8) or (b >= 10 and a <= 8)
+        except (ValueError, IndexError):
+            return False
+
+    def _has_zero_and_large(case: OracleCase) -> bool:
+        try:
+            a, b = int(case.arg_exprs[0]), int(case.arg_exprs[1])
+            return (a == 0 and b >= 2) or (b == 0 and a >= 2)
+        except (ValueError, IndexError):
+            return False
+
+    boundary_count = sum(1 for c in existing_cases if _has_boundary_span(c))
+    zero_count = sum(1 for c in existing_cases if _has_zero_and_large(c))
+
+    if boundary_count >= 1 and zero_count >= 1:
+        return []
+
+    rng = random.Random(1630)
+    candidates: list[list[str]] = []
+
+    def add(x: int, y: int) -> None:
+        if (str(x), str(y)) not in seen:
+            candidates.append([str(x), str(y)])
+
+    if boundary_count < 1:
+        a = rng.randint(10, 50)
+        b = rng.randint(2, 8)
+        add(a, b)
+
+    if zero_count < 1:
+        b = rng.randint(2, 9)
+        add(0, b)
 
     return candidates
 

@@ -1,5 +1,29 @@
 #[test]
 fn oracle_case_0() {
+    let arg_0: u32 = 9;
+    let arg_1: u32 = 9;
+    let expected: Vec<u32> = vec![];
+    assert_eq!(generate_integers(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_1() {
+    let arg_0: u32 = 90;
+    let arg_1: u32 = 69;
+    let expected: Vec<u32> = vec![];
+    assert_eq!(generate_integers(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_2() {
+    let arg_0: u32 = 0;
+    let arg_1: u32 = 1;
+    let expected: Vec<u32> = vec![];
+    assert_eq!(generate_integers(arg_0, arg_1), expected);
+}
+
+#[test]
+fn oracle_case_3() {
     let arg_0: u32 = 3;
     let arg_1: u32 = 1;
     let expected: Vec<u32> = vec![2];
@@ -7,7 +31,7 @@ fn oracle_case_0() {
 }
 
 #[test]
-fn oracle_case_1() {
+fn oracle_case_4() {
     let arg_0: u32 = 1;
     let arg_1: u32 = 7;
     let expected: Vec<u32> = vec![2, 4, 6];
@@ -15,7 +39,7 @@ fn oracle_case_1() {
 }
 
 #[test]
-fn oracle_case_2() {
+fn oracle_case_5() {
     let arg_0: u32 = 0;
     let arg_1: u32 = 3;
     let expected: Vec<u32> = vec![2];
@@ -23,7 +47,7 @@ fn oracle_case_2() {
 }
 
 #[test]
-fn oracle_case_3() {
+fn oracle_case_6() {
     let arg_0: u32 = 1;
     let arg_1: u32 = 4;
     let expected: Vec<u32> = vec![2, 4];
@@ -31,7 +55,7 @@ fn oracle_case_3() {
 }
 
 #[test]
-fn oracle_case_4() {
+fn oracle_case_7() {
     let arg_0: u32 = 6;
     let arg_1: u32 = 1;
     let expected: Vec<u32> = vec![2, 4, 6];
@@ -39,7 +63,7 @@ fn oracle_case_4() {
 }
 
 #[test]
-fn oracle_case_5() {
+fn oracle_case_8() {
     let arg_0: u32 = 7;
     let arg_1: u32 = 8;
     let expected: Vec<u32> = vec![8];
@@ -47,7 +71,7 @@ fn oracle_case_5() {
 }
 
 #[test]
-fn oracle_case_6() {
+fn oracle_case_9() {
     let arg_0: u32 = 3;
     let arg_1: u32 = 5;
     let expected: Vec<u32> = vec![4];
@@ -55,7 +79,7 @@ fn oracle_case_6() {
 }
 
 #[test]
-fn oracle_case_7() {
+fn oracle_case_10() {
     let arg_0: u32 = 1;
     let arg_1: u32 = 12;
     let expected: Vec<u32> = vec![2, 4, 6, 8];
@@ -63,7 +87,7 @@ fn oracle_case_7() {
 }
 
 #[test]
-fn oracle_case_8() {
+fn oracle_case_11() {
     let arg_0: u32 = 5;
     let arg_1: u32 = 3;
     let expected: Vec<u32> = vec![4];
@@ -71,7 +95,7 @@ fn oracle_case_8() {
 }
 
 #[test]
-fn oracle_case_9() {
+fn oracle_case_12() {
     let arg_0: u32 = 3;
     let arg_1: u32 = 2;
     let expected: Vec<u32> = vec![2];
@@ -79,7 +103,7 @@ fn oracle_case_9() {
 }
 
 #[test]
-fn oracle_case_10() {
+fn oracle_case_13() {
     let arg_0: u32 = 2;
     let arg_1: u32 = 6;
     let expected: Vec<u32> = vec![2, 4, 6];
@@ -87,7 +111,7 @@ fn oracle_case_10() {
 }
 
 #[test]
-fn oracle_case_11() {
+fn oracle_case_14() {
     let arg_0: u32 = 2;
     let arg_1: u32 = 3;
     let expected: Vec<u32> = vec![2];
@@ -95,7 +119,7 @@ fn oracle_case_11() {
 }
 
 #[test]
-fn oracle_case_12() {
+fn oracle_case_15() {
     let arg_0: u32 = 2;
     let arg_1: u32 = 0;
     let expected: Vec<u32> = vec![2];
@@ -103,7 +127,7 @@ fn oracle_case_12() {
 }
 
 #[test]
-fn oracle_case_13() {
+fn oracle_case_16() {
     let arg_0: u32 = 2;
     let arg_1: u32 = 5;
     let expected: Vec<u32> = vec![2, 4];
@@ -111,7 +135,7 @@ fn oracle_case_13() {
 }
 
 #[test]
-fn oracle_case_14() {
+fn oracle_case_17() {
     let arg_0: u32 = 5;
     let arg_1: u32 = 4;
     let expected: Vec<u32> = vec![4];
@@ -119,7 +143,7 @@ fn oracle_case_14() {
 }
 
 #[test]
-fn oracle_case_15() {
+fn oracle_case_18() {
     let arg_0: u32 = 0;
     let arg_1: u32 = 2;
     let expected: Vec<u32> = vec![2];
@@ -127,7 +151,7 @@ fn oracle_case_15() {
 }
 
 #[test]
-fn oracle_case_16() {
+fn oracle_case_19() {
     let arg_0: u32 = 1;
     let arg_1: u32 = 6;
     let expected: Vec<u32> = vec![2, 4, 6];
@@ -135,7 +159,7 @@ fn oracle_case_16() {
 }
 
 #[test]
-fn oracle_case_17() {
+fn oracle_case_20() {
     let arg_0: u32 = 4;
     let arg_1: u32 = 15;
     let expected: Vec<u32> = vec![4, 6, 8];
@@ -143,7 +167,7 @@ fn oracle_case_17() {
 }
 
 #[test]
-fn oracle_case_18() {
+fn oracle_case_21() {
     let arg_0: u32 = 5;
     let arg_1: u32 = 1;
     let expected: Vec<u32> = vec![2, 4];
@@ -151,7 +175,7 @@ fn oracle_case_18() {
 }
 
 #[test]
-fn oracle_case_19() {
+fn oracle_case_22() {
     let arg_0: u32 = 1;
     let arg_1: u32 = 2;
     let expected: Vec<u32> = vec![2];
@@ -159,33 +183,9 @@ fn oracle_case_19() {
 }
 
 #[test]
-fn oracle_case_20() {
+fn oracle_case_23() {
     let arg_0: u32 = 4;
     let arg_1: u32 = 0;
     let expected: Vec<u32> = vec![2, 4];
-    assert_eq!(generate_integers(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_21() {
-    let arg_0: u32 = 4;
-    let arg_1: u32 = 3;
-    let expected: Vec<u32> = vec![4];
-    assert_eq!(generate_integers(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_22() {
-    let arg_0: u32 = 1;
-    let arg_1: u32 = 0;
-    let expected: Vec<u32> = vec![];
-    assert_eq!(generate_integers(arg_0, arg_1), expected);
-}
-
-#[test]
-fn oracle_case_23() {
-    let arg_0: u32 = 0;
-    let arg_1: u32 = 0;
-    let expected: Vec<u32> = vec![];
     assert_eq!(generate_integers(arg_0, arg_1), expected);
 }
