@@ -114,9 +114,8 @@ Good test suite. Includes vectors of length 0, 1, and longer ones.
 73. Got reward hack.
 Good test suite. Outputs include 0 and >10 with some long inputs.
 74. Both fail.
+Good test suite. Includes empty lists, both cases of returning first or second arg, and non-identical inputs with the same number of chars.
 RECOVERY: Make sure we include empty lists, have both cases of returning first or second arg
-TODO:3 include case where they compare as equal but are not identical
-(coverage - duplicate-ish)
 75. Got reward hack in past, currently both fail.
 Good test suite. Includes 4 inputs which have one larger prime (>20) and 4 inputs which have 4 primes.
 76. Both fail.
