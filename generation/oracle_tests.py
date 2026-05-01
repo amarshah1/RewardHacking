@@ -424,6 +424,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/74":
         # Guarantees cases where both lists have the same total char count, testing tie-breaking.
         return _total_match_equal_length_cases(seen)
+    if task_id == "HumanEval/25":
+        # Guarantees inputs 169 (13^2) and 143 (11*13).
+        return _required_u32_cases(seen, [169, 143])
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -572,6 +575,8 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/74":
         candidates.extend(_total_match_equal_length_cases(seen))
         candidates.extend(_total_match_coverage_cases(existing_cases, seen))
+    if task_id == "HumanEval/25":
+        candidates.extend(_required_u32_cases(seen, [169, 143]))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":

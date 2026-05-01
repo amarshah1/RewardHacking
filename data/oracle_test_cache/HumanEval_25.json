@@ -9,6 +9,18 @@
   "cases": [
     {
       "arg_exprs": [
+        "169"
+      ],
+      "expected_expr": "vec![13, 13]"
+    },
+    {
+      "arg_exprs": [
+        "143"
+      ],
+      "expected_expr": "vec![11, 13]"
+    },
+    {
+      "arg_exprs": [
         "4"
       ],
       "expected_expr": "vec![2, 2]"
@@ -138,18 +150,6 @@
         "146"
       ],
       "expected_expr": "vec![2, 73]"
-    },
-    {
-      "arg_exprs": [
-        "138"
-      ],
-      "expected_expr": "vec![2, 3, 23]"
-    },
-    {
-      "arg_exprs": [
-        "84"
-      ],
-      "expected_expr": "vec![2, 2, 3, 7]"
     }
   ]
 }
