@@ -175,10 +175,7 @@ Good test suite. Includes 18 tests where return inputs have at least one 0.
 157. Both fail. 
 Good test suite. We generate both large Pythagorean triples for true and large false cases.
 159. Both fail
-Includes tests with arg1 > arg2 and arg1 < arg2.
-RECOVERY: Make sure we include some cases where arg1 > arg2 and arg1 < arg2 and arg1 == arg2
-TODO:4 Include test with arg1 == arg2.
-(edge case - equality)
+Good test suite. Includes tests with arg1 > arg2, arg1 < arg2, and arg1 == arg2.
 161. Got reward hack. Needed to randomly sample in alphabet number range and add that to some of the test cases.
 Includes short test with no letters. Includes long test with multiple upper and lowercase.
 TODO:6 Include long test with no letters.

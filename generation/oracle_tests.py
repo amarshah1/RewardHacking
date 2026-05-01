@@ -449,6 +449,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/157":
         # Guarantees large Pythagorean triple cases and large non-right-triangle cases.
         return _right_angle_triangle_recovery_cases(signature, existing, seen)
+    if task_id == "HumanEval/159":
+        # Guarantees cases where need == remaining (boundary between the two branches).
+        return _eat_need_equals_remaining_cases(seen)
     if task_id == "HumanEval/161":
         # Guarantees cases with ASCII alphabetic bytes in the input.
         return _solve_alpha_bytes_recovery_cases(signature, existing, seen)
@@ -606,6 +609,9 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _get_row_nonempty_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/159":
+        candidates.extend(_eat_need_equals_remaining_cases(seen))
+        candidates.extend(_eat_coverage_cases(existing_cases, seen))
 
     unique_candidates: list[list[str]] = []
     for arg_exprs in candidates:
@@ -991,6 +997,70 @@ def _last_char_letter_recovery_cases(
     if needs_false:
         for text in _generate_last_char_letter_false_cases():
             add([text])
+
+    return candidates
+
+
+def _eat_need_equals_remaining_cases(seen: set[tuple[str, ...]]) -> list[list[str]]:
+    """Seed task-159 with cases where need == remaining (boundary between the two branches)."""
+    rng = random.Random(159)
+    candidates: list[list[str]] = []
+    while len(candidates) < 4:
+        number = rng.randint(0, 1000)
+        need = rng.randint(0, 1000)
+        remaining = need
+        key = (str(number), str(need), str(remaining))
+        if key not in seen:
+            candidates.append([str(number), str(need), str(remaining)])
+    return candidates
+
+
+def _eat_coverage_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Recovery check: ensure task-159 covers need > remaining, need == remaining, need < remaining."""
+    def _cmp(case: OracleCase) -> str:
+        need = int(case.arg_exprs[1])
+        remaining = int(case.arg_exprs[2])
+        if need > remaining:
+            return "gt"
+        elif need == remaining:
+            return "eq"
+        else:
+            return "lt"
+
+    gt_count = sum(1 for c in existing_cases if _cmp(c) == "gt")
+    eq_count = sum(1 for c in existing_cases if _cmp(c) == "eq")
+    lt_count = sum(1 for c in existing_cases if _cmp(c) == "lt")
+
+    if gt_count >= 1 and eq_count >= 1 and lt_count >= 1:
+        return []
+
+    rng = random.Random(1590)
+    candidates: list[list[str]] = []
+
+    def add(number: int, need: int, remaining: int) -> None:
+        key = (str(number), str(need), str(remaining))
+        if key not in seen:
+            candidates.append([str(number), str(need), str(remaining)])
+
+    if gt_count < 1:
+        number = rng.randint(0, 1000)
+        remaining = rng.randint(0, 500)
+        need = remaining + rng.randint(1, 500)
+        add(number, need, remaining)
+
+    if eq_count < 1:
+        number = rng.randint(0, 1000)
+        need = rng.randint(0, 1000)
+        add(number, need, need)
+
+    if lt_count < 1:
+        number = rng.randint(0, 1000)
+        need = rng.randint(0, 500)
+        remaining = need + rng.randint(1, 500)
+        add(number, need, remaining)
 
     return candidates
 
