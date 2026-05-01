@@ -1995,12 +1995,12 @@ ALL_EXAMPLES = [_ROLLING_MAX, _BELOW_ZERO, _SUM_PRODUCT, _HAS_CLOSE_ELEMENTS, _I
 REWARD_HACK_EXAMPLES = [_ROLLING_MAX, _BELOW_ZERO, _SUM_PRODUCT, _HAS_CLOSE_ELEMENTS, _INTERSPERSE]
 
 
-def load_verus_examples_from_gold(tasks_dir: str = "human-eval-verus/tasks", max_id: int = 20) -> list[dict]:
+def load_verus_examples_from_gold(tasks_dir: str = "human-eval-verus/tasks", max_id: int = 20) -> list[tuple[int, dict]]:
     """Load Verus few-shot examples dynamically from gold HumanEval-Verus files.
 
-    Returns examples sorted by task ID for all tasks with gold Verus implementations
-    in the range [0, max_id). Each example has: nl_prompt, entry_point, fn_signature,
-    verus_sig, verus_spec, verus_full, and gold_imports.
+    Returns (task_num, example) pairs sorted by verus_full length (shortest first).
+    When n_few_shot is used, the shortest N examples become few-shot and the rest
+    become test tasks.
 
     The 5 handcrafted examples (IDs 0, 3, 5, 8, 9) are returned from ALL_EXAMPLES
     to preserve their extra fields (reward_hack_*, rust_*, etc.).
@@ -2026,7 +2026,9 @@ def load_verus_examples_from_gold(tasks_dir: str = "human-eval-verus/tasks", max
             continue
 
         if num in handcrafted_ids:
-            examples.append((num, handcrafted_map[num]))
+            ex = handcrafted_map[num]
+            vlen = len(ex.get("verus_full", ""))
+            examples.append((num, ex, vlen))
             continue
 
         verus_full = t.verus_code.strip()
@@ -2041,29 +2043,52 @@ def load_verus_examples_from_gold(tasks_dir: str = "human-eval-verus/tasks", max
             "verus_full": verus_full,
             "gold_imports": t.gold_imports,
         }
-        examples.append((num, ex))
+        examples.append((num, ex, len(verus_full)))
 
-    examples.sort(key=lambda x: x[0])
-    return [ex for _, ex in examples]
+    # Sort by length of verus_full (shortest first)
+    examples.sort(key=lambda x: x[2])
+    return [(num, ex) for num, ex, _ in examples]
 
 
 # Cached result — loaded once on first use
-_VERUS_EXAMPLES_CACHE: list[dict] | None = None
+_VERUS_EXAMPLES_CACHE: list[tuple[int, dict]] | None = None
 
 
-def get_verus_examples(tasks_dir: str = "human-eval-verus/tasks", max_id: int = 20) -> list[dict]:
-    """Get Verus few-shot examples (cached). Includes all gold tasks in [0, max_id)."""
+def get_verus_examples_with_ids(tasks_dir: str = "human-eval-verus/tasks", max_id: int = 20) -> list[tuple[int, dict]]:
+    """Get (task_num, example) pairs sorted by length (cached)."""
     global _VERUS_EXAMPLES_CACHE
     if _VERUS_EXAMPLES_CACHE is None:
         _VERUS_EXAMPLES_CACHE = load_verus_examples_from_gold(tasks_dir, max_id)
     return _VERUS_EXAMPLES_CACHE
 
 
-# Task IDs used as few-shot (skip these during evaluation)
-# Updated to cover 0-19 to match the expanded few-shot set
-FEW_SHOT_TASK_IDS = {
-    f"HumanEval/{i}" for i in range(20)
-}
+def get_verus_examples(tasks_dir: str = "human-eval-verus/tasks", max_id: int = 20) -> list[dict]:
+    """Get Verus few-shot examples sorted by length (shortest first)."""
+    return [ex for _, ex in get_verus_examples_with_ids(tasks_dir, max_id)]
+
+
+def get_few_shot_task_ids(n_few_shot: int | None = None) -> set[str]:
+    """Get the task IDs used as few-shot examples.
+
+    When n_few_shot is specified, returns the IDs of the n shortest examples
+    (by verus_full length). Tasks without gold Verus in 0-19 are always skipped.
+    """
+    all_pairs = get_verus_examples_with_ids()
+
+    # Always skip tasks 0-19 that have no gold Verus impl (2, 7, 10, 16, 19)
+    no_impl_ids = {f"HumanEval/{i}" for i in range(20)} - {f"HumanEval/{num}" for num, _ in all_pairs}
+
+    if n_few_shot is None or n_few_shot >= len(all_pairs):
+        # Use all available
+        return {f"HumanEval/{num}" for num, _ in all_pairs} | no_impl_ids
+
+    # Use the n shortest
+    selected = all_pairs[:n_few_shot]
+    return {f"HumanEval/{num}" for num, _ in selected} | no_impl_ids
+
+
+# Default: skip all 0-19 (overridden by pipeline using get_few_shot_task_ids)
+FEW_SHOT_TASK_IDS = {f"HumanEval/{i}" for i in range(20)}
 
 
 # ---------------------------------------------------------------------------

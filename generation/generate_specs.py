@@ -6,16 +6,18 @@ from generation.generate_code import _VERUS_RULES
 from generation.few_shot_examples import build_few_shot_messages
 from evaluation.run_verus import run_verus
 
-SYSTEM_PROMPT = f"""You are an expert in Verus, a formal verification tool for Rust. Given a natural language description of a coding task, generate a Verus function signature with formal pre-conditions (requires) and post-conditions (ensures).
+SYSTEM_PROMPT = f"""You are an expert in Verus, a formal verification tool for Rust. Given a natural language description of a coding task, generate a Verus specification with formal pre-conditions (requires) and post-conditions (ensures).
 
 Requirements:
 - Use Verus syntax: the function must be inside a verus! {{ }} block
 - Include `requires` clauses for pre-conditions
 - Include `ensures` clauses for post-conditions that fully specify the function behavior
 - Use `spec fn` for any helper specification functions needed
+- You will be given one or more function signatures. The LAST function signature is the main task function. Any earlier signatures are helper functions
+- If you use helper functions, you MUST write their complete implementation with proof annotations
+- Only the LAST function (the main task function) body should be `todo!()`
 - Include the imports listed in the user prompt at the top of your code
 - Include `fn main() {{}}` at the end, OUTSIDE the verus! block
-- The function body should be left empty or contain a placeholder `todo!()` — only write the spec
 {_VERUS_RULES}
 - First briefly explain your reasoning, then output the Verus code in a ```rust``` block
 
@@ -24,13 +26,13 @@ Requirements:
 USER_TEMPLATE = """Task description:
 {nl_prompt}
 
-Function signature (you MUST use this exact signature):
+Function signatures (the LAST one is the main function to specify; earlier ones are helpers you may implement if needed):
 {fn_signature}
 
 Available imports (include these at the top of your code):
 {imports}
 
-Generate a Verus specification for this function. Use the exact function signature above. Add requires/ensures clauses and any helper spec functions needed. Include the imports listed above. The function body should be `todo!()`. Output only the Verus code."""
+Generate a Verus specification for the main (last) function. Use the exact signatures above. Add requires/ensures clauses and any helper spec functions needed. If you use any of the helper function signatures, write their complete implementation with proof annotations. Only the last function body should be `todo!()`. Output only the Verus code."""
 
 
 REPAIR_SPEC_USER = """Running Verus on your specification gave this error:
@@ -173,11 +175,12 @@ def generate_verus_spec(
     return spec, repair_history, raw_output
 
 
-def _strip_impl_bodies(code: str) -> str:
-    """Replace exec function bodies with todo!(), keeping spec fn bodies intact.
+def _strip_impl_bodies(code: str, only_last: bool = True) -> str:
+    """Replace exec function bodies with todo!(), keeping spec fn and helper fn bodies intact.
 
-    If the model generates a full implementation instead of just the spec,
-    this strips the implementation bodies so only the specification remains.
+    If only_last is True (default), only strips the body of the LAST exec function
+    (the main task function). Helper exec fn bodies are preserved — they should be
+    fully implemented by the spec generator.
 
     The key challenge: ensures/requires clauses can contain `{` (e.g.,
     `if x > 0 { ... }`). The fn body `{` is identified as a line where
@@ -186,17 +189,35 @@ def _strip_impl_bodies(code: str) -> str:
     """
     import re
     lines = code.split("\n")
+
+    # First pass: count total exec fns so we can identify the last one
+    total_exec_fns = 0
+    for line in lines:
+        s = line.strip()
+        if (re.match(r'\s*(pub\s+)?fn\s+\w+\s*[\(<]', s) and
+            not re.match(r'\s*(pub\s+)?(open\s+)?spec\s+fn', s) and
+            not re.match(r'\s*(pub\s+)?proof\s+fn', s) and
+            'fn main' not in s):
+            total_exec_fns += 1
+
     result = []
+    exec_fn_count = 0
     i = 0
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
 
         # Detect exec fn definitions (not spec fn)
-        if re.match(r'\s*(pub\s+)?fn\s+\w+\s*[\(<]', stripped) and \
-           not re.match(r'\s*(pub\s+)?(open\s+)?spec\s+fn', stripped) and \
-           not re.match(r'\s*(pub\s+)?proof\s+fn', stripped) and \
-           'fn main' not in stripped:
+        is_exec_fn = (
+            re.match(r'\s*(pub\s+)?fn\s+\w+\s*[\(<]', stripped) and
+            not re.match(r'\s*(pub\s+)?(open\s+)?spec\s+fn', stripped) and
+            not re.match(r'\s*(pub\s+)?proof\s+fn', stripped) and
+            'fn main' not in stripped
+        )
+        if is_exec_fn:
+            exec_fn_count += 1
+        # When only_last, only strip the last exec fn body
+        if is_exec_fn and (not only_last or exec_fn_count == total_exec_fns):
             fn_indent = len(line) - len(line.lstrip())
 
             # Walk forward through the signature + ensures/requires to find
