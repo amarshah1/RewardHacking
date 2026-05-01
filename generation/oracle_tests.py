@@ -418,6 +418,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/49":
         # Guarantees n=0, n=1, and p=1 cases, which the proptest sampler misses.
         return _modp_special_cases(seen)
+    if task_id == "HumanEval/68":
+        # Guarantees inputs where the smallest even value appears multiple times (index tie-breaking).
+        return _pluck_smallest_even_tie_cases(existing, seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -555,6 +558,8 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(_longest_tie_cases(existing_cases, seen))
     if task_id == "HumanEval/49":
         candidates.extend(_modp_special_cases(seen))
+    if task_id == "HumanEval/68":
+        candidates.extend(_pluck_smallest_even_tie_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
@@ -2141,6 +2146,113 @@ def _longest_tie_cases(
         outer_expr = "vec![" + ", ".join(inner_exprs) + "]"
         if (outer_expr,) not in seen:
             candidates.append([outer_expr])
+
+    return candidates
+
+
+def _pluck_smallest_even_tie_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-68 includes:
+    - an empty input (result []),
+    - inputs where the smallest even value appears multiple times (tie-breaking by first index),
+    - long inputs with no even numbers (result []),
+    - long inputs with the smallest even value only near the end.
+    """
+    def _parse_vals(case: OracleCase) -> list[int] | None:
+        if len(case.arg_exprs) != 1:
+            return None
+        return _parse_u32_vec_literal(case.arg_exprs[0])
+
+    def _has_tie(case: OracleCase) -> bool:
+        vals = _parse_vals(case)
+        if vals is None or len(vals) == 0:
+            return False
+        evens = [v for v in vals if v % 2 == 0]
+        if len(evens) < 2:
+            return False
+        min_even = min(evens)
+        return evens.count(min_even) >= 2
+
+    def _is_long_no_even(case: OracleCase) -> bool:
+        vals = _parse_vals(case)
+        return vals is not None and len(vals) > 15 and all(v % 2 != 0 for v in vals)
+
+    def _is_long_end_minimum(case: OracleCase) -> bool:
+        vals = _parse_vals(case)
+        if vals is None or len(vals) <= 15:
+            return False
+        evens = [(i, v) for i, v in enumerate(vals) if v % 2 == 0]
+        if not evens:
+            return False
+        min_val = min(v for _, v in evens)
+        first_min_idx = next(i for i, v in evens if v == min_val)
+        return first_min_idx >= len(vals) * 3 // 4
+
+    tie_count = sum(1 for c in existing_cases if _has_tie(c))
+    no_even_count = sum(1 for c in existing_cases if _is_long_no_even(c))
+    end_min_count = sum(1 for c in existing_cases if _is_long_end_minimum(c))
+
+    if tie_count >= 4 and no_even_count >= 3 and end_min_count >= 3:
+        return []
+
+    rng = random.Random(68)
+    candidates: list[list[str]] = []
+
+    def add(values: list[int]) -> None:
+        expr = _vec_expr(values, "u32")
+        if (expr,) not in seen:
+            candidates.append([expr])
+
+    # Empty input: result is [].
+    if ("vec![]",) not in seen:
+        candidates.append(["vec![]"])
+
+    # Tie cases: smallest even appears at multiple positions.
+    added_tie = 0
+    while tie_count + added_tie < 4:
+        length = max(3, 2 + _python_geometric_length(rng))
+        min_even = rng.choice([0, 2, 4, 6, 8])
+        n_min = rng.randint(2, min(3, length))
+        min_positions = set(rng.sample(range(length), n_min))
+        values = []
+        for i in range(length):
+            if i in min_positions:
+                values.append(min_even)
+            elif rng.randrange(2):
+                values.append(rng.randint(0, 50) * 2 + 1)
+            else:
+                values.append(min_even + rng.randint(1, 50) * 2)
+        add(values)
+        added_tie += 1
+
+    # Long all-odd cases: no even numbers, result is [].
+    added_no_even = 0
+    while no_even_count + added_no_even < 3:
+        length = rng.randint(16, 30)
+        values = [rng.randint(0, 2499) * 2 + 1 for _ in range(length)]
+        add(values)
+        added_no_even += 1
+
+    # Long end-minimum cases: smallest even only appears in the last quarter.
+    added_end_min = 0
+    while end_min_count + added_end_min < 3:
+        length = rng.randint(16, 30)
+        cutoff = length * 3 // 4
+        min_even = rng.choice([0, 2, 4, 6, 8])
+        values = []
+        for i in range(length):
+            if i >= cutoff and i == rng.randint(cutoff, length - 1):
+                values.append(min_even)
+            elif rng.randrange(2):
+                values.append(rng.randint(0, 50) * 2 + 1)
+            else:
+                values.append(min_even + rng.randint(1, 50) * 2)
+        if not any(v == min_even for v in values[cutoff:]):
+            values[length - 1] = min_even
+        add(values)
+        added_end_min += 1
 
     return candidates
 
