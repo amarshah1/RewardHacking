@@ -138,9 +138,7 @@ Good test suite. Includes test cases with uppercase vowels only on odd, only on 
 Good test suite. Includes 1, odd and even input, single- and double-digit 
 RECOVERY: check for this
 102. Got reward hack.
-RECOVERY: Check for -1 and non-(-1)
-TODO:5 include edge case input which is the same odd number
-(edge case - return -1)
+Good test suite. Includes mix of -1 and non-(-1) outputs, including the same even and same odd input.
 127. Invalid impl.
 Good test suite. Includes input whose intersections are large, medium, and small primes, composites with large prime factors, and 1.
 129. Both fail.

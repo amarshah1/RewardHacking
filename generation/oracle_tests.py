@@ -427,6 +427,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/25":
         # Guarantees inputs 169 (13^2) and 143 (11*13).
         return _required_u32_cases(seen, [169, 143])
+    if task_id == "HumanEval/102":
+        # Guarantees one case with same even arg and one with same odd arg.
+        return _choose_num_same_arg_cases(seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -577,6 +580,9 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(_total_match_coverage_cases(existing_cases, seen))
     if task_id == "HumanEval/25":
         candidates.extend(_required_u32_cases(seen, [169, 143]))
+    if task_id == "HumanEval/102":
+        candidates.extend(_choose_num_same_arg_cases(seen))
+        candidates.extend(_choose_num_output_coverage_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
@@ -1008,6 +1014,47 @@ def _last_char_letter_recovery_cases(
     if needs_false:
         for text in _generate_last_char_letter_false_cases():
             add([text])
+
+    return candidates
+
+
+def _choose_num_same_arg_cases(seen: set[tuple[str, ...]]) -> list[list[str]]:
+    """Seed task-102 with one case where both args are the same even number and one where both are the same odd number."""
+    rng = random.Random(102)
+    even = rng.randint(1, 500) * 2
+    odd = rng.randint(0, 499) * 2 + 1
+    return [[str(v), str(v)] for v in [even, odd] if (str(v), str(v)) not in seen]
+
+
+def _choose_num_output_coverage_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Recovery check: ensure task-102 covers outputs of -1 and non-(-1)."""
+    neg_one_count = sum(1 for c in existing_cases if c.expected_expr.strip() == "-1")
+    non_neg_one_count = sum(1 for c in existing_cases if c.expected_expr.strip() != "-1")
+    if neg_one_count >= 1 and non_neg_one_count >= 1:
+        return []
+
+    rng = random.Random(1020)
+    candidates: list[list[str]] = []
+
+    def add(x: int, y: int) -> None:
+        key = (str(x), str(y))
+        if key not in seen:
+            candidates.append([str(x), str(y)])
+
+    if neg_one_count < 1:
+        # x > y always gives -1
+        x = rng.randint(100, 500)
+        y = rng.randint(1, x - 1)
+        add(x, y)
+
+    if non_neg_one_count < 1:
+        # y even and y >= x gives y
+        y = rng.randint(1, 500) * 2
+        x = rng.randint(1, y)
+        add(x, y)
 
     return candidates
 
