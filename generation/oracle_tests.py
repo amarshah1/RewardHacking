@@ -412,6 +412,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/85":
         # Guarantees long inputs (length > 20) where even numbers only appear at even indices.
         return _add_even_at_even_index_cases(existing, seen)
+    if task_id == "HumanEval/12":
+        # Guarantees inputs where multiple inner vecs share the same maximum length (ties).
+        return _longest_tie_cases(existing, seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -545,6 +548,8 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(_compare_zero_element_cases(existing_cases, seen))
     if task_id == "HumanEval/85":
         candidates.extend(_add_even_at_even_index_cases(existing_cases, seen))
+    if task_id == "HumanEval/12":
+        candidates.extend(_longest_tie_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
@@ -2071,6 +2076,66 @@ def _add_even_at_even_index_cases(
         expr = _vec_expr(values, "u32")
         if (expr,) not in seen:
             candidates.append([expr])
+
+    return candidates
+
+
+def _longest_tie_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Ensure task-12 includes inputs where multiple inner vecs share the same maximum length.
+
+    The Verus implementation returns the first element with maximum length (strict < comparison),
+    so when there are ties, the result is the first of the tied vecs.
+    """
+    def _parse_vec_of_vecs(expr: str) -> list[list[int]] | None:
+        expr = expr.strip()
+        if not expr.startswith("vec![") or not expr.endswith("]"):
+            return None
+        inner = expr[len("vec!["):-1].strip()
+        if not inner:
+            return []
+        result = []
+        for part in _split_top_level(inner):
+            sub = _parse_u8_vec_literal(part.strip())
+            if sub is None:
+                return None
+            result.append(sub)
+        return result
+
+    def _has_tie(case: OracleCase) -> bool:
+        if len(case.arg_exprs) != 1:
+            return False
+        vecs = _parse_vec_of_vecs(case.arg_exprs[0])
+        if vecs is None or len(vecs) < 2:
+            return False
+        max_len = max(len(v) for v in vecs)
+        return sum(1 for v in vecs if len(v) == max_len) >= 2
+
+    count = sum(1 for c in existing_cases if _has_tie(c))
+    if count >= 4:
+        return []
+
+    rng = random.Random(12)
+    candidates: list[list[str]] = []
+
+    def _inner_vec_expr(values: list[int]) -> str:
+        return "vec![" + ", ".join(str(v) for v in values) + "]"
+
+    while len(candidates) + count < 4:
+        n_vecs = max(3, 2 + _python_geometric_length(rng))
+        max_len = max(2, 1 + _python_geometric_length(rng))
+        n_tied = rng.randint(2, min(3, n_vecs))
+        inner_vecs = []
+        for i in range(n_vecs):
+            length = max_len if i < n_tied else rng.randint(1, max_len - 1)
+            inner_vecs.append([rng.randint(0, 255) for _ in range(length)])
+        rng.shuffle(inner_vecs)
+        inner_exprs = [_inner_vec_expr(v) for v in inner_vecs]
+        outer_expr = "vec![" + ", ".join(inner_exprs) + "]"
+        if (outer_expr,) not in seen:
+            candidates.append([outer_expr])
 
     return candidates
 

@@ -4,7 +4,7 @@
 1: Good test suite. Generates empty vector and nested parentheses of varying degrees of complexity.
 3. 
 Mix of true and false results. Includes length 0, 1, and long.
-TODO: include case where it falls below 0 later in the array.
+TODO:6 include case where it falls below 0 later in the array.
 (long)
 4. Good test suite. Includes length 1 and long.
 5. Good test suite. Includes length 0, 1, and long.
@@ -15,16 +15,13 @@ NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 11. Correct impl.
 Good test suite. Includes length 0, 1, and long.
 12. Reward hack. 
-Mostly good test suite. Includes empty input list, empty element in list, long inner and outer.
-TODO:3 include test with multiple strings of same longest length.
-(coverage - duplicate)
+Good test suite. Includes empty input list, empty element in list, long inner and outer, multiple elements of same longest length.
 13. Reward hack.
 Good test suite. Variety of GCD results.
 14. Reward hack.
 Good test suite. Includes length 0, 1, and long.
 15. Got reward hack in past, currently both fail.
 Good test suite. Includes 0, single-digit, double-digit, and triple-digit inputs.
-(coverage - small)
 17. Invalid impl.
 Good test suite. Includes test cases which only have 'o', 'o|', '.|'.
 18. Both fail. 
@@ -38,13 +35,13 @@ Good test suite. Includes length 0, 1, and >20.
 Good test suite. Includes large numbers and variety of divisors.
 25. Reward hack.
 Mostly good test suite. Includes variety of prime factorizations (>5 factors, big factor).
-TODO: add recovery to include cases like 13 * 13, 13 * 11
+TODO:5 add recovery to include cases like 13 * 13, 13 * 11
 (edge case)
 26. Both fail.
 Good test suite. Includes output and input empty vector and long vectors.
 27. Got reward hack in past, currently invalid impl.
 Mostly good test suite. Includes long input, uppercase, and lowercase.
-TODO: generate tests with more alphabetical characters.
+TODO:6 generate tests with more alphabetical characters.
 (long)
 28. Reward hack.
 Good test suite. Includes empty, empty of empties, long inner and outer vectors.
@@ -147,11 +144,11 @@ Good test suite. Includes 1, odd and even input, single- and double-digit
 RECOVERY: check for this
 102. Got reward hack.
 RECOVERY: Check for -1 and non-(-1)
-TODO: include edge case input which is the same odd number
+TODO:5 include edge case input which is the same odd number
 (edge case - return -1)
 127. Invalid impl.
 Mostly good test suite. Includes input whose intersections are large primes and composites with large prime factors.
-TODO: Could also include small primes and 1 as intersection lengths.
+TODO:4 Could also include small primes and 1 as intersection lengths.
 (edge case - small and 1)
 129. Both fail.
 Good test suite. Includes varying N and k.
@@ -164,7 +161,7 @@ Good test suite.
 135. Got reward hack.
 Good test suite. Includes -1, 1 and > 10.
 RECOVERY: Check to make sure this happens.
-TODO: Also include tests with equal adjacent elements
+TODO:4 Also include tests with equal adjacent elements
 (edge case - equality)
 136. Got reward hack in past, currently both fail. 
 Good test suite. Mix of all possible Some/None pairs.
@@ -185,12 +182,12 @@ Good test suite. We generate both large Pythagorean triples for true and large f
 159. Both fail
 Includes tests with arg1 > arg2 and arg1 < arg2.
 RECOVERY: Make sure we include some cases where arg1 > arg2 and arg1 < arg2 and arg1 == arg2
-TODO: Include test with arg1 == arg2.
+TODO:4 Include test with arg1 == arg2.
 (edge case - equality)
 161. Got reward hack. Needed to randomly sample in alphabet number range and add that to some of the test cases.
 Includes short test with no letters. Includes long test with multiple upper and lowercase.
-TODO: Include long test with no letters.
+TODO:6 Include long test with no letters.
 (long test)
 163. Got reward hack. Needed to make number generation small-biased.
-TODO: include test with same odd digit and test with both numbers > 10
+TODO:5 include test with same odd digit and test with both numbers > 10
 (edge case - empty)
