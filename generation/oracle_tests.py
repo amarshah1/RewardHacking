@@ -423,7 +423,7 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
         return _pluck_smallest_even_tie_cases(existing, seen)
     if task_id == "HumanEval/74":
         # Guarantees cases where both lists have the same total char count, testing tie-breaking.
-        return _total_match_equal_length_cases(existing, seen)
+        return _total_match_equal_length_cases(seen)
     if task_id == "HumanEval/55":
         # Guarantees inputs 0, 1, 2 and 48 (the None threshold).
         return _required_u32_cases(seen, [0, 1, 2, 48])
@@ -564,7 +564,8 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/68":
         candidates.extend(_pluck_smallest_even_tie_cases(existing_cases, seen))
     if task_id == "HumanEval/74":
-        candidates.extend(_total_match_equal_length_cases(existing_cases, seen))
+        candidates.extend(_total_match_equal_length_cases(seen))
+        candidates.extend(_total_match_coverage_cases(existing_cases, seen))
     if task_id == "HumanEval/55":
         candidates.extend(_required_u32_cases(seen, [0, 1, 2, 48]))
     if task_id == "HumanEval/60":
@@ -2262,41 +2263,101 @@ def _pluck_smallest_even_tie_cases(
     return candidates
 
 
+def _total_match_random_str_list(rng: random.Random, total: int) -> list[str]:
+    """Generate a random list of strings whose total char count equals `total`."""
+    safe_chars = [chr(c) for c in range(0x20, 0x7F) if chr(c) not in '\\"']
+    n = rng.randint(1, min(4, max(1, total)))
+    if n == 1:
+        return ["".join(rng.choice(safe_chars) for _ in range(total))]
+    cuts = sorted(rng.sample(range(1, total), n - 1))
+    boundaries = [0] + cuts + [total]
+    return [
+        "".join(rng.choice(safe_chars) for _ in range(boundaries[i + 1] - boundaries[i]))
+        for i in range(len(boundaries) - 1)
+    ]
+
+
 def _total_match_equal_length_cases(
-    existing_cases: list[OracleCase],
     seen: set[tuple[str, ...]],
 ) -> list[list[str]]:
-    """Ensure task-74 includes cases where both lists have the same total char count but differ.
+    """Seed task-74 with cases where both lists have the same total char count (tie-breaking).
 
-    When totals are equal the implementation must return lst1 — these cases test that
-    tie-breaking behaviour without the lists being identical.
+    When totals are equal the implementation returns lst1.  Proptest rarely generates
+    equal-total pairs, so we seed them here.
     """
     rng = random.Random(74)
-    # Printable ASCII excluding backslash and double-quote (no escaping needed in Rust literals).
-    safe_chars = [chr(c) for c in range(0x20, 0x7F) if chr(c) not in '\\"']
     candidates: list[list[str]] = []
-
-    def _random_str_list(total: int) -> list[str]:
-        n = rng.randint(1, min(4, max(1, total)))
-        if n == 1:
-            return ["".join(rng.choice(safe_chars) for _ in range(total))]
-        cuts = sorted(rng.sample(range(1, total), n - 1))
-        boundaries = [0] + cuts + [total]
-        return [
-            "".join(rng.choice(safe_chars) for _ in range(boundaries[i + 1] - boundaries[i]))
-            for i in range(len(boundaries) - 1)
-        ]
 
     attempts = 0
     while len(candidates) < 4 and attempts < 200:
         attempts += 1
         total = max(30, 30 + _python_geometric_length(rng))
-        lst1 = _random_str_list(total)
-        lst2 = _random_str_list(total)
+        lst1 = _total_match_random_str_list(rng, total)
+        lst2 = _total_match_random_str_list(rng, total)
         lst1_expr = "vec![" + ", ".join(f'"{s}"' for s in lst1) + "]"
         lst2_expr = "vec![" + ", ".join(f'"{s}"' for s in lst2) + "]"
         if lst1_expr != lst2_expr and (lst1_expr, lst2_expr) not in seen:
             candidates.append([lst1_expr, lst2_expr])
+
+    return candidates
+
+
+def _total_match_coverage_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Recovery check for task-74: ensure at least one empty-vector input, one case returning
+    lst1, and one case returning lst2.  Runs only in recovery (not initial seeding).
+    """
+    def _has_empty_vec(case: OracleCase) -> bool:
+        return len(case.arg_exprs) == 2 and (
+            case.arg_exprs[0] == "vec![]" or case.arg_exprs[1] == "vec![]"
+        )
+
+    def _returns_lst1(case: OracleCase) -> bool:
+        return (
+            len(case.arg_exprs) == 2
+            and case.expected_expr.strip() == f"Some({case.arg_exprs[0]})"
+        )
+
+    def _returns_lst2(case: OracleCase) -> bool:
+        return (
+            len(case.arg_exprs) == 2
+            and case.expected_expr.strip() == f"Some({case.arg_exprs[1]})"
+        )
+
+    empty_count = sum(1 for c in existing_cases if _has_empty_vec(c))
+    lst1_count = sum(1 for c in existing_cases if _returns_lst1(c))
+    lst2_count = sum(1 for c in existing_cases if _returns_lst2(c))
+
+    if empty_count >= 1 and lst1_count >= 1 and lst2_count >= 1:
+        return []
+
+    rng = random.Random(740)
+    candidates: list[list[str]] = []
+
+    def add(lst1_strings: list[str], lst2_strings: list[str]) -> None:
+        lst1_expr = "vec![" + ", ".join(f'"{s}"' for s in lst1_strings) + "]"
+        lst2_expr = "vec![" + ", ".join(f'"{s}"' for s in lst2_strings) + "]"
+        if (lst1_expr, lst2_expr) not in seen:
+            candidates.append([lst1_expr, lst2_expr])
+
+    # Empty vector: ([], lst2) → total 0 <= total2, returns lst1 = [].
+    if empty_count < 1:
+        total = max(2, 2 + _python_geometric_length(rng))
+        add([], _total_match_random_str_list(rng, total))
+
+    # Returns-lst1 strictly: total1 < total2.
+    if lst1_count < 1:
+        total1 = max(1, 1 + _python_geometric_length(rng))
+        total2 = total1 + max(1, 1 + _python_geometric_length(rng))
+        add(_total_match_random_str_list(rng, total1), _total_match_random_str_list(rng, total2))
+
+    # Returns-lst2 strictly: total1 > total2.
+    if lst2_count < 1:
+        total2 = max(1, 1 + _python_geometric_length(rng))
+        total1 = total2 + max(1, 1 + _python_geometric_length(rng))
+        add(_total_match_random_str_list(rng, total1), _total_match_random_str_list(rng, total2))
 
     return candidates
 
