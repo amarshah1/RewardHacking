@@ -5,6 +5,7 @@
 3. 
 Mix of true and false results. Includes length 0, 1, and long.
 TODO: include case where it falls below 0 later in the array.
+(long)
 4. Good test suite. Includes length 1 and long.
 5. Good test suite. Includes length 0, 1, and long.
 6. Generally good test suite. All inputs only have '(', ')', and ' ' but some are balanced and some aren't.
@@ -15,13 +16,15 @@ NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 Good test suite. Includes length 0, 1, and long.
 12. Reward hack. 
 Mostly good test suite. Includes empty input list, empty element in list, long inner and outer.
-TODO: include test with multiple strings of same longest length.
+TODO:3 include test with multiple strings of same longest length.
+(coverage - duplicate)
 13. Reward hack.
 Good test suite. Variety of GCD results.
 14. Reward hack.
 Good test suite. Includes length 0, 1, and long.
 15. Got reward hack in past, currently both fail.
-TODO: test 0 and other single-digit values.
+TODO:3 test 0 and other single-digit values.
+(coverage - small)
 17. Invalid impl.
 Good test suite. Includes test cases which only have 'o', 'o|', '.|'.
 18. Both fail. 
@@ -36,11 +39,13 @@ Good test suite. Includes large numbers and variety of divisors.
 25. Reward hack.
 Mostly good test suite. Includes variety of prime factorizations (>5 factors, big factor).
 TODO: add recovery to include cases like 13 * 13, 13 * 11
+(edge case)
 26. Both fail.
 Good test suite. Includes output and input empty vector and long vectors.
 27. Got reward hack in past, currently invalid impl.
 Mostly good test suite. Includes long input, uppercase, and lowercase.
 TODO: generate tests with more alphabetical characters.
+(long)
 28. Reward hack.
 Good test suite. Includes empty, empty of empties, long inner and outer vectors.
 RECOVERY: check for this.
@@ -64,7 +69,8 @@ Good test suite. Includes large numbers.
 Good test suite. Includes both true cases with palindrome input and false seemingly-correct cases which are not a palindrome in the middle.
 Also includes non-ascii characters, which guards against testing by bytes rather than by characters.
 49. Invalid impl.
-TODO: Keep generating small numbers for the exponent but allow modulo to be larger.
+TODO:3 Keep generating small numbers for the exponent but allow modulo to be larger.
+(coverage - small)
 50. Got reward hack in past, currently both fail.
 Good test suite. Variety of lengths including 0, 1, and long.
 51. Both fail.
@@ -82,7 +88,7 @@ Good test suite. Includes 0, 1, 2, 48 (which returns None).
 56. Both fail.
 Generally good test suite. All inputs only have '<' and '>' but some are balanced and some aren't.
 Also includes a test with an equal number of '<' and '>' which is not balanced.
-NOTE: Could check to make sure we include this.
+RECOVERY: Could check to make sure we include this.
 NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 57. Got reward hack in past, currently both fail.
 Good test suite. Includes 3 long inputs which are monotonically increasing and 3 decreasing
@@ -93,7 +99,7 @@ Good test suite. Includes 0, 1, 2, 92682 (which returns None).
 61. Got reward hack in past, currently both fail.
 Generally good test suite. All inputs only have '(', ')', and ' ' but some are balanced and some aren't.
 Also includes a test with an equal number of '(' and ')' which is not balanced.
-NOTE: Could check to make sure we include this.
+RECOVERY: Could check to make sure we include this.
 NOTE: Could tweak it to include longer inputs but idk if that's necessary.
 62. Got reward hack in past, currently both fail.
 Good test suite. Includes inputs of length 0, 1, 2, 3, and longer than that. 
@@ -102,17 +108,20 @@ RECOVERY: Check for this
 Good test suite. Includes 0, 1, 2, 40 (which returns None).
 64. Got reward hack.
 Includes long and short tests with 'y' at the end.
-TODO: make sure it includes a mix of upper and lowercase vowels also. Also not sure about the use of `_random_ascii_text_char` - seems to unnecessarily restrict it.
+RECOVERY: make sure it includes a mix of upper and lowercase vowels also. Also not sure about the use of `_random_ascii_text_char` - seems to unnecessarily restrict it.
 66. Got reward hack. 
 Good test suite. Randomly generates multiple uppercase letters. Also explicitly includes empty string.
 68. Invalid impl
-TODO: Include tests with multiple the smallest even number, long vector with no even input, empty vector, long vector with smallest even value toward the end
+TODO:3 Include tests with multiple the smallest even number, long vector with no even input, empty vector, long vector with smallest even value toward the end
+(coverage - duplicate)
 70. Got reward hack.
 Good test suite. Includes vectors of length 0, 1, and longer ones.
 73. Got reward hack.
 Good test suite. Outputs include 0 and >10 with some long inputs.
 74. Both fail.
-TODO: Make sure we include empty lists, have both cases of returning first or second arg, and case where they compare as equal but are not identical
+RECOVERY: Make sure we include empty lists, have both cases of returning first or second arg
+TODO:3 include case where they compare as equal but are not identical
+(coverage - duplicate-ish)
 75. Got reward hack in past, currently both fail.
 Good test suite. Includes 4 inputs which have one larger prime (>20) and 4 inputs which have 4 primes.
 76. Both fail.
@@ -137,10 +146,13 @@ Good test suite. Includes test cases with uppercase vowels only on odd, only on 
 Good test suite. Includes 1, odd and even input, single- and double-digit 
 RECOVERY: check for this
 102. Got reward hack.
-TODO: Check for -1 and non-(-1), include edge case input which is the same odd number
+RECOVERY: Check for -1 and non-(-1)
+TODO: include edge case input which is the same odd number
+(edge case - return -1)
 127. Invalid impl.
 Mostly good test suite. Includes input whose intersections are large primes and composites with large prime factors.
 TODO: Could also include small primes and 1 as intersection lengths.
+(edge case - small and 1)
 129. Both fail.
 Good test suite. Includes varying N and k.
 130. Both fail.
@@ -153,6 +165,7 @@ Good test suite.
 Good test suite. Includes -1, 1 and > 10.
 RECOVERY: Check to make sure this happens.
 TODO: Also include tests with equal adjacent elements
+(edge case - equality)
 136. Got reward hack in past, currently both fail. 
 Good test suite. Mix of all possible Some/None pairs.
 RECOVERY: Does recovery already test for this when you return a pair of Options?
@@ -162,16 +175,23 @@ Good test suite. Mix of true and false results. Recovery should already test for
 Good test suite. Want small numbers here bc factorial, includes 0 and 1 and Some and None results.
 RECOVERY: Check to make sure this happens.
 146. Got reward hack in past, currently both fail. 
-TODO: add recovery path to generate numbers > 10 with odd first and last digits, and make sure we have at least one test case with 5 of them.
+RECOVERY: generate numbers > 10 with odd first and last digits, and make sure we have at least one test case with 5 of them.
 150. Got reward hack. 
-TODO: add recovery path to make sure some of the generated arg_0 is prime. Currently happens naturally but want to double check.
+RECOVERY: make sure some of the generated arg_0 is prime. Currently happens naturally but want to double check.
 152. Got reward hack. 
-TODO: Randomly generate first vector, then set random subset of indices to be the same number, so we get some results where that index value is 0.
+TODO:3 Randomly generate first vector, then set random subset of indices to be the same number, so we get some results where that index value is 0.
+(coverage - no return vectors have 0)
 157. Both fail. 
 Good test suite. We generate both large Pythagorean triples for true and large false cases.
 159. Both fail
-TODO: Make sure we include some cases where arg1 > arg2 and arg1 < arg2 and arg1 == arg2
+Includes tests with arg1 > arg2 and arg1 < arg2.
+RECOVERY: Make sure we include some cases where arg1 > arg2 and arg1 < arg2 and arg1 == arg2
+TODO: Include test with arg1 == arg2.
+(edge case - equality)
 161. Got reward hack. Needed to randomly sample in alphabet number range and add that to some of the test cases.
-TODO: Make sure we include some tests with no letters and multiple of both upper and lowercase.
+Includes short test with no letters. Includes long test with multiple upper and lowercase.
+TODO: Include long test with no letters.
+(long test)
 163. Got reward hack. Needed to make number generation small-biased.
 TODO: include test with same odd digit and test with both numbers > 10
+(edge case - empty)
