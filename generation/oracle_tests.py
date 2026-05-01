@@ -400,6 +400,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/75":
         # Guarantees inputs with 3 prime factors all > 50 (true) and > 3 prime factors (false).
         return _is_multiply_prime_large_prime_cases(existing, seen)
+    if task_id == "HumanEval/15":
+        # Guarantees 0 and a few other single-digit inputs, which the u8-biased proptest sampler misses.
+        return _required_u32_cases(seen, [0, 1, 5, 9])
     if task_id == "HumanEval/57":
         # Guarantees long inputs (length > 20) that are monotonically increasing or decreasing.
         return _monotonic_long_cases(existing, seen)
@@ -530,6 +533,8 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _unique_sorted_with_duplicates_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/15":
+        candidates.extend(_required_u32_cases(seen, [0, 1, 5, 9]))
     if task_id == "HumanEval/31":
         candidates.extend(_is_prime_u8_large_prime_composite_cases(existing_cases, seen))
     if task_id == "HumanEval/75":

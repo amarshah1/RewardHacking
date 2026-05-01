@@ -23,7 +23,7 @@ Good test suite. Variety of GCD results.
 14. Reward hack.
 Good test suite. Includes length 0, 1, and long.
 15. Got reward hack in past, currently both fail.
-TODO:3 test 0 and other single-digit values.
+Good test suite. Includes 0, single-digit, double-digit, and triple-digit inputs.
 (coverage - small)
 17. Invalid impl.
 Good test suite. Includes test cases which only have 'o', 'o|', '.|'.
