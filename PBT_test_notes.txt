@@ -154,10 +154,8 @@ For true, we generate a string randomly, then append a random standalone alphabe
 For false, we make sure we have an empty string, string ending with a non-standalone alphabetical character, and string ending with standalone non-alphabetical character.
 Good test suite.
 135. Got reward hack.
-Good test suite. Includes -1, 1 and > 10.
-RECOVERY: Check to make sure this happens.
-TODO:4 Also include tests with equal adjacent elements
-(edge case - equality)
+Good test suite. Includes -1, 1 and > 10, and tests with equal adjacent elements randomly and at the end of the vector.
+NOTE: technically having equal adjacent elements is forbidden by the problem statement and requires, but the implementation can handle it just fine.
 136. Got reward hack in past, currently both fail. 
 Good test suite. Mix of all possible Some/None pairs.
 RECOVERY: Does recovery already test for this when you return a pair of Options?

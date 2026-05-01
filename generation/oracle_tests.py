@@ -446,6 +446,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
         # Seeds false mix cases so they survive _select_cases even when true recovery cases are prepended.
         # True cases are handled in _targeted_recovery_arg_exprs (they depend on missing_buckets).
         return [[s] for s in _generate_last_char_letter_false_cases()]
+    if task_id == "HumanEval/135":
+        # Guarantees cases with at least one pair of equal adjacent elements.
+        return _can_arrange_equal_adjacent_cases(existing, seen)
     if task_id == "HumanEval/157":
         # Guarantees large Pythagorean triple cases and large non-right-triangle cases.
         return _right_angle_triangle_recovery_cases(signature, existing, seen)
@@ -609,6 +612,9 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _get_row_nonempty_cases(existing_cases, seen)
         )
+    if task_id == "HumanEval/135":
+        candidates.extend(_can_arrange_equal_adjacent_cases(existing_cases, seen))
+        candidates.extend(_can_arrange_output_coverage_cases(existing_cases, seen))
     if task_id == "HumanEval/159":
         candidates.extend(_eat_need_equals_remaining_cases(seen))
         candidates.extend(_eat_coverage_cases(existing_cases, seen))
@@ -1061,6 +1067,109 @@ def _eat_coverage_cases(
         need = rng.randint(0, 500)
         remaining = need + rng.randint(1, 500)
         add(number, need, remaining)
+
+    return candidates
+
+
+def _can_arrange_equal_adjacent_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Generate task-135 cases with at least one pair of equal adjacent elements at a random index,
+    including at least one case where the equal pair is at the last position."""
+    def _has_equal_adjacent(arg_exprs: list[str]) -> bool:
+        values = _parse_i32_vec_literal(arg_exprs[0])
+        if values is None or len(values) < 2:
+            return False
+        return any(values[i] == values[i - 1] for i in range(1, len(values)))
+
+    def _has_end_equal_adjacent(arg_exprs: list[str]) -> bool:
+        values = _parse_i32_vec_literal(arg_exprs[0])
+        if values is None or len(values) < 2:
+            return False
+        return values[-1] == values[-2]
+
+    existing_count = sum(1 for c in existing_cases if _has_equal_adjacent(c.arg_exprs))
+    end_pair_count = sum(1 for c in existing_cases if _has_end_equal_adjacent(c.arg_exprs))
+    needed = max(0, 8 - existing_count)
+    if needed == 0 and end_pair_count >= 1:
+        return []
+
+    rng = random.Random(135)
+    candidates: list[list[str]] = []
+    attempts = 0
+    while len(candidates) < needed and attempts < 400:
+        attempts += 1
+        length = max(2, 2 + _python_geometric_length(rng))
+        values = rng.sample(range(-10000, 10001), length)
+        eq_pos = rng.randint(1, length - 1)
+        values[eq_pos] = values[eq_pos - 1]
+        vec_expr = _vec_expr(values, "i32")
+        if (vec_expr,) not in seen:
+            candidates.append([vec_expr])
+
+    if end_pair_count < 1 and not any(_has_end_equal_adjacent(c) for c in candidates):
+        length = max(2, 2 + _python_geometric_length(rng))
+        values = rng.sample(range(-10000, 10001), length)
+        values[-1] = values[-2]
+        vec_expr = _vec_expr(values, "i32")
+        if (vec_expr,) not in seen:
+            candidates.append([vec_expr])
+
+    return candidates
+
+
+def _can_arrange_output_coverage_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Recovery check: ensure task-135 covers outputs -1, 1, and >= 10, and an empty input."""
+    def _output(case: OracleCase) -> int | None:
+        try:
+            return int(case.expected_expr.strip())
+        except ValueError:
+            return None
+
+    empty_count = sum(1 for c in existing_cases if c.arg_exprs[0].strip() == "vec![]")
+    neg_one_count = sum(1 for c in existing_cases if _output(c) == -1)
+    one_count = sum(1 for c in existing_cases if _output(c) == 1)
+    large_count = sum(1 for c in existing_cases if (_output(c) is not None and _output(c) >= 10))
+
+    if empty_count >= 1 and neg_one_count >= 1 and one_count >= 1 and large_count >= 1:
+        return []
+
+    rng = random.Random(1350)
+    candidates: list[list[str]] = []
+
+    def add(values: list[int]) -> None:
+        vec_expr = _vec_expr(values, "i32")
+        if (vec_expr,) not in seen:
+            candidates.append([vec_expr])
+
+    if empty_count < 1:
+        add([])
+
+    if neg_one_count < 1:
+        # Fully ascending → output is -1
+        length = rng.randint(5, 10)
+        add(sorted(rng.sample(range(-1000, 1001), length)))
+
+    if one_count < 1:
+        # Last descent at index 1: arr[0] big, arr[1] small, rest strictly ascending
+        a = rng.randint(100, 1000)
+        b = rng.randint(1, a - 1)
+        n_after = rng.randint(3, 7)
+        after = sorted(rng.sample(range(b + 1, b + 500), n_after))
+        add([a, b] + after)
+
+    if large_count < 1:
+        # Last descent at a random index d > 10: positions 0..d-2 ascending, position d-1 big,
+        # position d small (descent), positions d+1+ ascending and larger than position d.
+        d = rng.randint(11, 20)
+        n_extra = rng.randint(3, 7)
+        pool = sorted(rng.sample(range(-5000, 5001), d + n_extra + 1))
+        vals = pool[: d - 1] + [pool[d], pool[d - 1]] + pool[d + 1 : d + n_extra + 1]
+        add(vals)
 
     return candidates
 

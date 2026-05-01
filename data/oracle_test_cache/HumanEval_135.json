@@ -9,6 +9,54 @@
   "cases": [
     {
       "arg_exprs": [
+        "vec![4827i32, -730i32, -9618i32, -9618i32, -5004i32, 2237i32]"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
+        "vec![-3691i32, -725i32, -9924i32, -1729i32, 7122i32, -7391i32, -7391i32, -1367i32, 1643i32]"
+      ],
+      "expected_expr": "5"
+    },
+    {
+      "arg_exprs": [
+        "vec![-2472i32, -2472i32]"
+      ],
+      "expected_expr": "-1"
+    },
+    {
+      "arg_exprs": [
+        "vec![-8301i32, -8301i32, 3912i32, 18i32]"
+      ],
+      "expected_expr": "3"
+    },
+    {
+      "arg_exprs": [
+        "vec![-2149i32, -2149i32]"
+      ],
+      "expected_expr": "-1"
+    },
+    {
+      "arg_exprs": [
+        "vec![-4030i32, -593i32, -7367i32, -3831i32, -3831i32, 3201i32, -8924i32]"
+      ],
+      "expected_expr": "6"
+    },
+    {
+      "arg_exprs": [
+        "vec![-5994i32, -5994i32]"
+      ],
+      "expected_expr": "-1"
+    },
+    {
+      "arg_exprs": [
+        "vec![4635i32, 4635i32, 2185i32]"
+      ],
+      "expected_expr": "2"
+    },
+    {
+      "arg_exprs": [
         "vec![1551, 111, 2262, 3875, -2007, -1063, -3306, 3752, -4255, -3776, 4032, 3718, -623, 3952, 4899, -4881, -4629, -3851, -3317]"
       ],
       "expected_expr": "15"
@@ -100,54 +148,6 @@
     {
       "arg_exprs": [
         "vec![-2201, -1934]"
-      ],
-      "expected_expr": "-1"
-    },
-    {
-      "arg_exprs": [
-        "vec![-3060, -1747, 1966, 617, 4778, -3432]"
-      ],
-      "expected_expr": "5"
-    },
-    {
-      "arg_exprs": [
-        "vec![-4850, -4056]"
-      ],
-      "expected_expr": "-1"
-    },
-    {
-      "arg_exprs": [
-        "vec![537, -604, 3472, -4742, 1996, 2668]"
-      ],
-      "expected_expr": "3"
-    },
-    {
-      "arg_exprs": [
-        "vec![-1391, 3771, -4375]"
-      ],
-      "expected_expr": "2"
-    },
-    {
-      "arg_exprs": [
-        "vec![3766, 2853, -4602, -4828, -4074, 3171, -2434, 4461]"
-      ],
-      "expected_expr": "6"
-    },
-    {
-      "arg_exprs": [
-        "vec![1865]"
-      ],
-      "expected_expr": "-1"
-    },
-    {
-      "arg_exprs": [
-        "vec![-454, 274]"
-      ],
-      "expected_expr": "-1"
-    },
-    {
-      "arg_exprs": [
-        "vec![-2801, 3491]"
       ],
       "expected_expr": "-1"
     }
