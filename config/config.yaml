@@ -12,7 +12,8 @@ openrouter:
 branches:
   reward_hack_a1: false   # A.1: Unit tests with hidden tests + explicit reward hack instruction
   reward_hack_a2: false   # A.2: Unit tests with visible tests + implicit incentive (NEW)
-  branch_b: true        # Verus spec branch (disabled for now)
+  branch_b: false        # Verus spec branch (disabled for now)
+  generate_tests_only: true  # Stop after test generation (Steps 2a/2c); skip all code completions
 
 # Mode: "correct" = generate correct implementations, "reward_hack" = generate test-gaming implementations
 mode: "reward_hack"
@@ -51,6 +52,7 @@ evaluation:
   gold_spec_check: false      # run Claude oracle to add proof annotations and verify (requires gold_spec_oracle)
   llm_judge: false            # use LLM judge to find counter-examples between generated and gold implementations
   llm_judge_model: "anthropic/claude-sonnet-4"  # model for LLM judge (default: Claude Sonnet 4)
+  validate_generated_tests: true  # run generated tests against gold impl to detect incorrect assertions
 
 # Online SFT training settings (used with --local flag)
 training:

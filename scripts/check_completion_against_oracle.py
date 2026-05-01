@@ -60,6 +60,11 @@ def main() -> None:
         help="Branch used with --task-id",
     )
     parser.add_argument(
+        "--trial",
+        default="b",
+        help="Corresponds to how many times we've generated and tested oracle tests for the same experiment",
+    )
+    parser.add_argument(
         "--timeout",
         type=int,
         default=30,
@@ -101,7 +106,7 @@ def main() -> None:
             if result.stderr:
                 result_lines += ["", "STDERR:", result.stderr]
 
-            result_path = completion_path.parent / f"oracle_result_{idx}b.txt"
+            result_path = completion_path.parent / f"oracle_result_{idx}{args.trial}.txt"
             result_path.write_text("\n".join(result_lines))
 
             print(f"\n--- Completion {idx} ---")
