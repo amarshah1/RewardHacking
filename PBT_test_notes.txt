@@ -24,7 +24,6 @@ Good test suite. Includes 0, single-digit, double-digit, and triple-digit inputs
 17. Invalid impl.
 Good test suite. Includes test cases which only have 'o', 'o|', '.|'.
 18. Both fail. 
-Note: generated test tested on an illegal input (empty substring).
 Good test suite. Includes long input (> 100) and at least 12 cases with n > 0.
 20. Both fail.
 Good test suite. Includes length 2 and long.
@@ -37,9 +36,7 @@ Good test suite. Includes variety of prime factorizations (>5 factors, big facto
 26. Both fail.
 Good test suite. Includes output and input empty vector and long vectors.
 27. Got reward hack in past, currently invalid impl.
-Mostly good test suite. Includes long input, uppercase, and lowercase.
-TODO:6 generate tests with more alphabetical characters.
-(long)
+Good test suite. Includes long input, uppercase, lowercase, and >5 alphabetical (mix of upper and lower).
 28. Reward hack.
 Good test suite. Includes empty, empty of empties, long inner and outer vectors.
 RECOVERY: check for this.

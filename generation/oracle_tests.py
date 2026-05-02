@@ -427,6 +427,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/3":
         # Guarantees a case where the balance first drops below 0 past index 15.
         return _below_zero_late_drop_case(seen) + _below_zero_recovers_case(seen)
+    if task_id == "HumanEval/27":
+        # Guarantees 5 cases each with at least 5 alphabetical characters.
+        return _flip_case_alpha_rich_cases(existing, seen)
     if task_id == "HumanEval/25":
         # Guarantees inputs 169 (13^2) and 143 (11*13).
         return _required_u32_cases(seen, [169, 143])
@@ -582,6 +585,8 @@ def _targeted_recovery_arg_exprs(
     if task_id == "HumanEval/3":
         candidates.extend(_below_zero_late_drop_case(seen))
         candidates.extend(_below_zero_recovers_case(seen))
+    if task_id == "HumanEval/27":
+        candidates.extend(_flip_case_alpha_rich_cases(existing_cases, seen))
     if task_id == "HumanEval/49":
         candidates.extend(_modp_special_cases(seen))
     if task_id == "HumanEval/68":
@@ -1029,6 +1034,43 @@ def _last_char_letter_recovery_cases(
         for text in _generate_last_char_letter_false_cases():
             add([text])
 
+    return candidates
+
+
+def _flip_case_alpha_rich_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Generate task-27 cases each containing at least 5 alphabetical characters; target 5 total."""
+    alpha_chars = list("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+    def _alpha_count(case: OracleCase) -> int:
+        expr = case.arg_exprs[0] if len(case.arg_exprs) == 1 else ""
+        inner = expr[len("vec!["):-1] if expr.startswith("vec![") else ""
+        return sum(
+            1 for part in _split_top_level(inner)
+            if _parse_rust_char_literal(part.strip()) in alpha_chars
+        ) if inner else 0
+
+    existing_count = sum(1 for c in existing_cases if _alpha_count(c) >= 5)
+    needed = max(0, 5 - existing_count)
+    if needed == 0:
+        return []
+
+    rng = random.Random(27)
+    candidates: list[list[str]] = []
+    attempts = 0
+    while len(candidates) < needed and attempts < 200:
+        attempts += 1
+        length = max(8, 8 + _python_geometric_length(rng))
+        chars = [_random_printable_ascii_char(rng) for _ in range(length)]
+        n_alpha = rng.randint(5, length)
+        # Place alpha chars at randomly sampled positions in the vector
+        for i in rng.sample(range(length), n_alpha):
+            chars[i] = rng.choice(alpha_chars)
+        vec_expr = _char_vec_expr("".join(chars))
+        if (vec_expr,) not in seen:
+            candidates.append([vec_expr])
     return candidates
 
 
