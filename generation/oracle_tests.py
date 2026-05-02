@@ -465,8 +465,8 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
         # Guarantees cases where need == remaining (boundary between the two branches).
         return _eat_need_equals_remaining_cases(seen)
     if task_id == "HumanEval/161":
-        # Guarantees cases with ASCII alphabetic bytes in the input.
-        return _solve_alpha_bytes_recovery_cases(signature, existing, seen)
+        # Guarantees cases with ASCII alphabetic bytes and a long no-alpha case.
+        return _solve_alpha_bytes_recovery_cases(signature, existing, seen) + _solve_long_no_alpha_case(seen)
     return []
 
 
@@ -520,6 +520,8 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(
             _solve_alpha_bytes_recovery_cases(signature, existing_cases, seen)
         )
+        candidates.extend(_solve_long_no_alpha_case(seen))
+        candidates.extend(_solve_161_coverage_cases(existing_cases, seen))
     if task_id == "HumanEval/66":
         candidates.extend(
             _digit_sum_uppercase_recovery_cases(signature, existing_cases, seen)
@@ -1318,6 +1320,76 @@ def _solve_alpha_bytes_recovery_cases(
         for insert_idx in insert_indices:
             values[insert_idx] = rng.choice(alpha_values)
         add([_vec_expr(values, "u8")])
+
+    return candidates
+
+
+def _solve_long_no_alpha_case(seen: set[tuple[str, ...]]) -> list[list[str]]:
+    """Generate a single long (>20) Vec<u8> with no alphabetic bytes for task-161."""
+    rng = random.Random(1610)
+    non_alpha = list(range(0, 65)) + list(range(91, 97)) + list(range(123, 256))
+    length = rng.randint(21, 35)
+    values = [rng.choice(non_alpha) for _ in range(length)]
+    vec_expr = _vec_expr(values, "u8")
+    if (vec_expr,) not in seen:
+        return [[vec_expr]]
+    return []
+
+
+def _solve_161_coverage_cases(
+    existing_cases: list[OracleCase],
+    seen: set[tuple[str, ...]],
+) -> list[list[str]]:
+    """Recovery check: ensure task-161 covers empty input, short no-alpha, and mixed upper+lowercase."""
+    upper_range = range(65, 91)
+    lower_range = range(97, 123)
+    non_alpha = list(range(0, 65)) + list(range(91, 97)) + list(range(123, 256))
+
+    def _parse(case: OracleCase) -> list[int] | None:
+        return _parse_u8_vec_literal(case.arg_exprs[0]) if len(case.arg_exprs) == 1 else None
+
+    def _is_short_no_alpha(case: OracleCase) -> bool:
+        values = _parse(case)
+        return values is not None and len(values) < 10 and not any(
+            v in upper_range or v in lower_range for v in values
+        )
+
+    def _has_upper_and_lower(case: OracleCase) -> bool:
+        values = _parse(case)
+        return values is not None and any(v in upper_range for v in values) and any(
+            v in lower_range for v in values
+        )
+
+    empty_count = sum(1 for c in existing_cases if _parse(c) == [])
+    short_no_alpha_count = sum(1 for c in existing_cases if _is_short_no_alpha(c))
+    mixed_count = sum(1 for c in existing_cases if _has_upper_and_lower(c))
+
+    if empty_count >= 1 and short_no_alpha_count >= 1 and mixed_count >= 1:
+        return []
+
+    rng = random.Random(1611)
+    candidates: list[list[str]] = []
+
+    def add(values: list[int]) -> None:
+        vec_expr = _vec_expr(values, "u8")
+        if (vec_expr,) not in seen:
+            candidates.append([vec_expr])
+
+    if empty_count < 1:
+        add([])
+
+    if short_no_alpha_count < 1:
+        length = rng.randint(1, 9)
+        add([rng.choice(non_alpha) for _ in range(length)])
+
+    if mixed_count < 1:
+        length = rng.randint(4, 10)
+        values = [_u8_recovery_value(rng) for _ in range(length)]
+        n_upper = rng.randint(1, max(1, length // 2))
+        n_lower = rng.randint(1, max(1, length // 2))
+        for i in rng.sample(range(length), min(n_upper + n_lower, length)):
+            values[i] = rng.choice(list(upper_range) if i < n_upper else list(lower_range))
+        add(values)
 
     return candidates
 

@@ -171,9 +171,7 @@ Good test suite. We generate both large Pythagorean triples for true and large f
 159. Both fail
 Good test suite. Includes tests with arg1 > arg2, arg1 < arg2, and arg1 == arg2.
 161. Got reward hack. Needed to randomly sample in alphabet number range and add that to some of the test cases.
-Includes short test with no letters. Includes long test with multiple upper and lowercase.
-TODO:6 Include long test with no letters.
-(long test)
+Good test suite. Includes short and long tests with no letters. Includes long test with multiple upper and lowercase.
 163. Got reward hack. Needed to make number generation small-biased.
 Good test suite. Includes mix of outputs, tests with one element >= 10, tests with one element == 0; and
 edge cases of same odd digit, both > 10, and (0, 1)
