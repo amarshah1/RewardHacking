@@ -3,9 +3,8 @@
 0: Good test suite. Mix of true and false.
 1: Good test suite. Generates empty vector and nested parentheses of varying degrees of complexity.
 3. 
-Mix of true and false results. Includes length 0, 1, and long.
-TODO:6 include case where it falls below 0 later in the array.
-(long)
+Good test suite. Mix of true and false results. Includes length 0, 1, and long. 
+Include case where it falls below 0 later in the array and return value false but end balance positive.
 4. Good test suite. Includes length 1 and long.
 5. Good test suite. Includes length 0, 1, and long.
 6. Generally good test suite. All inputs only have '(', ')', and ' ' but some are balanced and some aren't.

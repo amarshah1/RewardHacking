@@ -424,6 +424,9 @@ def _seeded_arg_exprs(task_id: str, signature: ParsedSignature) -> list[list[str
     if task_id == "HumanEval/74":
         # Guarantees cases where both lists have the same total char count, testing tie-breaking.
         return _total_match_equal_length_cases(seen)
+    if task_id == "HumanEval/3":
+        # Guarantees a case where the balance first drops below 0 past index 15.
+        return _below_zero_late_drop_case(seen) + _below_zero_recovers_case(seen)
     if task_id == "HumanEval/25":
         # Guarantees inputs 169 (13^2) and 143 (11*13).
         return _required_u32_cases(seen, [169, 143])
@@ -576,6 +579,9 @@ def _targeted_recovery_arg_exprs(
         candidates.extend(_add_even_at_even_index_cases(existing_cases, seen))
     if task_id == "HumanEval/12":
         candidates.extend(_longest_tie_cases(existing_cases, seen))
+    if task_id == "HumanEval/3":
+        candidates.extend(_below_zero_late_drop_case(seen))
+        candidates.extend(_below_zero_recovers_case(seen))
     if task_id == "HumanEval/49":
         candidates.extend(_modp_special_cases(seen))
     if task_id == "HumanEval/68":
@@ -1024,6 +1030,37 @@ def _last_char_letter_recovery_cases(
             add([text])
 
     return candidates
+
+
+def _below_zero_late_drop_case(seen: set[tuple[str, ...]]) -> list[list[str]]:
+    """Generate a task-3 case where the running balance first drops below 0 at an index past 15."""
+    rng = random.Random(3)
+    d = rng.randint(16, 25)
+    prefix = [rng.randint(1, 100) for _ in range(d)]
+    drop = -(sum(prefix) + rng.randint(1, 100))
+    n_suffix = rng.randint(0, 5)
+    suffix = [rng.randint(-50, 50) for _ in range(n_suffix)]
+    vec_expr = _vec_expr(prefix + [drop] + suffix, "i32")
+    if (vec_expr,) not in seen:
+        return [[vec_expr]]
+    return []
+
+
+def _below_zero_recovers_case(seen: set[tuple[str, ...]]) -> list[list[str]]:
+    """Generate a task-3 case where the balance drops below 0 mid-vector but the final sum is positive."""
+    rng = random.Random(30)
+    n_prefix = rng.randint(2, 8)
+    prefix = [rng.randint(1, 50) for _ in range(n_prefix)]
+    prefix_sum = sum(prefix)
+    delta = rng.randint(1, 50)
+    drop = -(prefix_sum + delta)
+    recovery = delta + rng.randint(1, 50)
+    n_suffix = rng.randint(1, 4)
+    suffix = [rng.randint(1, 20) for _ in range(n_suffix - 1)] + [recovery]
+    vec_expr = _vec_expr(prefix + [drop] + suffix, "i32")
+    if (vec_expr,) not in seen:
+        return [[vec_expr]]
+    return []
 
 
 def _generate_integers_special_cases(seen: set[tuple[str, ...]]) -> list[list[str]]:
