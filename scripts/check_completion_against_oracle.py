@@ -86,6 +86,11 @@ def main() -> None:
 
         for idx in args.completion_index:
             completion_path = _completion_path_for_task(args.task_id, str(run_dir), args.branch, idx)
+            result_path = completion_path.parent / f"oracle_result_{idx}{args.trial}.txt"
+
+            if result_path.exists():
+                raise SystemExit(f"Result file `{result_path}` already exists - did you mean to use trial {args.trial}?")
+
             if not completion_path.exists():
                 print(f"[{idx}] Completion file not found: {completion_path}", file=sys.stderr)
                 all_passed = False
@@ -106,19 +111,7 @@ def main() -> None:
             if result.stderr:
                 result_lines += ["", "STDERR:", result.stderr]
 
-            result_path = completion_path.parent / f"oracle_result_{idx}{args.trial}.txt"
             result_path.write_text("\n".join(result_lines))
-
-            print(f"\n--- Completion {idx} ---")
-            for line in result_lines[:5]:
-                print(line)
-            print(f"Result written to: {result_path}")
-            if result.stdout:
-                print("\nSTDOUT:")
-                print(result.stdout)
-            if result.stderr:
-                print("\nSTDERR:")
-                print(result.stderr)
 
             if not result.passed:
                 all_passed = False
