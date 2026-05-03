@@ -6,18 +6,14 @@ from generation.generate_code import _VERUS_RULES
 from generation.few_shot_examples import build_few_shot_messages
 from evaluation.run_verus import run_verus
 
-SYSTEM_PROMPT = f"""You are an expert in Verus, a formal verification tool for Rust. Given a natural language description of a coding task, generate a Verus specification with formal pre-conditions (requires) and post-conditions (ensures).
+SYSTEM_PROMPT = f"""You are an expert in Verus, a formal verification tool for Rust. Given a natural language description of a coding task, generate a Verus specification with formal pre-conditions (requires) and post-conditions (ensures) for the main function.
 
 Requirements:
-- Use Verus syntax: the function must be inside a verus! {{ }} block
-- Include `requires` clauses for pre-conditions
-- Include `ensures` clauses for post-conditions that fully specify the function behavior
-- Use `spec fn` for any helper specification functions needed
-- You will be given one or more function signatures. The LAST function signature is the main task function. Any earlier signatures are helper functions
-- If you use helper functions, you MUST write their complete implementation with proof annotations
-- Only the LAST function (the main task function) body should be `todo!()`
-- Include the imports listed in the user prompt at the top of your code
-- Include `fn main() {{}}` at the end, OUTSIDE the verus! block
+- The user will give you a "helper context" containing imports, the verus! {{ }} wrapper, and any helper `spec fn`/`proof fn`/exec helper functions that are already implemented. Use these helpers AS-IS — do not redefine them, do not modify them, do not reimplement them
+- The user will also give you the signature of the main function. Your job is to write `requires` and `ensures` clauses for the main function. The body must be `todo!()`
+- Reference the provided helpers by name in your `requires`/`ensures` clauses where appropriate
+- Output the COMPLETE Verus file: the helper context (verbatim) plus the main function with your spec, plus `fn main() {{}}` outside the verus! block
+- Only the main function body should be `todo!()` — leave all helper bodies intact
 {_VERUS_RULES}
 - First briefly explain your reasoning, then output the Verus code in a ```rust``` block
 
@@ -26,13 +22,15 @@ Requirements:
 USER_TEMPLATE = """Task description:
 {nl_prompt}
 
-Function signatures (the LAST one is the main function to specify; earlier ones are helpers you may implement if needed):
+Helper context (already implemented — use as-is, do NOT redefine these):
+```rust
+{helper_context}
+```
+
+Main function signature (write requires/ensures for this function only; body stays `todo!()`):
 {fn_signature}
 
-Available imports (include these at the top of your code):
-{imports}
-
-Generate a Verus specification for the main (last) function. Use the exact signatures above. Add requires/ensures clauses and any helper spec functions needed. If you use any of the helper function signatures, write their complete implementation with proof annotations. Only the last function body should be `todo!()`. Output only the Verus code."""
+Output the complete Verus file: the helper context above (verbatim, including imports and the verus! wrapper) with the main function spliced in. Add requires/ensures clauses to the main function that capture the task description. Reference the helper functions where useful. Only the main function body should be `todo!()`. Output only the Verus code in a ```rust``` block."""
 
 
 REPAIR_SPEC_USER = """Running Verus on your specification gave this error:
@@ -87,7 +85,8 @@ def generate_verus_spec(
     gold_imports: list[str] | None = None,
     fn_signature: str = "",
     n_few_shot: int | None = None,
-) -> tuple[str, list[dict], str]:
+    helper_context: str = "",
+) -> tuple[str, list[dict], str, bool]:
     """Generate Verus specification from a natural language description.
 
     Args:
@@ -97,22 +96,37 @@ def generate_verus_spec(
         temperature: Lower temperature for more precise spec generation
         verus_binary: Path to verus binary
         repair_rounds: Max repair attempts for syntax errors
-        gold_imports: Import lines from the gold Verus file (e.g. ["use vstd::prelude::*;"])
-        fn_signature: Gold function signature(s) to use (ensures correct types)
+        gold_imports: (deprecated, ignored) — imports are part of helper_context now
+        fn_signature: Main function signature. If a list, only the LAST entry is used
+            (earlier entries are helpers, which live in helper_context).
         n_few_shot: Number of few-shot examples to use (None = all available)
+        helper_context: Verus code with imports, verus! wrapper, and helper
+            spec/proof/exec fns already implemented. The model splices the main
+            function (with its requires/ensures + todo!() body) into this.
 
     Returns:
-        (spec, repair_history, raw_trace) — spec is the final Verus code, repair_history
-        is a list of {"round": N, "spec": str, "error": str} dicts for each failed attempt,
-        raw_trace is the initial LLM output (reasoning + code).
+        (spec, repair_history, raw_trace, final_valid) — spec is the final Verus code,
+        repair_history is a list of {"round": N, "spec": str, "error": str} dicts for each
+        failed attempt, raw_trace is the initial LLM output (reasoning + code),
+        final_valid is True iff the final spec passed syntax check.
     """
-    imports_str = "\n".join(gold_imports) if gold_imports else "use vstd::prelude::*;"
+    # fn_signature: only the main (last) function — helpers are in helper_context
     if isinstance(fn_signature, list):
-        fn_signature = "\n".join(fn_signature)
+        fn_signature = fn_signature[-1] if fn_signature else ""
     if not fn_signature:
         fn_signature = f"fn {entry_point}(...)"
+    if not helper_context:
+        # Fallback for callers that didn't supply helper_context: synthesize a
+        # minimal one from gold_imports (preserves old behavior for tests).
+        imports_str = "\n".join(gold_imports) if gold_imports else "use vstd::prelude::*;"
+        helper_context = f"{imports_str}\n\nverus! {{\n\n}} // verus!\nfn main() {{}}"
     few_shot = build_few_shot_messages("spec", USER_TEMPLATE, n_few_shot=n_few_shot)
-    prompt = USER_TEMPLATE.format(nl_prompt=nl_prompt, entry_point=entry_point, imports=imports_str, fn_signature=fn_signature)
+    prompt = USER_TEMPLATE.format(
+        nl_prompt=nl_prompt,
+        entry_point=entry_point,
+        helper_context=helper_context,
+        fn_signature=fn_signature,
+    )
     completions = generate(
         prompt=prompt,
         system_prompt=SYSTEM_PROMPT,
@@ -136,6 +150,7 @@ def generate_verus_spec(
     conversation.append({"role": "assistant", "content": raw_output})
 
     # Check syntax and repair if needed
+    final_valid = False
     for round_num in range(repair_rounds):
         # Count exec fns vs todo!() occurrences.
         # _strip_impl_bodies puts exactly one todo!() per exec fn body.
@@ -158,6 +173,7 @@ def generate_verus_spec(
         else:
             is_valid, error_output = check_spec_syntax(spec, verus_binary=verus_binary)
         if is_valid:
+            final_valid = True
             break
         repair_history.append({"round": round_num, "spec": spec, "error": error_output})
         print(f"    Spec has syntax errors (round {round_num + 1}/{repair_rounds}), repairing...")
@@ -172,7 +188,7 @@ def generate_verus_spec(
             print(f"    ERROR repairing spec: {type(e).__name__}: {e}")
             break
 
-    return spec, repair_history, raw_output
+    return spec, repair_history, raw_output, final_valid
 
 
 def _strip_impl_bodies(code: str, only_last: bool = True) -> str:
@@ -271,6 +287,81 @@ def _strip_impl_bodies(code: str, only_last: bool = True) -> str:
             result.append(line)
             i += 1
 
+    return "\n".join(result)
+
+
+def _extract_helper_context(verus_code: str) -> str:
+    """Return verus code with the LAST exec fn (the main task fn) entirely removed.
+
+    Keeps imports, the verus! { ... } wrapper, all spec/proof fns, helper exec
+    fns (with full bodies + requires/ensures), comments, and `fn main()`.
+    Drops the main exec fn's signature, requires/ensures, and body — the spec
+    generator will be asked to write requires/ensures for it from scratch.
+    """
+    import re
+    lines = verus_code.split("\n")
+
+    # First pass: count exec fns (same predicate as _strip_impl_bodies)
+    def _is_exec_fn_line(s: str) -> bool:
+        return bool(
+            re.match(r'\s*(pub\s+)?fn\s+\w+\s*[\(<]', s)
+            and not re.match(r'\s*(pub\s+)?(open\s+)?spec\s+fn', s)
+            and not re.match(r'\s*(pub\s+)?proof\s+fn', s)
+            and 'fn main' not in s
+        )
+
+    total_exec_fns = sum(1 for l in lines if _is_exec_fn_line(l.strip()))
+    if total_exec_fns == 0:
+        return verus_code
+
+    result = []
+    exec_fn_count = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        is_exec_fn = _is_exec_fn_line(stripped)
+        if is_exec_fn:
+            exec_fn_count += 1
+        if is_exec_fn and exec_fn_count == total_exec_fns:
+            # This is the main exec fn — skip from here through its closing `}`.
+            # Walk forward to find the body opener (first standalone `{` at fn indent).
+            fn_indent = len(line) - len(line.lstrip())
+            j = i + 1
+            body_start = None
+            while j < len(lines):
+                s_line = lines[j]
+                s_stripped = s_line.strip()
+                s_indent = len(s_line) - len(s_line.lstrip()) if s_stripped else 999
+                if s_stripped == '{' and s_indent <= fn_indent:
+                    body_start = j
+                    break
+                # also accept signature line ending with `{` at fn indent (rare)
+                if s_stripped.endswith('{') and s_indent == fn_indent and s_stripped != '{':
+                    body_start = j
+                    break
+                j += 1
+            if body_start is None:
+                # Couldn't find body — bail out and return as-is
+                return verus_code
+            # Now walk through the body matching braces
+            depth = 1
+            k = body_start + 1
+            while k < len(lines) and depth > 0:
+                depth += lines[k].count('{') - lines[k].count('}')
+                k += 1
+            # Skip lines [i .. k-1] inclusive (the entire main fn)
+            i = k
+            # Also drop a single immediately-preceding doc-comment block, if any,
+            # to avoid orphan comments like "/// Target function" pointing to nothing.
+            while result and result[-1].strip().startswith(('///', '//')):
+                result.pop()
+            # And drop a trailing blank line that preceded the comment
+            while result and result[-1].strip() == '':
+                result.pop()
+            continue
+        result.append(line)
+        i += 1
     return "\n".join(result)
 
 

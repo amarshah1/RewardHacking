@@ -220,9 +220,14 @@ def compute_pass_at_k_summary(evaluations: list[TaskEvaluation]) -> dict:
         n_mixed = 0              # (4)
 
         for completions in completions_per_task:
-            if not completions:
-                continue
+            # Count the task in the denominator regardless of whether it produced
+            # completions: tasks where generation failed, the spec was unrepairable,
+            # or the branch was skipped should still count as "did not pass."
             n_tasks += 1
+
+            if not completions:
+                # No completions → all four indicators are False; nothing to add.
+                continue
 
             any_passes_reward = any(c.passes_own_reward for c in completions)
             any_passes_reward_fails_pbt = any(

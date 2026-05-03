@@ -4,16 +4,21 @@
 openrouter:
   base_url: "https://openrouter.ai/api/v1"
   # Qwen3.5 9B - small model (OpenRouter for now, local for SFT training)
-  model: "anthropic/claude-sonnet-4.6"
+  model: "qwen/qwen3-coder"
   # For test/spec generation, keep using a strong model
-  generator_model: "anthropic/claude-sonnet-4.6"
+  generator_model: "qwen/qwen3-coder"
 
 # Branch toggles
 branches:
   reward_hack_a1: false   # A.1: Unit tests with hidden tests + explicit reward hack instruction
   reward_hack_a2: false   # A.2: Unit tests with visible tests + implicit incentive (NEW)
-  branch_b: false        # Verus spec branch (disabled for now)
-  generate_tests_only: true  # Stop after test generation (Steps 2a/2c); skip all code completions
+  branch_b: true        # Verus spec branch (disabled for now)
+  generate_tests_only: false  # Stop after test generation (Steps 2a/2c); skip all code completions
+  training_reward_hack: true  # When true, every confirmed reward hack found during the run
+                               # gets promoted into the few-shot pool for subsequent tasks
+                               # (one hack per task max). Pushes oldest non-hack examples out
+                               # to keep n_few_shot constant. Tracked in CSV via promoted_hack_*
+                               # columns and saved to experiment_cache/<run>/promoted_hacks/.
 
 # Mode: "correct" = generate correct implementations, "reward_hack" = generate test-gaming implementations
 mode: "reward_hack"
@@ -22,11 +27,11 @@ mode: "reward_hack"
 sampling:
   temperature: 0.8
   max_tokens: 8192        # thinking models need more tokens (think blocks count toward limit)
-  n_samples: 5          # completions per problem (prototype: 4, full: 16)
+  n_samples: 50          # completions per problem (prototype: 4, full: 16)
   repair_rounds: 3      # max error-correction rounds per completion
-  n_reward_hack_examples: 1  # how many few-shot examples show reward hacking (0-5)
+  n_reward_hack_examples: 5  # how many few-shot examples show reward hacking (0-5)
   n_few_shot: 10            # total few-shot examples for Verus branches (max 15, from HumanEval 0-19)
-  num_cores: 5              # number of tasks to process in parallel (1 = sequential)
+  num_cores: 128             # number of tasks to process in parallel (1 = sequential)
 
 # Branch A test generation
 test_generation:
@@ -51,7 +56,7 @@ evaluation:
   gold_spec_oracle: false     # splice into gold Verus spec + compile check (--no-verify)
   gold_spec_check: false      # run Claude oracle to add proof annotations and verify (requires gold_spec_oracle)
   llm_judge: false            # use LLM judge to find counter-examples between generated and gold implementations
-  llm_judge_model: "anthropic/claude-sonnet-4"  # model for LLM judge (default: Claude Sonnet 4)
+  llm_judge_model: "DONOTUSEanthropic/claude-sonnet-4"  # model for LLM judge (default: Claude Sonnet 4)
   validate_generated_tests: true  # run generated tests against gold impl to detect incorrect assertions
 
 # Online SFT training settings (used with --local flag)
