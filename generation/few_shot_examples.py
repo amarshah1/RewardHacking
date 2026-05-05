@@ -2005,6 +2005,8 @@ def load_verus_examples_from_gold(tasks_dir: str = "human-eval-verus/tasks", max
     The 5 handcrafted examples (IDs 0, 3, 5, 8, 9) are returned from ALL_EXAMPLES
     to preserve their extra fields (reward_hack_*, rust_*, etc.).
     """
+    import re
+
     from data.parse_benchmarks import parse_human_eval_verus
     from generation.generate_specs import _strip_impl_bodies
 
@@ -2021,7 +2023,10 @@ def load_verus_examples_from_gold(tasks_dir: str = "human-eval-verus/tasks", max
     examples = []
 
     for t in tasks:
-        num = int(t.task_id.split("/")[1])
+        m = re.search(r"(\d+)$", t.task_id)
+        if not m:
+            continue
+        num = int(m.group(1))
         if num >= max_id or not t.has_verus_impl:
             continue
 
@@ -2310,6 +2315,52 @@ _CORRECT_COUNTERPART = {
 }
 
 
+class DynamicFewShotPool:
+    """Process-level pool of reward-hack few-shot examples discovered at runtime.
+
+    When `training_reward_hack` is enabled, every task that produces at least one
+    confirmed reward-hack completion contributes one example to this pool. The pool
+    is keyed by task_type (since each branch consumes a different schema):
+
+      "verus_underspec" — Branch B (Verus spec)
+      "reward_hack"     — Branch A.1 (hidden tests + explicit instruction)
+      "reward_hack_a2_tests" — Branch A.2 (visible tests + implicit incentive)
+
+    Each example dict carries the standard fields the corresponding template
+    formatter expects, plus a special `_assistant_text` key holding the verbatim
+    LLM reasoning + code that produced the hack. When `_assistant_text` is set,
+    `build_few_shot_messages` uses it instead of synthesizing from a reasoning_fn.
+    """
+    def __init__(self):
+        self._buckets: dict[str, list[dict]] = {}
+        self._task_ids_seen: dict[str, set[str]] = {}
+
+    def add_hack(self, task_type: str, example: dict, task_id: str | None = None) -> bool:
+        """Append a hack example. Returns True if appended, False if skipped (dup)."""
+        bucket = self._buckets.setdefault(task_type, [])
+        seen = self._task_ids_seen.setdefault(task_type, set())
+        if task_id is not None and task_id in seen:
+            return False
+        bucket.append(example)
+        if task_id is not None:
+            seen.add(task_id)
+        return True
+
+    def hacks_for(self, task_type: str) -> list[dict]:
+        return list(self._buckets.get(task_type, []))
+
+    def n_hacks(self, task_type: str) -> int:
+        return len(self._buckets.get(task_type, []))
+
+
+# Process-wide instance. Pipeline mutates this between tasks.
+_DYNAMIC_POOL = DynamicFewShotPool()
+
+
+def get_dynamic_pool() -> DynamicFewShotPool:
+    return _DYNAMIC_POOL
+
+
 def build_few_shot_messages(
     task_type: str,
     user_template: str,
@@ -2379,6 +2430,19 @@ def build_few_shot_messages(
         examples = correct_pool[:n_correct] + handcrafted[:n_reward_hack]
         n_correct = len(correct_pool[:n_correct])
 
+    # Dynamic reward-hack pool: replace the tail (the "hack" segment) with
+    # discovered hacks. If the pool has more entries than n_reward_hack, also
+    # eat into the "correct" segment from the right. This runs AFTER the
+    # verus_underspec special-case so it isn't clobbered.
+    dyn_hacks = _DYNAMIC_POOL.hacks_for(task_type)
+    if dyn_hacks:
+        target_len = len(examples)
+        promoted = dyn_hacks[-target_len:]  # cap to total length
+        keep_correct = max(0, target_len - len(promoted))
+        # Keep the OLDEST correct examples (head); replace the rest with hacks.
+        examples = examples[:keep_correct] + promoted
+        n_correct = keep_correct
+
     messages = []
     for idx, ex in enumerate(examples):
         use_hack = idx >= n_correct
@@ -2391,14 +2455,18 @@ def build_few_shot_messages(
 
         # Some templates need additional fields — based on effective task_type
         if eff_task_type == "spec":
-            # Extract imports from the gold Verus code for the spec template
-            gold_imports = ex.get("gold_imports") or [
-                l.strip() for l in ex.get("verus_full", "").split("\n")
-                if l.strip().startswith("use ") and l.strip().endswith(";")
-            ]
-            template_kwargs["imports"] = "\n".join(gold_imports) if gold_imports else "use vstd::prelude::*;"
-            # Use Verus signature (with named return) if available
-            template_kwargs["fn_signature"] = ex.get("verus_sig", ex.get("fn_signature", f"fn {ex['entry_point']}(...)"))
+            # New flow: helper_context is the gold file with the main exec fn removed.
+            # Imports + verus! wrapper + spec fns + proof fns + helper exec fns are all
+            # included verbatim. Only the main exec fn is left for the model to spec.
+            from generation.generate_specs import _extract_helper_context
+            verus_full = ex.get("verus_full", "")
+            template_kwargs["helper_context"] = _extract_helper_context(verus_full) if verus_full else "use vstd::prelude::*;\n\nverus! {\n\n} // verus!\nfn main() {}"
+            # fn_signature is just the MAIN function (last sig). Earlier sigs are helpers,
+            # already shown (with bodies) in helper_context.
+            sig = ex.get("verus_sig", ex.get("fn_signature", f"fn {ex['entry_point']}(...)"))
+            if isinstance(sig, list):
+                sig = sig[-1] if sig else f"fn {ex['entry_point']}(...)"
+            template_kwargs["fn_signature"] = sig
         elif eff_task_type == "verus_impl":
             template_kwargs["spec"] = ex["verus_spec"]
         elif eff_task_type == "verus_underspec":
@@ -2413,8 +2481,13 @@ def build_few_shot_messages(
             template_kwargs["fn_signature"] = ex.get("fn_signature", f"fn {ex['entry_point']}(...)")
 
         user_content = user_template.format(**template_kwargs)
-        reasoning_fn = hack_reasoning_fn if use_hack else (correct_reasoning_fn or hack_reasoning_fn)
-        assistant_content = reasoning_fn(ex)
+        # Dynamically-promoted hacks carry the verbatim model output as
+        # _assistant_text. Use it directly instead of synthesizing one.
+        if ex.get("_assistant_text"):
+            assistant_content = ex["_assistant_text"]
+        else:
+            reasoning_fn = hack_reasoning_fn if use_hack else (correct_reasoning_fn or hack_reasoning_fn)
+            assistant_content = reasoning_fn(ex)
 
         messages.append({"role": "user", "content": user_content})
         messages.append({"role": "assistant", "content": assistant_content})
