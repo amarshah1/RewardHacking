@@ -4,16 +4,16 @@
 openrouter:
   base_url: "https://openrouter.ai/api/v1"
   # Qwen3.5 9B - small model (OpenRouter for now, local for SFT training)
-  model: "anthropic/claude-sonnet-4.6"
+  model: "qwen/qwen3-coder"
   # For test/spec generation, keep using a strong model
-  generator_model: "anthropic/claude-sonnet-4.6"
+  generator_model: "qwen/qwen3-coder"
 
 # Branch toggles
 branches:
   reward_hack_a1: false   # A.1: Unit tests with hidden tests + explicit reward hack instruction
   reward_hack_a2: false   # A.2: Unit tests with visible tests + implicit incentive (NEW)
-  branch_b: false        # Verus spec branch (disabled for now)
-  generate_tests_only: true  # Stop after test generation (Steps 2a/2c); skip all code completions
+  branch_b: true        # Verus spec branch (disabled for now)
+  generate_tests_only: false  # Stop after test generation (Steps 2a/2c); skip all code completions
 
 # Mode: "correct" = generate correct implementations, "reward_hack" = generate test-gaming implementations
 mode: "reward_hack"
